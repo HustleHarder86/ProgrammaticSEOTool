@@ -2,10 +2,19 @@
 from http.server import BaseHTTPRequestHandler
 import json
 import os
+import sys
 from urllib.parse import urlparse, parse_qs
-from urllib.request import urlopen
+from urllib.request import urlopen, Request
 from urllib.error import URLError
 from datetime import datetime
+import base64
+
+# Import AI handler if available
+try:
+    from .ai_handler import AIHandler
+    ai_handler = AIHandler()
+except:
+    ai_handler = None
 
 class handler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
@@ -75,7 +84,7 @@ class handler(BaseHTTPRequestHandler):
                     'has_openai': bool(os.environ.get('OPENAI_API_KEY')),
                     'has_anthropic': bool(os.environ.get('ANTHROPIC_API_KEY')),
                 },
-                'python_version': os.sys.version,
+                'python_version': sys.version,
                 'current_time': datetime.now().isoformat()
             }
         else:
@@ -119,41 +128,55 @@ class handler(BaseHTTPRequestHandler):
         business_url = data.get('business_url', '')
         business_description = data.get('business_description', '')
         
-        # Simple analysis without heavy dependencies
+        # Get basic info first
+        business_info = {
+            'name': 'Your Business',
+            'url': business_url,
+            'description': business_description or 'No description provided'
+        }
+        
+        # Try to fetch title from URL
         if business_url:
             try:
-                # Basic URL fetch using urllib
                 with urlopen(business_url, timeout=5) as response:
                     html = response.read().decode('utf-8')
-                    title = "Business Website"
                     if '<title>' in html:
                         start = html.find('<title>') + 7
                         end = html.find('</title>')
-                        title = html[start:end] if end > start else title
-                
-                return {
-                    'success': True,
-                    'business_info': {
-                        'name': title,
-                        'url': business_url,
-                        'description': business_description or f"Analysis of {title}",
-                        'industry': 'Technology',  # Would use AI in production
-                        'target_audience': 'General audience',
-                        'content_types': ['blog posts', 'tutorials', 'guides']
-                    }
-                }
+                        title = html[start:end] if end > start else "Business Website"
+                        business_info['name'] = title
             except:
                 pass
         
-        return {
-            'success': True,
-            'business_info': {
-                'name': 'Your Business',
-                'description': business_description or 'No description provided',
+        # Use AI for deeper analysis if available
+        if ai_handler and ai_handler.has_ai_provider():
+            ai_analysis = ai_handler.analyze_business_with_ai(business_info)
+            if ai_analysis:
+                business_info.update({
+                    'industry': ai_analysis.get('industry', 'General'),
+                    'target_audience': ai_analysis.get('target_audience', 'General audience'),
+                    'content_types': ai_analysis.get('content_types', ['blog posts', 'tutorials']),
+                    'main_keywords': ai_analysis.get('main_keywords', [])
+                })
+            else:
+                # AI failed, use defaults
+                business_info.update({
+                    'industry': 'General',
+                    'target_audience': 'General audience',
+                    'content_types': ['blog posts', 'tutorials', 'guides']
+                })
+        else:
+            # No AI, use defaults
+            business_info.update({
                 'industry': 'General',
                 'target_audience': 'General audience',
                 'content_types': ['blog posts', 'tutorials', 'guides']
-            }
+            })
+        
+        return {
+            'success': True,
+            'business_info': business_info,
+            'ai_enabled': bool(ai_handler and ai_handler.has_ai_provider())
         }
 
     def _generate_keywords(self, data):
@@ -161,24 +184,41 @@ class handler(BaseHTTPRequestHandler):
         business_info = data.get('business_info', {})
         num_keywords = data.get('num_keywords', 10)
         
-        # Mock keywords - in production would use AI
-        base_terms = ['how to', 'best', 'guide', 'tutorial', 'tips', 'vs', 'review', 'alternatives']
-        business_name = business_info.get('name', 'business').lower()
-        
         keywords = []
-        for i, term in enumerate(base_terms[:num_keywords]):
-            keywords.append({
-                'keyword': f"{term} {business_name}",
-                'search_volume': 1000 - (i * 100),
-                'difficulty': 30 + (i * 5),
-                'intent': 'informational',
-                'cpc': 0.5 + (i * 0.1)
-            })
+        
+        # Try AI generation first
+        if ai_handler and ai_handler.has_ai_provider():
+            ai_keywords = ai_handler.generate_keywords_with_ai(business_info, num_keywords)
+            if ai_keywords:
+                # Convert AI keywords to structured format
+                for i, kw in enumerate(ai_keywords):
+                    keywords.append({
+                        'keyword': kw,
+                        'search_volume': 1000 - (i * 50),  # Mock volumes for now
+                        'difficulty': 30 + (i * 3),
+                        'intent': 'informational' if 'how' in kw.lower() else 'commercial',
+                        'cpc': 0.5 + (i * 0.1)
+                    })
+        
+        # Fallback to mock keywords if AI fails or not available
+        if not keywords:
+            base_terms = ['how to', 'best', 'guide', 'tutorial', 'tips', 'vs', 'review', 'alternatives']
+            business_name = business_info.get('name', 'business').lower()
+            
+            for i, term in enumerate(base_terms[:num_keywords]):
+                keywords.append({
+                    'keyword': f"{term} {business_name}",
+                    'search_volume': 1000 - (i * 100),
+                    'difficulty': 30 + (i * 5),
+                    'intent': 'informational',
+                    'cpc': 0.5 + (i * 0.1)
+                })
         
         return {
             'success': True,
             'keywords': keywords,
-            'total': len(keywords)
+            'total': len(keywords),
+            'ai_generated': bool(ai_handler and ai_handler.has_ai_provider() and len(keywords) > 0)
         }
 
     def _generate_content(self, data):
@@ -187,20 +227,49 @@ class handler(BaseHTTPRequestHandler):
         business_info = data.get('business_info', {})
         
         contents = []
-        for keyword in keywords[:5]:  # Limit to 5 for demo
-            contents.append({
+        
+        # Limit to 5 keywords to avoid timeout
+        for keyword in keywords[:5]:
+            content_data = {
                 'keyword': keyword,
-                'title': f"{keyword.title()} - Complete Guide",
-                'meta_description': f"Learn everything about {keyword} in this comprehensive guide.",
-                'content': f"# {keyword.title()}\n\nThis is a comprehensive guide about {keyword}...",
-                'word_count': 500,
                 'status': 'generated'
-            })
+            }
+            
+            # Try AI generation
+            if ai_handler and ai_handler.has_ai_provider():
+                ai_content = ai_handler.generate_content_with_ai(keyword, business_info)
+                if ai_content:
+                    content_data.update({
+                        'title': ai_content.get('title', f"{keyword.title()} - Guide"),
+                        'meta_description': ai_content.get('meta_description', f"Learn about {keyword}"),
+                        'content': ai_content.get('intro', f"Content about {keyword}..."),
+                        'outline': ai_content.get('outline', []),
+                        'ai_generated': True
+                    })
+                else:
+                    # AI failed, use fallback
+                    content_data.update({
+                        'title': f"{keyword.title()} - Complete Guide",
+                        'meta_description': f"Learn everything about {keyword} in this guide.",
+                        'content': f"This is a guide about {keyword}. AI generation failed.",
+                        'ai_generated': False
+                    })
+            else:
+                # No AI available
+                content_data.update({
+                    'title': f"{keyword.title()} - Complete Guide",
+                    'meta_description': f"Learn everything about {keyword} in this comprehensive guide.",
+                    'content': f"# {keyword.title()}\n\nThis is a comprehensive guide about {keyword}...",
+                    'ai_generated': False
+                })
+            
+            contents.append(content_data)
         
         return {
             'success': True,
             'contents': contents,
-            'total': len(contents)
+            'total': len(contents),
+            'ai_enabled': bool(ai_handler and ai_handler.has_ai_provider())
         }
 
     def _create_project(self, data):

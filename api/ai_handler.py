@@ -1,0 +1,182 @@
+"""AI integration for content generation"""
+import os
+import json
+from urllib.request import Request, urlopen
+from urllib.error import URLError
+
+class AIHandler:
+    def __init__(self):
+        self.openai_key = os.environ.get('OPENAI_API_KEY')
+        self.anthropic_key = os.environ.get('ANTHROPIC_API_KEY')
+        
+    def has_ai_provider(self):
+        """Check if at least one AI provider is configured"""
+        return bool(self.openai_key or self.anthropic_key)
+    
+    def generate_with_openai(self, prompt, max_tokens=500):
+        """Generate content using OpenAI API"""
+        if not self.openai_key:
+            return None
+            
+        headers = {
+            'Authorization': f'Bearer {self.openai_key}',
+            'Content-Type': 'application/json'
+        }
+        
+        data = {
+            'model': 'gpt-3.5-turbo',
+            'messages': [{'role': 'user', 'content': prompt}],
+            'max_tokens': max_tokens,
+            'temperature': 0.7
+        }
+        
+        try:
+            req = Request('https://api.openai.com/v1/chat/completions',
+                         data=json.dumps(data).encode(),
+                         headers=headers,
+                         method='POST')
+            
+            with urlopen(req, timeout=30) as response:
+                result = json.loads(response.read().decode())
+                return result['choices'][0]['message']['content']
+        except Exception as e:
+            print(f"OpenAI error: {e}")
+            return None
+    
+    def generate_with_anthropic(self, prompt, max_tokens=500):
+        """Generate content using Anthropic API"""
+        if not self.anthropic_key:
+            return None
+            
+        headers = {
+            'x-api-key': self.anthropic_key,
+            'Content-Type': 'application/json',
+            'anthropic-version': '2023-06-01'
+        }
+        
+        data = {
+            'model': 'claude-3-haiku-20240307',
+            'messages': [{'role': 'user', 'content': prompt}],
+            'max_tokens': max_tokens
+        }
+        
+        try:
+            req = Request('https://api.anthropic.com/v1/messages',
+                         data=json.dumps(data).encode(),
+                         headers=headers,
+                         method='POST')
+            
+            with urlopen(req, timeout=30) as response:
+                result = json.loads(response.read().decode())
+                return result['content'][0]['text']
+        except Exception as e:
+            print(f"Anthropic error: {e}")
+            return None
+    
+    def generate(self, prompt, max_tokens=500):
+        """Generate content using available AI provider"""
+        # Try OpenAI first
+        result = self.generate_with_openai(prompt, max_tokens)
+        if result:
+            return result
+            
+        # Fall back to Anthropic
+        result = self.generate_with_anthropic(prompt, max_tokens)
+        if result:
+            return result
+            
+        # No AI provider available or all failed
+        return None
+
+    def analyze_business_with_ai(self, business_info):
+        """Use AI to analyze business and suggest content types"""
+        if not self.has_ai_provider():
+            return None
+            
+        prompt = f"""Analyze this business and suggest SEO content opportunities:
+Business: {business_info.get('name', 'Unknown')}
+Description: {business_info.get('description', 'No description')}
+URL: {business_info.get('url', 'No URL')}
+
+Provide a JSON response with:
+1. industry (string)
+2. target_audience (string)
+3. content_types (array of 5 content type suggestions)
+4. main_keywords (array of 5 main keywords)
+"""
+        
+        response = self.generate(prompt, 300)
+        if response:
+            try:
+                # Try to parse JSON from response
+                start = response.find('{')
+                end = response.rfind('}') + 1
+                if start >= 0 and end > start:
+                    return json.loads(response[start:end])
+            except:
+                pass
+        return None
+
+    def generate_keywords_with_ai(self, business_info, num_keywords=10):
+        """Use AI to generate keyword suggestions"""
+        if not self.has_ai_provider():
+            return None
+            
+        prompt = f"""Generate {num_keywords} SEO keyword opportunities for:
+Business: {business_info.get('name', 'Unknown')}
+Industry: {business_info.get('industry', 'General')}
+Target: {business_info.get('target_audience', 'General audience')}
+
+Provide keywords that are:
+- Long-tail (3-5 words)
+- Have commercial or informational intent
+- Realistic for a small business to rank for
+
+Format as a simple list, one per line."""
+        
+        response = self.generate(prompt, 200)
+        if response:
+            # Parse keywords from response
+            keywords = []
+            for line in response.strip().split('\n'):
+                line = line.strip().strip('-').strip('•').strip('*').strip()
+                if line and len(line) > 5:
+                    keywords.append(line)
+            return keywords[:num_keywords]
+        return None
+
+    def generate_content_with_ai(self, keyword, business_info):
+        """Use AI to generate content for a keyword"""
+        if not self.has_ai_provider():
+            return None
+            
+        prompt = f"""Write SEO-optimized content for:
+Keyword: {keyword}
+Business: {business_info.get('name', 'Unknown')}
+Industry: {business_info.get('industry', 'General')}
+
+Include:
+1. A compelling title
+2. Meta description (150 chars)
+3. Introduction paragraph (100 words)
+4. Main content outline (3-5 points)
+
+Format as JSON with keys: title, meta_description, intro, outline"""
+        
+        response = self.generate(prompt, 400)
+        if response:
+            try:
+                # Try to parse JSON from response
+                start = response.find('{')
+                end = response.rfind('}') + 1
+                if start >= 0 and end > start:
+                    return json.loads(response[start:end])
+            except:
+                # Fallback to structured response
+                return {
+                    'title': f"{keyword.title()} - Complete Guide",
+                    'meta_description': f"Learn everything about {keyword} in this guide.",
+                    'intro': response[:200] if response else "Content coming soon...",
+                    'outline': ["Introduction", "Main Points", "Conclusion"]
+                }
+        return None
