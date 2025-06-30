@@ -9,6 +9,10 @@
       "destination": "/api/main"
     },
     {
+      "source": "/dashboard",
+      "destination": "/api/main"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/main"
     },
