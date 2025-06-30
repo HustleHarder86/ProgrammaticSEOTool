@@ -1175,10 +1175,6 @@
                 console.error('Analyze business error:', error);
                 resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
             }
-            } catch (error) {
-                console.error('Outer error:', error);
-                document.getElementById('analyzeResult').innerHTML = `<div class="error">Error: ${error.message}</div>`;
-            }
         }
 
         async function generateKeywords() {
