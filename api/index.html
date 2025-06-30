@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programmatic SEO Tool</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #333; margin-bottom: 10px; }
+        .subtitle { color: #666; margin-bottom: 30px; }
+        .section { margin-bottom: 30px; padding: 20px; background: #f9f9f9; border-radius: 8px; }
+        h2 { color: #444; margin-bottom: 15px; font-size: 1.3em; }
+        input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .result { margin-top: 20px; padding: 15px; background: #e9ecef; border-radius: 4px; white-space: pre-wrap; font-family: monospace; font-size: 12px; max-height: 400px; overflow-y: auto; }
+        .keywords { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+        .keyword { background: #007bff; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px; }
+        .loading { color: #666; font-style: italic; }
+        .error { color: #dc3545; }
+        .success { color: #28a745; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Programmatic SEO Tool</h1>
+        <p class="subtitle">Generate SEO content at scale</p>
+
+        <!-- Step 1: Analyze Business -->
+        <div class="section">
+            <h2>Step 1: Analyze Your Business</h2>
+            <input type="url" id="businessUrl" placeholder="Enter your website URL (optional)">
+            <textarea id="businessDesc" rows="3" placeholder="Describe your business..."></textarea>
+            <button onclick="analyzeBusiness()">Analyze Business</button>
+            <div id="analyzeResult"></div>
+        </div>
+
+        <!-- Step 2: Generate Keywords -->
+        <div class="section">
+            <h2>Step 2: Generate Keywords</h2>
+            <input type="number" id="numKeywords" value="10" min="1" max="50" placeholder="Number of keywords">
+            <button onclick="generateKeywords()" id="keywordBtn" disabled>Generate Keywords</button>
+            <div id="keywordResult"></div>
+        </div>
+
+        <!-- Step 3: Generate Content -->
+        <div class="section">
+            <h2>Step 3: Generate Content</h2>
+            <button onclick="generateContent()" id="contentBtn" disabled>Generate Content</button>
+            <div id="contentResult"></div>
+        </div>
+
+        <!-- Debug/Status -->
+        <div class="section">
+            <h2>API Status</h2>
+            <button onclick="checkHealth()">Check API Health</button>
+            <div id="healthResult"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://programmatic-seo-tool-three.vercel.app';
+        let businessInfo = null;
+        let keywords = [];
+
+        async function checkHealth() {
+            const resultDiv = document.getElementById('healthResult');
+            resultDiv.innerHTML = '<p class="loading">Checking API health...</p>';
+            
+            try {
+                const response = await fetch(`${API_URL}/health`);
+                const data = await response.json();
+                resultDiv.innerHTML = `<div class="result success">API is healthy! ${JSON.stringify(data, null, 2)}</div>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function analyzeBusiness() {
+            const url = document.getElementById('businessUrl').value;
+            const desc = document.getElementById('businessDesc').value;
+            const resultDiv = document.getElementById('analyzeResult');
+            
+            if (!url && !desc) {
+                resultDiv.innerHTML = '<p class="error">Please enter a URL or description</p>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<p class="loading">Analyzing business...</p>';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/analyze-business`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        business_url: url,
+                        business_description: desc
+                    })
+                });
+                
+                const data = await response.json();
+                businessInfo = data.business_info;
+                
+                resultDiv.innerHTML = `
+                    <div class="result">
+                        <p class="success">✓ Business analyzed successfully!</p>
+                        <strong>${businessInfo.name}</strong>
+                        <p>${businessInfo.description}</p>
+                        <p>Industry: ${businessInfo.industry}</p>
+                        <p>Target: ${businessInfo.target_audience}</p>
+                    </div>
+                `;
+                
+                document.getElementById('keywordBtn').disabled = false;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function generateKeywords() {
+            if (!businessInfo) {
+                alert('Please analyze your business first');
+                return;
+            }
+            
+            const num = document.getElementById('numKeywords').value;
+            const resultDiv = document.getElementById('keywordResult');
+            resultDiv.innerHTML = '<p class="loading">Generating keywords...</p>';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/generate-keywords`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        business_info: businessInfo,
+                        num_keywords: parseInt(num)
+                    })
+                });
+                
+                const data = await response.json();
+                keywords = data.keywords;
+                
+                let keywordHtml = '<p class="success">✓ Keywords generated!</p><div class="keywords">';
+                keywords.forEach(kw => {
+                    keywordHtml += `<span class="keyword">${kw.keyword} (vol: ${kw.search_volume})</span>`;
+                });
+                keywordHtml += '</div>';
+                
+                resultDiv.innerHTML = keywordHtml;
+                document.getElementById('contentBtn').disabled = false;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function generateContent() {
+            if (!keywords || keywords.length === 0) {
+                alert('Please generate keywords first');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('contentResult');
+            resultDiv.innerHTML = '<p class="loading">Generating content...</p>';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/generate-content`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        keywords: keywords.map(k => k.keyword),
+                        business_info: businessInfo
+                    })
+                });
+                
+                const data = await response.json();
+                
+                let contentHtml = '<p class="success">✓ Content generated!</p>';
+                data.contents.forEach(content => {
+                    contentHtml += `
+                        <div class="result">
+                            <strong>${content.title}</strong>
+                            <p><em>${content.meta_description}</em></p>
+                            <p>${content.content.substring(0, 200)}...</p>
+                        </div>
+                    `;
+                });
+                
+                resultDiv.innerHTML = contentHtml;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        // Check API health on load
+        window.onload = () => checkHealth();
+    </script>
+</body>
+</html>

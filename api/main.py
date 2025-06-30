@@ -18,13 +18,30 @@ class handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         """Handle GET requests"""
+        parsed_path = urlparse(self.path)
+        path = parsed_path.path
+        
+        # Serve HTML interface at /app
+        if path == '/app':
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            
+            # Read and serve the HTML file
+            html_path = os.path.join(os.path.dirname(__file__), 'index.html')
+            try:
+                with open(html_path, 'r') as f:
+                    self.wfile.write(f.read().encode())
+            except:
+                # Fallback if file not found
+                self.wfile.write(b'<h1>Programmatic SEO Tool</h1><p>API is running. Use POST requests to interact.</p>')
+            return
+        
+        # JSON responses for API endpoints
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
-        
-        parsed_path = urlparse(self.path)
-        path = parsed_path.path
         
         if path == '/' or path == '':
             response = {
