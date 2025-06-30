@@ -1099,35 +1099,116 @@
         function clusterBySemantic(keywords) {
             const clusters = {};
             
-            keywords.forEach(kw => {
-                // Extract main topic words
-                const words = kw.keyword.toLowerCase().split(' ');
-                let clusterName = '';
+            // Check if real estate industry for specialized clustering
+            const isRealEstate = businessInfo.industry && 
+                businessInfo.industry.toLowerCase().includes('real estate');
+            
+            if (isRealEstate) {
+                // Predefined real estate clusters
+                const realEstateClusters = {
+                    'Location Guides': { keywords: [], icon: '📍' },
+                    'Property Types': { keywords: [], icon: '🏠' },
+                    'Buyer Resources': { keywords: [], icon: '🔑' },
+                    'Market Analysis': { keywords: [], icon: '📊' },
+                    'Comparisons': { keywords: [], icon: '⚖️' },
+                    'Investment': { keywords: [], icon: '💰' },
+                    'Selling Guides': { keywords: [], icon: '🏷️' },
+                    'Financial & Mortgage': { keywords: [], icon: '💳' }
+                };
                 
-                // Find most significant word (usually noun)
-                const significantWords = words.filter(w => 
-                    w.length > 3 && 
-                    !['best', 'how', 'what', 'where', 'when', 'why', 'top', 'for', 'the', 'and'].includes(w)
-                );
+                keywords.forEach(kw => {
+                    const lower = kw.keyword.toLowerCase();
+                    let assigned = false;
+                    
+                    // Assign to appropriate cluster
+                    if (lower.includes('neighborhood') || lower.includes('living in') || 
+                        lower.includes('moving to') || lower.includes('area') || 
+                        lower.includes('cost of living')) {
+                        realEstateClusters['Location Guides'].keywords.push(kw);
+                        assigned = true;
+                    } else if ((lower.includes('condo') || lower.includes('townhouse') || 
+                               lower.includes('single family') || lower.includes('property type') ||
+                               lower.includes('luxury home') || lower.includes('starter home')) && 
+                               !lower.includes('vs')) {
+                        realEstateClusters['Property Types'].keywords.push(kw);
+                        assigned = true;
+                    } else if (lower.includes('buyer') || lower.includes('buying') || 
+                              lower.includes('first time') || lower.includes('purchase')) {
+                        realEstateClusters['Buyer Resources'].keywords.push(kw);
+                        assigned = true;
+                    } else if (lower.includes('market') || lower.includes('forecast') || 
+                              lower.includes('trend') || lower.includes('analysis') ||
+                              lower.includes('median price')) {
+                        realEstateClusters['Market Analysis'].keywords.push(kw);
+                        assigned = true;
+                    } else if (lower.includes('vs') || lower.includes('versus') || 
+                              lower.includes('compare')) {
+                        realEstateClusters['Comparisons'].keywords.push(kw);
+                        assigned = true;
+                    } else if (lower.includes('investment') || lower.includes('roi') || 
+                              lower.includes('rental') || lower.includes('airbnb') ||
+                              lower.includes('flip')) {
+                        realEstateClusters['Investment'].keywords.push(kw);
+                        assigned = true;
+                    } else if (lower.includes('sell') || lower.includes('staging') || 
+                              lower.includes('listing')) {
+                        realEstateClusters['Selling Guides'].keywords.push(kw);
+                        assigned = true;
+                    } else if (lower.includes('mortgage') || lower.includes('financing') || 
+                              lower.includes('loan') || lower.includes('down payment')) {
+                        realEstateClusters['Financial & Mortgage'].keywords.push(kw);
+                        assigned = true;
+                    }
+                    
+                    // Default to location guides if not assigned
+                    if (!assigned) {
+                        realEstateClusters['Location Guides'].keywords.push(kw);
+                    }
+                });
                 
-                if (significantWords.length > 0) {
-                    clusterName = significantWords[0];
-                } else {
-                    clusterName = words[0];
-                }
-                
-                // Capitalize cluster name
-                clusterName = clusterName.charAt(0).toUpperCase() + clusterName.slice(1);
-                
-                if (!clusters[clusterName]) {
-                    clusters[clusterName] = {
-                        name: clusterName,
-                        keywords: [],
-                        totalVolume: 0,
-                        avgDifficulty: 0,
-                        icon: getClusterIcon(clusterName)
-                    };
-                }
+                // Convert to final format
+                Object.entries(realEstateClusters).forEach(([name, data]) => {
+                    if (data.keywords.length > 0) {
+                        clusters[name] = {
+                            name: name,
+                            keywords: data.keywords,
+                            totalVolume: data.keywords.reduce((sum, k) => sum + k.search_volume, 0),
+                            avgDifficulty: Math.round(data.keywords.reduce((sum, k) => sum + k.difficulty, 0) / data.keywords.length),
+                            icon: data.icon
+                        };
+                    }
+                });
+            } else {
+                // Original semantic clustering for other industries
+                keywords.forEach(kw => {
+                    // Extract main topic words
+                    const words = kw.keyword.toLowerCase().split(' ');
+                    let clusterName = '';
+                    
+                    // Find most significant word (usually noun)
+                    const significantWords = words.filter(w => 
+                        w.length > 3 && 
+                        !['best', 'how', 'what', 'where', 'when', 'why', 'top', 'for', 'the', 'and'].includes(w)
+                    );
+                    
+                    if (significantWords.length > 0) {
+                        clusterName = significantWords[0];
+                    } else {
+                        clusterName = words[0];
+                    }
+                    
+                    // Capitalize cluster name
+                    clusterName = clusterName.charAt(0).toUpperCase() + clusterName.slice(1);
+                    
+                    if (!clusters[clusterName]) {
+                        clusters[clusterName] = {
+                            name: clusterName,
+                            keywords: [],
+                            totalVolume: 0,
+                            avgDifficulty: 0,
+                            icon: getClusterIcon(clusterName)
+                        };
+                    }
                 
                 clusters[clusterName].keywords.push(kw);
                 clusters[clusterName].totalVolume += kw.search_volume;

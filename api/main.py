@@ -216,19 +216,33 @@ class handler(BaseHTTPRequestHandler):
         
         keywords = []
         
+        # Import keyword optimizer to check for enhanced keywords
+        try:
+            from .keyword_optimizer import KeywordOptimizer
+            ko = KeywordOptimizer()
+        except:
+            ko = None
+        
         # Try AI generation first
         if ai_handler and ai_handler.has_ai_provider():
-            ai_keywords = ai_handler.generate_keywords_with_ai(business_info, num_keywords)
-            if ai_keywords:
-                # Convert AI keywords to structured format
-                for i, kw in enumerate(ai_keywords):
-                    keywords.append({
-                        'keyword': kw,
-                        'search_volume': 1000 - (i * 50),  # Mock volumes for now
-                        'difficulty': 30 + (i * 3),
-                        'intent': 'informational' if 'how' in kw.lower() else 'commercial',
-                        'cpc': 0.5 + (i * 0.1)
-                    })
+            # Check if we should use enhanced real estate generation
+            industry = business_info.get('industry', '').lower()
+            if ko and 'real estate' in industry:
+                # Get full keyword objects from optimizer
+                keywords = ko.generate_real_estate_keywords(business_info, num_keywords)
+            else:
+                # Standard AI generation
+                ai_keywords = ai_handler.generate_keywords_with_ai(business_info, num_keywords)
+                if ai_keywords:
+                    # Convert AI keywords to structured format
+                    for i, kw in enumerate(ai_keywords):
+                        keywords.append({
+                            'keyword': kw,
+                            'search_volume': 1000 - (i * 50),  # Mock volumes for now
+                            'difficulty': 30 + (i * 3),
+                            'intent': 'informational' if 'how' in kw.lower() else 'commercial',
+                            'cpc': 0.5 + (i * 0.1)
+                        })
         
         # Fallback to mock keywords if AI fails or not available
         if not keywords:

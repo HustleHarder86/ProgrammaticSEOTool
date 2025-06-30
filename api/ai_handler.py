@@ -11,6 +11,13 @@ try:
 except:
     variation_engine = None
 
+# Import keyword optimizer
+try:
+    from .keyword_optimizer import KeywordOptimizer
+    keyword_optimizer = KeywordOptimizer()
+except:
+    keyword_optimizer = None
+
 class AIHandler:
     def __init__(self):
         self.openai_key = os.environ.get('OPENAI_API_KEY')
@@ -162,10 +169,24 @@ Provide a JSON response with:
 
     def generate_keywords_with_ai(self, business_info, num_keywords=10):
         """Use AI to generate keyword suggestions"""
+        industry = business_info.get('industry', 'General').lower()
+        
+        # Use specialized keyword generation for supported industries
+        if keyword_optimizer and 'real estate' in industry:
+            # Generate comprehensive real estate keywords
+            keyword_objects = keyword_optimizer.generate_real_estate_keywords(business_info, num_keywords)
+            # Return just the keyword strings for backward compatibility
+            return [kw['keyword'] for kw in keyword_objects]
+        
         if not self.has_ai_provider():
             return None
-            
-        prompt = f"""Generate {num_keywords} SEO keyword opportunities for:
+        
+        # Use enhanced prompt from keyword optimizer if available
+        if keyword_optimizer:
+            prompt = keyword_optimizer.enhance_with_ai_prompt(industry, business_info)
+        else:
+            # Fallback to original prompt
+            prompt = f"""Generate {num_keywords} SEO keyword opportunities for:
 Business: {business_info.get('name', 'Unknown')}
 Industry: {business_info.get('industry', 'General')}
 Target: {business_info.get('target_audience', 'General audience')}
@@ -177,13 +198,13 @@ Provide keywords that are:
 
 Format as a simple list, one per line."""
         
-        response = self.generate(prompt, 200)
+        response = self.generate(prompt, 400)  # Increased token limit
         if response:
             # Parse keywords from response
             keywords = []
             for line in response.strip().split('\n'):
-                line = line.strip().strip('-').strip('•').strip('*').strip()
-                if line and len(line) > 5:
+                line = line.strip().strip('-').strip('•').strip('*').strip('1234567890.').strip()
+                if line and len(line) > 5 and not line.lower().startswith(('generate', 'keyword', 'note:')):
                     keywords.append(line)
             return keywords[:num_keywords]
         return None
