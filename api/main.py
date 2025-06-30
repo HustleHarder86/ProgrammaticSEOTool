@@ -341,10 +341,13 @@ class handler(BaseHTTPRequestHandler):
                     # Track minimal usage for suggestions
                     if usage_tracker:
                         usage_tracker.track_usage('generate_keywords_seed')
+                    
+                    print(f"Returning {len(seed_suggestions)} seed suggestions")
                     return {
                         'success': True,
                         'seed_suggestions': seed_suggestions,
-                        'business_info': business_info
+                        'business_info': business_info,
+                        'ai_generated': True
                     }
             
             # Check if we should use enhanced real estate generation
