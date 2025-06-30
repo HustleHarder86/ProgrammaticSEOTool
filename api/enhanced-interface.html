@@ -1088,15 +1088,14 @@
                 }
                 
                 console.log('Analyzing business:', url || desc);
-            
-            // If only URL provided, add a default description
-            if (url && !desc) {
-                desc = "Real estate investment analysis tool";
-            }
-            
-            resultDiv.innerHTML = '<p class="loading"><span class="spinner"></span> Analyzing with AI...</p>';
-            
-            try {
+                
+                // If only URL provided, add a default description
+                if (url && !desc) {
+                    desc = "Real estate investment analysis tool";
+                }
+                
+                resultDiv.innerHTML = '<p class="loading"><span class="spinner"></span> Analyzing with AI...</p>';
+                
                 const response = await fetch(`${API_URL}/api/analyze-business`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
