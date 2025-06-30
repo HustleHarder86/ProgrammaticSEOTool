@@ -1017,17 +1017,23 @@
             
             updateStats();
             
-            // Show the keywords in cluster view
-            if (allKeywords.length > 50) {
-                // For many keywords, use cluster view
-                clusterView = true;
-                document.getElementById('clusterMethod').value = 'semantic';
-                clusterKeywords();
-            } else {
-                // For fewer keywords, show list view
-                clusterView = false;
-                renderKeywords();
-            }
+            // Clear the seed results display and show keywords
+            setTimeout(() => {
+                // Show the keywords in cluster view
+                if (allKeywords.length > 50) {
+                    // For many keywords, use cluster view
+                    clusterView = true;
+                    document.getElementById('clusterMethod').value = 'semantic';
+                    clusterKeywords();
+                } else {
+                    // For fewer keywords, show list view
+                    clusterView = false;
+                    renderKeywords();
+                }
+                
+                // Scroll to the results
+                document.getElementById('keywordResult').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 1000); // Wait a second to let user see the summary
             
             // Show success message
             showCostNotification('generate_keywords_seed', 0.0050);
@@ -2003,6 +2009,12 @@
             clusterView = true;
             document.getElementById('clusterMethod').value = 'semantic';
             clusterKeywords();
+            
+            // Scroll to Step 3 where keywords are shown
+            const step3 = document.querySelector('.section:nth-of-type(3)');
+            if (step3) {
+                step3.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         }
         
         function downloadSeedKeywords() {
