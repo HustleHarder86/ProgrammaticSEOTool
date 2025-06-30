@@ -30,7 +30,7 @@ class handler(BaseHTTPRequestHandler):
         parsed_path = urlparse(self.path)
         path = parsed_path.path
         
-        # Serve HTML interface at /app
+        # Serve HTML interface at /app or /pro
         if path == '/app':
             self.send_response(200)
             self.send_header('Content-type', 'text/html')
@@ -44,6 +44,27 @@ class handler(BaseHTTPRequestHandler):
             except:
                 # Fallback if file not found
                 self.wfile.write(b'<h1>Programmatic SEO Tool</h1><p>API is running. Use POST requests to interact.</p>')
+            return
+        
+        # Serve enhanced interface at /pro
+        if path == '/pro':
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            
+            # Read and serve the enhanced HTML file
+            html_path = os.path.join(os.path.dirname(__file__), 'enhanced-interface.html')
+            try:
+                with open(html_path, 'r') as f:
+                    self.wfile.write(f.read().encode())
+            except:
+                # Fallback to basic interface
+                html_path = os.path.join(os.path.dirname(__file__), 'interface.html')
+                try:
+                    with open(html_path, 'r') as f:
+                        self.wfile.write(f.read().encode())
+                except:
+                    self.wfile.write(b'<h1>Programmatic SEO Tool</h1><p>API is running.</p>')
             return
         
         # JSON responses for API endpoints

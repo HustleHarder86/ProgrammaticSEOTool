@@ -5,11 +5,19 @@
       "destination": "/api/main"
     },
     {
+      "source": "/pro",
+      "destination": "/api/main"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/main"
     },
     {
       "source": "/health",
+      "destination": "/api/main"
+    },
+    {
+      "source": "/debug",
       "destination": "/api/main"
     },
     {
