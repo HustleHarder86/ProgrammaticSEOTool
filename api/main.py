@@ -67,19 +67,27 @@ class handler(BaseHTTPRequestHandler):
                     self.wfile.write(b'<h1>Programmatic SEO Tool</h1><p>API is running.</p>')
             return
         
+        # Redirect root to app
+        if path == '/' or path == '':
+            self.send_response(302)
+            self.send_header('Location', '/app')
+            self.send_header('Cache-Control', 'no-cache')
+            self.end_headers()
+            return
+        
         # JSON responses for API endpoints
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
         
-        if path == '/' or path == '':
+        if path == '/api':
             response = {
                 'message': 'Programmatic SEO Tool API',
                 'version': '1.0.0',
                 'status': 'healthy',
                 'endpoints': [
-                    'GET /',
+                    'GET /api',
                     'GET /health',
                     'POST /api/analyze-business',
                     'POST /api/generate-keywords',
