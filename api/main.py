@@ -237,6 +237,53 @@ class handler(BaseHTTPRequestHandler):
             ko = KeywordOptimizer()
         except:
             ko = None
+            
+        # Check if seed mode
+        if data.get('seed_mode', False):
+            try:
+                from .seed_generator import SeedKeywordGenerator
+                sg = SeedKeywordGenerator()
+                
+                selected_seeds = data.get('selected_seeds', [])
+                location = data.get('location', 'Austin')
+                
+                # Map selected seeds to seed configurations
+                seed_configs = []
+                for seed_id in selected_seeds:
+                    if seed_id == 'location_property':
+                        seed_configs.append({
+                            "category": "location_based",
+                            "template_group": "property_analysis"
+                        })
+                    elif seed_id == 'comparison':
+                        seed_configs.append({
+                            "category": "comparison_based",
+                            "template_group": "strategy_comparison",
+                            "include_location": True
+                        })
+                    elif seed_id == 'calculator_tools':
+                        seed_configs.append({
+                            "category": "tool_based",
+                            "template_group": "calculators"
+                        })
+                    elif seed_id == 'market_analysis':
+                        seed_configs.append({
+                            "category": "location_based",
+                            "template_group": "market_analysis"
+                        })
+                
+                # Generate from seeds
+                seed_results = sg.generate_from_seeds(seed_configs, location)
+                
+                return {
+                    'success': True,
+                    'seed_mode': True,
+                    'seed_results': seed_results,
+                    'ai_generated': True
+                }
+            except Exception as e:
+                print(f"Seed generation error: {e}")
+                # Fall back to regular generation
         
         # Try AI generation first
         if ai_handler and ai_handler.has_ai_provider():

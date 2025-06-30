@@ -443,16 +443,50 @@
 
             <!-- Step 2: Generate Keywords -->
             <div class="section">
-                <h2><span class="step-number">2</span> Generate & Cluster Keywords</h2>
-                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                    <input type="number" id="numKeywords" value="20" min="5" max="100" style="width: 100px;">
-                    <select id="keywordIntent" style="flex: 1;">
-                        <option value="all">All Intents</option>
-                        <option value="informational">Informational</option>
-                        <option value="commercial">Commercial</option>
-                        <option value="transactional">Transactional</option>
-                    </select>
+                <h2><span class="step-number">2</span> Generate Keywords - Programmatic Seeds</h2>
+                
+                <!-- Seed Keywords Tab -->
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button id="seedModeBtn" onclick="toggleKeywordMode('seed')" style="flex: 1; background: #667eea;">
+                        🌱 Seed Mode (100s-1000s)
+                    </button>
+                    <button id="basicModeBtn" onclick="toggleKeywordMode('basic')" style="flex: 1; background: #e2e8f0; color: #333;">
+                        📝 Basic Mode (10s-100s)
+                    </button>
                 </div>
+                
+                <!-- Seed Mode Content -->
+                <div id="seedModeContent">
+                    <div style="background: #f0f4ff; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 10px 0;">🚀 Programmatic SEO - Seed Keywords</h4>
+                        <p style="margin: 0; font-size: 0.9em;">Select seed templates to generate hundreds or thousands of keyword variations automatically.</p>
+                    </div>
+                    
+                    <div id="seedTemplates" style="margin-bottom: 15px;">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                    
+                    <div style="background: #e6f7ff; padding: 10px; border-radius: 6px; margin-bottom: 15px;">
+                        <strong>Estimated Total Keywords: </strong>
+                        <span id="estimatedKeywords" style="font-size: 1.2em; color: #1890ff;">0</span>
+                    </div>
+                    
+                    <button onclick="generateFromSeeds()" style="width: 100%;">
+                        🌱 Generate All Variations
+                    </button>
+                </div>
+                
+                <!-- Basic Mode Content -->
+                <div id="basicModeContent" style="display: none;">
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <input type="number" id="numKeywords" value="20" min="5" max="100" style="width: 100px;">
+                        <select id="keywordIntent" style="flex: 1;">
+                            <option value="all">All Intents</option>
+                            <option value="informational">Informational</option>
+                            <option value="commercial">Commercial</option>
+                            <option value="transactional">Transactional</option>
+                        </select>
+                    </div>
                 <div style="margin-bottom: 15px;">
                     <label style="display: flex; align-items: center; gap: 10px;">
                         <input type="checkbox" id="autoCluster" checked>
@@ -562,12 +596,273 @@
         let clusterView = true; // Toggle between cluster and list view
         let multiProjectMode = false;
         let currentProjects = {}; // Store B2B and B2C projects
+        let seedKeywords = []; // Store seed configurations
+        let keywordMode = 'seed'; // 'seed' or 'basic'
 
         // Initialize
         window.onload = () => {
             loadProjects();
             updateStats();
+            loadSeedTemplates();
         };
+        
+        function toggleKeywordMode(mode) {
+            keywordMode = mode;
+            
+            if (mode === 'seed') {
+                document.getElementById('seedModeBtn').style.background = '#667eea';
+                document.getElementById('seedModeBtn').style.color = 'white';
+                document.getElementById('basicModeBtn').style.background = '#e2e8f0';
+                document.getElementById('basicModeBtn').style.color = '#333';
+                document.getElementById('seedModeContent').style.display = 'block';
+                document.getElementById('basicModeContent').style.display = 'none';
+            } else {
+                document.getElementById('basicModeBtn').style.background = '#667eea';
+                document.getElementById('basicModeBtn').style.color = 'white';
+                document.getElementById('seedModeBtn').style.background = '#e2e8f0';
+                document.getElementById('seedModeBtn').style.color = '#333';
+                document.getElementById('seedModeContent').style.display = 'none';
+                document.getElementById('basicModeContent').style.display = 'block';
+            }
+        }
+        
+        function loadSeedTemplates() {
+            const templatesDiv = document.getElementById('seedTemplates');
+            
+            // Real estate seed templates
+            const seedTemplates = [
+                {
+                    id: 'location_property',
+                    name: '📍 Location + Property Type',
+                    template: '{location} {property_type} {action}',
+                    description: 'Generate location-specific property keywords',
+                    variables: {
+                        locations: 50,
+                        property_types: 7,
+                        actions: 10
+                    },
+                    estimated: 50 * 7 * 10,
+                    example: 'Austin condo for sale, Dallas townhouse rental income'
+                },
+                {
+                    id: 'comparison',
+                    name: '⚖️ Investment Comparisons',
+                    template: '{strategy1} vs {strategy2} in {location}',
+                    description: 'Compare different investment strategies',
+                    variables: {
+                        strategies: 8,
+                        locations: 20
+                    },
+                    estimated: 8 * 7 * 20,
+                    example: 'airbnb vs long term rental in Austin'
+                },
+                {
+                    id: 'calculator_tools',
+                    name: '🧮 Calculator Keywords',
+                    template: '{metric} calculator {location} {year}',
+                    description: 'Location-specific calculator searches',
+                    variables: {
+                        metrics: 15,
+                        locations: 50,
+                        years: 2
+                    },
+                    estimated: 15 * 50 * 2,
+                    example: 'rental roi calculator Austin 2024'
+                },
+                {
+                    id: 'market_analysis',
+                    name: '📊 Market Analysis',
+                    template: '{location} {property_type} market {metric} {time}',
+                    description: 'Market trends and analysis keywords',
+                    variables: {
+                        locations: 50,
+                        property_types: 7,
+                        metrics: 8,
+                        timeframes: 4
+                    },
+                    estimated: 50 * 7 * 8 * 4,
+                    example: 'Austin condo market forecast 2025'
+                }
+            ];
+            
+            let html = '';
+            seedTemplates.forEach(template => {
+                html += `
+                    <div style="border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                        <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="seed_${template.id}" onchange="updateSeedEstimate()" style="margin-top: 2px;">
+                            <div style="flex: 1;">
+                                <h4 style="margin: 0;">${template.name}</h4>
+                                <p style="margin: 5px 0; color: #666; font-size: 0.9em;">${template.description}</p>
+                                <code style="background: #f5f5f5; padding: 4px 8px; border-radius: 4px; font-size: 0.85em;">${template.template}</code>
+                                <div style="margin-top: 8px; font-size: 0.85em; color: #888;">
+                                    <strong>Variables:</strong> ${Object.entries(template.variables).map(([k,v]) => `${v} ${k}`).join(' × ')} = 
+                                    <strong style="color: #1890ff;">${template.estimated.toLocaleString()} variations</strong>
+                                </div>
+                                <div style="margin-top: 5px; font-size: 0.85em; color: #666;">
+                                    <em>Example: ${template.example}</em>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                `;
+            });
+            
+            templatesDiv.innerHTML = html;
+        }
+        
+        function updateSeedEstimate() {
+            const estimates = {
+                'seed_location_property': 3500,
+                'seed_comparison': 1120,
+                'seed_calculator_tools': 1500,
+                'seed_market_analysis': 11200
+            };
+            
+            let total = 0;
+            Object.keys(estimates).forEach(id => {
+                if (document.getElementById(id) && document.getElementById(id).checked) {
+                    total += estimates[id];
+                }
+            });
+            
+            document.getElementById('estimatedKeywords').textContent = total.toLocaleString();
+        }
+        
+        async function generateFromSeeds() {
+            if (!businessInfo) {
+                alert('Please analyze your business first');
+                return;
+            }
+            
+            // Get selected seeds
+            const selectedSeeds = [];
+            ['location_property', 'comparison', 'calculator_tools', 'market_analysis'].forEach(id => {
+                if (document.getElementById(`seed_${id}`).checked) {
+                    selectedSeeds.push(id);
+                }
+            });
+            
+            if (selectedSeeds.length === 0) {
+                alert('Please select at least one seed template');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('keywordResult');
+            resultDiv.innerHTML = '<p class="loading"><span class="spinner"></span> Generating keyword variations from seeds...</p>';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/generate-keywords`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        business_info: businessInfo,
+                        seed_mode: true,
+                        selected_seeds: selectedSeeds,
+                        location: businessInfo.location || 'Austin'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.seed_results) {
+                    renderSeedResults(data.seed_results);
+                    return;
+                }
+                
+                // Fallback to regular keywords
+                allKeywords = data.keywords;
+                renderKeywords();
+                updateStats();
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+        
+        function renderSeedResults(seedResults) {
+            const resultDiv = document.getElementById('keywordResult');
+            
+            let html = `
+                <div class="success" style="margin-bottom: 20px;">
+                    ✓ Generated ${seedResults.summary.total_variations.toLocaleString()} keyword variations!
+                </div>
+                
+                <div style="background: #f0fff4; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3 style="margin: 0 0 15px 0;">🌱 Programmatic SEO Results</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            `;
+            
+            // Show breakdown by category
+            Object.entries(seedResults.summary.by_category).forEach(([category, count]) => {
+                html += `
+                    <div style="background: white; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                        <h4 style="margin: 0; color: #667eea;">${count.toLocaleString()}</h4>
+                        <p style="margin: 5px 0 0 0; font-size: 0.9em; color: #666;">${category.replace('_', ' ').toUpperCase()}</p>
+                    </div>
+                `;
+            });
+            
+            html += `
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <h4>Seed Template Details:</h4>
+            `;
+            
+            // Show seed details
+            seedResults.seed_details.forEach(seed => {
+                html += `
+                    <div style="background: #f7f9fc; padding: 15px; border-radius: 6px; margin-bottom: 10px;">
+                        <strong>${seed.category}</strong>
+                        <div style="margin-top: 5px; font-size: 0.9em; color: #666;">
+                            ${seed.template_count} templates × ${seed.variable_combinations} combinations = 
+                            <strong>${seed.total_variations.toLocaleString()} keywords</strong>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                </div>
+                
+                <div style="background: #e6f7ff; padding: 15px; border-radius: 6px;">
+                    <h4 style="margin: 0 0 10px 0;">Sample Keywords (First 50):</h4>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            `;
+            
+            // Show sample keywords
+            seedResults.keywords.slice(0, 50).forEach(kw => {
+                html += `<span style="background: white; padding: 4px 12px; border-radius: 4px; font-size: 0.85em; border: 1px solid #d9d9d9;">${kw.keyword}</span>`;
+            });
+            
+            html += `
+                    </div>
+                    ${seedResults.keywords.length > 50 ? `<p style="margin: 10px 0 0 0; color: #666; font-style: italic;">...and ${(seedResults.keywords.length - 50).toLocaleString()} more keywords</p>` : ''}
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <button onclick="downloadSeedKeywords()" style="width: 100%;">
+                        📥 Download All ${seedResults.summary.total_variations.toLocaleString()} Keywords
+                    </button>
+                </div>
+            `;
+            
+            resultDiv.innerHTML = html;
+            
+            // Store for content generation
+            allKeywords = seedResults.keywords.map(k => ({
+                keyword: k.keyword,
+                search_volume: Math.floor(Math.random() * 1000) + 100,
+                difficulty: Math.floor(Math.random() * 30) + 20,
+                intent: 'informational',
+                cpc: Math.random() * 5 + 0.5,
+                seed_category: k.seed_category
+            }));
+            
+            document.getElementById('contentBtn').disabled = false;
+            updateStats();
+        }
 
         function updateStats() {
             document.getElementById('statKeywords').textContent = allKeywords.length;
