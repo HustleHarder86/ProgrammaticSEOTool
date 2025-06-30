@@ -720,12 +720,28 @@
             resultDiv.innerHTML = `<p class="loading"><span class="spinner"></span> Generating ${keywordsToGenerate.length} articles...</p>`;
             
             try {
+                // Get cluster keywords if in cluster view
+                let clusterKeywords = [];
+                if (clusterView && keywordClusters) {
+                    // Find which cluster contains current keywords
+                    Object.values(keywordClusters).forEach(cluster => {
+                        const hasKeyword = cluster.keywords.some(k => 
+                            keywordsToGenerate.includes(k.keyword)
+                        );
+                        if (hasKeyword) {
+                            clusterKeywords = cluster.keywords.map(k => k.keyword);
+                        }
+                    });
+                }
+                
                 const response = await fetch(`${API_URL}/api/generate-content`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         keywords: keywordsToGenerate,
-                        business_info: businessInfo
+                        business_info: businessInfo,
+                        all_keywords: allKeywords.map(k => k.keyword),
+                        cluster_keywords: clusterKeywords
                     })
                 });
                 

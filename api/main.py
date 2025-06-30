@@ -255,6 +255,8 @@ class handler(BaseHTTPRequestHandler):
         """Generate content for keywords"""
         keywords = data.get('keywords', [])
         business_info = data.get('business_info', {})
+        all_keywords = data.get('all_keywords', keywords)  # For internal linking
+        cluster_keywords = data.get('cluster_keywords', [])  # Keywords in same cluster
         
         contents = []
         
@@ -267,13 +269,32 @@ class handler(BaseHTTPRequestHandler):
             
             # Try AI generation
             if ai_handler and ai_handler.has_ai_provider():
+                # Pass all keywords for internal linking
                 ai_content = ai_handler.generate_content_with_ai(keyword, business_info)
                 if ai_content:
+                    # Enhance with internal links
+                    enhanced_content = ai_content.get('content', ai_content.get('intro', ''))
+                    
+                    # Import enhancement function if available
+                    try:
+                        from .content_variation import enhance_content_quality
+                        enhanced_content = enhance_content_quality(
+                            enhanced_content,
+                            keyword,
+                            business_info,
+                            all_keywords,
+                            cluster_keywords
+                        )
+                    except:
+                        pass
+                    
                     content_data.update({
                         'title': ai_content.get('title', f"{keyword.title()} - Guide"),
                         'meta_description': ai_content.get('meta_description', f"Learn about {keyword}"),
-                        'content': ai_content.get('intro', f"Content about {keyword}..."),
+                        'content': enhanced_content,
                         'outline': ai_content.get('outline', []),
+                        'unique_elements': ai_content.get('unique_elements', []),
+                        'internal_links_count': enhanced_content.count('<a href='),
                         'ai_generated': True
                     })
                 else:
@@ -299,7 +320,8 @@ class handler(BaseHTTPRequestHandler):
             'success': True,
             'contents': contents,
             'total': len(contents),
-            'ai_enabled': bool(ai_handler and ai_handler.has_ai_provider())
+            'ai_enabled': bool(ai_handler and ai_handler.has_ai_provider()),
+            'interlinking_enabled': True
         }
 
     def _create_project(self, data):

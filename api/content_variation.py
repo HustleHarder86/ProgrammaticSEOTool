@@ -277,9 +277,114 @@ This demonstrates the real-world impact of properly implementing {keyword}.
         return uniqueness * 100  # Return as percentage
 
 # Quality enhancement functions
-def enhance_content_quality(content: str, keyword: str, business_info: Dict) -> str:
-    """Enhance content quality to avoid thin content penalties"""
+def generate_internal_links(current_keyword: str, all_keywords: List[str], cluster_info: Dict = None) -> List[Dict[str, str]]:
+    """Generate intelligent internal links based on keyword relationships"""
+    internal_links = []
+    
+    # Clean current keyword for comparison
+    current_words = set(current_keyword.lower().split())
+    
+    # Find related keywords
+    for keyword in all_keywords:
+        if keyword.lower() == current_keyword.lower():
+            continue
+            
+        keyword_words = set(keyword.lower().split())
+        
+        # Calculate relevance score
+        common_words = current_words.intersection(keyword_words)
+        relevance_score = len(common_words) / max(len(current_words), len(keyword_words))
+        
+        # Determine link context
+        link_context = "related"
+        anchor_text = keyword
+        
+        # Smart anchor text generation
+        if "vs" in current_keyword.lower() and "vs" not in keyword.lower():
+            # Comparison article linking to individual topics
+            anchor_text = f"learn more about {keyword}"
+            link_context = "comparison_to_single"
+        elif "how to" in current_keyword.lower() and "how to" in keyword.lower():
+            # How-to articles linking to other how-tos
+            anchor_text = f"similar guide: {keyword}"
+            link_context = "similar_guide"
+        elif "best" in current_keyword.lower() and keyword.lower() in current_keyword.lower():
+            # List article linking to specific item
+            anchor_text = f"detailed review of {keyword}"
+            link_context = "list_to_item"
+        elif relevance_score > 0.3:
+            # General related content
+            anchor_text = keyword
+            link_context = "related_topic"
+        
+        if relevance_score > 0.2 or (cluster_info and cluster_info.get('same_cluster')):
+            internal_links.append({
+                'keyword': keyword,
+                'anchor_text': anchor_text,
+                'url': f"/guides/{keyword.lower().replace(' ', '-')}",
+                'relevance': relevance_score,
+                'context': link_context
+            })
+    
+    # Sort by relevance and limit
+    internal_links.sort(key=lambda x: x['relevance'], reverse=True)
+    return internal_links[:8]  # Return top 8 most relevant links
+
+def insert_contextual_links(content: str, internal_links: List[Dict[str, str]], keyword: str) -> str:
+    """Insert internal links naturally within the content"""
+    linked_content = content
+    links_inserted = 0
+    max_links = 5  # Maximum contextual links in body content
+    
+    # Track which keywords we've already linked to avoid duplicate links
+    linked_keywords = set()
+    
+    for link in internal_links:
+        if links_inserted >= max_links:
+            break
+            
+        target_keyword = link['keyword']
+        if target_keyword in linked_keywords:
+            continue
+            
+        # Find natural places to insert the link
+        # Look for mentions of related concepts
+        search_terms = target_keyword.lower().split()
+        
+        for term in search_terms:
+            if len(term) > 3 and term in linked_content.lower() and target_keyword not in linked_keywords:
+                # Find the exact position (case-insensitive)
+                import re
+                pattern = r'\b' + re.escape(term) + r'\b'
+                match = re.search(pattern, linked_content, re.IGNORECASE)
+                
+                if match:
+                    # Create the link
+                    link_html = f'<a href="{link["url"]}" title="{target_keyword}">{match.group()}</a>'
+                    
+                    # Replace only the first occurrence
+                    linked_content = linked_content[:match.start()] + link_html + linked_content[match.end():]
+                    
+                    linked_keywords.add(target_keyword)
+                    links_inserted += 1
+                    break
+    
+    return linked_content
+
+def enhance_content_quality(content: str, keyword: str, business_info: Dict, 
+                          all_keywords: List[str] = None, cluster_keywords: List[str] = None) -> str:
+    """Enhance content quality with internal linking"""
     enhancements = []
+    
+    # Generate internal links
+    internal_links = []
+    if all_keywords:
+        cluster_info = {'same_cluster': True} if cluster_keywords else None
+        internal_links = generate_internal_links(keyword, all_keywords, cluster_info)
+    
+    # Insert contextual links within content
+    if internal_links:
+        content = insert_contextual_links(content, internal_links[:5], keyword)
     
     # Add schema markup suggestions
     enhancements.append("""
@@ -300,15 +405,69 @@ def enhance_content_quality(content: str, keyword: str, business_info: Dict) -> 
 </script>
 """)
     
-    # Add internal linking suggestions
-    enhancements.append(f"""
-## Related Topics
+    # Add related articles section with remaining links
+    if internal_links:
+        related_links_html = f"""
+## Related {business_info.get('industry', 'Topic')} Guides
+
 Explore these related guides to deepen your understanding:
-- [Understanding {keyword} Basics](/guides/{keyword}-basics)
-- [Advanced {keyword} Techniques](/guides/{keyword}-advanced)
-- [{keyword} Best Practices](/guides/{keyword}-best-practices)
-- [Common {keyword} Mistakes to Avoid](/guides/{keyword}-mistakes)
+
+"""
+        # Add cluster-based links first
+        cluster_links = [l for l in internal_links if l['context'] == 'same_cluster'][:4]
+        if cluster_links:
+            related_links_html += "### In This Series:\n"
+            for link in cluster_links:
+                related_links_html += f"- [{link['anchor_text'].title()}]({link['url']})\n"
+            related_links_html += "\n"
+        
+        # Add other related links
+        other_links = [l for l in internal_links if l['context'] != 'same_cluster'][:4]
+        if other_links:
+            related_links_html += "### Related Topics:\n"
+            for link in other_links:
+                related_links_html += f"- [{link['anchor_text'].title()}]({link['url']})\n"
+        
+        enhancements.append(related_links_html)
+    
+    # Add navigation breadcrumbs
+    breadcrumb_html = f"""
+<nav class="breadcrumbs">
+<a href="/">Home</a> > <a href="/{business_info.get('industry', 'guides').lower()}">{business_info.get('industry', 'Guides')}</a> > {keyword}
+</nav>
+"""
+    
+    # Add hub page link if part of a cluster
+    if cluster_keywords and len(cluster_keywords) > 5:
+        hub_topic = keyword.split()[0] if len(keyword.split()) > 1 else keyword
+        enhancements.append(f"""
+## Complete {hub_topic.title()} Guide Series
+
+This article is part of our comprehensive {hub_topic} series. 
+<a href="/hubs/{hub_topic.lower().replace(' ', '-')}">View all {len(cluster_keywords)} {hub_topic} guides →</a>
 """)
+    
+    # Add "What's Next" section
+    if internal_links and len(internal_links) > 2:
+        next_steps = internal_links[:3]
+        next_html = """
+## What to Read Next
+
+Based on this guide, we recommend:
+
+"""
+        for i, link in enumerate(next_steps, 1):
+            next_html += f"{i}. **[{link['anchor_text'].title()}]({link['url']})** - "
+            if 'how to' in link['keyword'].lower():
+                next_html += "Step-by-step tutorial\n"
+            elif 'best' in link['keyword'].lower():
+                next_html += "Top recommendations\n"
+            elif 'vs' in link['keyword'].lower():
+                next_html += "Detailed comparison\n"
+            else:
+                next_html += "Essential guide\n"
+        
+        enhancements.append(next_html)
     
     # Add multimedia suggestions
     enhancements.append("""
