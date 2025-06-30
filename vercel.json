@@ -14,12 +14,6 @@
       "dest": "api/minimal.py"
     }
   ],
-  "functions": {
-    "api/minimal.py": {
-      "maxDuration": 30,
-      "memory": 256
-    }
-  },
   "installCommand": "pip install -r requirements-minimal.txt",
   "env": {
     "PYTHON_VERSION": "3.9"
