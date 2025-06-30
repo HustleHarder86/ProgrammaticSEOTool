@@ -838,9 +838,8 @@
                 renderKeywords();
                 updateStats();
                 
-                // Show cost estimate (dynamic based on model)
-                const keywordCost = await getEndpointCost('generate_keywords');
-                showCostNotification('generate_keywords', keywordCost);
+                // Show cost estimate
+                showCostNotification('generate_keywords', 0.0050);
             } catch (error) {
                 resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
             }
@@ -1076,16 +1075,19 @@
         }
 
         async function analyzeBusiness() {
-            const url = document.getElementById('businessUrl').value;
-            let desc = document.getElementById('businessDesc').value;
-            const contentType = document.getElementById('contentType').value;
-            const targetAudience = document.getElementById('targetAudience').value;
-            const resultDiv = document.getElementById('analyzeResult');
-            
-            if (!url && !desc) {
-                resultDiv.innerHTML = '<p class="error">Please enter a URL or description</p>';
-                return;
-            }
+            try {
+                const url = document.getElementById('businessUrl').value;
+                let desc = document.getElementById('businessDesc').value;
+                const contentType = document.getElementById('contentType').value;
+                const targetAudience = document.getElementById('targetAudience').value;
+                const resultDiv = document.getElementById('analyzeResult');
+                
+                if (!url && !desc) {
+                    resultDiv.innerHTML = '<p class="error">Please enter a URL or description</p>';
+                    return;
+                }
+                
+                console.log('Analyzing business:', url || desc);
             
             // If only URL provided, add a default description
             if (url && !desc) {
@@ -1166,12 +1168,16 @@
                 // Load intelligent seed templates based on business
                 await loadSeedTemplates();
                 
-                // Show cost estimate (dynamic based on model)
-                const analyzeBaseCost = await getEndpointCost('analyze_business');
-                showCostNotification('analyze_business', analyzeBaseCost);
+                // Show cost estimate (use default for now to avoid blocking)
+                showCostNotification('analyze_business', 0.0051);
                 
             } catch (error) {
+                console.error('Analyze business error:', error);
                 resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+            } catch (error) {
+                console.error('Outer error:', error);
+                document.getElementById('analyzeResult').innerHTML = `<div class="error">Error: ${error.message}</div>`;
             }
         }
 
@@ -1395,8 +1401,8 @@
                     saveProject(true); // Silent save
                 }
                 
-                // Show cost for content generation (dynamic based on model)
-                const contentCostPerArticle = await getEndpointCost('generate_content');
+                // Show cost for content generation
+                const contentCostPerArticle = 0.0055;
                 const totalContentCost = keywordsToGenerate.length * contentCostPerArticle;
                 showCostNotification(`generate ${keywordsToGenerate.length} articles`, totalContentCost);
             } catch (error) {
