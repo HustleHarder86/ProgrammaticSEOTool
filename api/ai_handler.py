@@ -4,6 +4,13 @@ import json
 from urllib.request import Request, urlopen
 from urllib.error import URLError
 
+# Import content variation engine
+try:
+    from .content_variation import ContentVariationEngine, enhance_content_quality, ensure_minimum_quality
+    variation_engine = ContentVariationEngine()
+except:
+    variation_engine = None
+
 class AIHandler:
     def __init__(self):
         self.openai_key = os.environ.get('OPENAI_API_KEY')
@@ -181,38 +188,83 @@ Format as a simple list, one per line."""
             return keywords[:num_keywords]
         return None
 
-    def generate_content_with_ai(self, keyword, business_info):
-        """Use AI to generate content for a keyword"""
+    def generate_content_with_ai(self, keyword, business_info, ensure_unique=True):
+        """Use AI to generate content for a keyword with uniqueness"""
         if not self.has_ai_provider():
             return None
+        
+        # Get unique structure if variation engine available
+        structure = None
+        if variation_engine and ensure_unique:
+            structure = variation_engine.generate_unique_structure(keyword, "general")
             
-        prompt = f"""Write SEO-optimized content for:
+        prompt = f"""Write comprehensive SEO-optimized content for:
 Keyword: {keyword}
 Business: {business_info.get('name', 'Unknown')}
 Industry: {business_info.get('industry', 'General')}
+Target Audience: {business_info.get('target_audience', 'General audience')}
 
-Include:
-1. A compelling title
-2. Meta description (150 chars)
-3. Introduction paragraph (100 words)
-4. Main content outline (3-5 points)
+Requirements:
+1. Compelling, unique title (not generic)
+2. Meta description (150-160 chars, include keyword naturally)
+3. Introduction paragraph (150-200 words, engage reader immediately)
+4. Main content sections with detailed information
+5. Include data, statistics, or examples where relevant
+6. Natural keyword usage (2-3% density)
+7. Actionable advice and practical tips
 
-Format as JSON with keys: title, meta_description, intro, outline"""
+{f"Use this structure: {structure['structure']}" if structure else ""}
+Target word count: {structure.get('word_count_target', 1500) if structure else 1500} words
+
+Format as JSON with keys: title, meta_description, intro, content_sections, outline"""
         
-        response = self.generate(prompt, 400)
+        response = self.generate(prompt, 1000)
         if response:
             try:
-                # Try to parse JSON from response
+                # Parse JSON response
                 start = response.find('{')
                 end = response.rfind('}') + 1
                 if start >= 0 and end > start:
-                    return json.loads(response[start:end])
-            except:
-                # Fallback to structured response
-                return {
-                    'title': f"{keyword.title()} - Complete Guide",
-                    'meta_description': f"Learn everything about {keyword} in this guide.",
-                    'intro': response[:200] if response else "Content coming soon...",
-                    'outline': ["Introduction", "Main Points", "Conclusion"]
-                }
-        return None
+                    content_data = json.loads(response[start:end])
+                    
+                    # Apply variations if available
+                    if variation_engine and ensure_unique:
+                        # Generate full content from sections
+                        full_content = content_data.get('intro', '')
+                        sections = content_data.get('content_sections', [])
+                        
+                        if isinstance(sections, list):
+                            for section in sections:
+                                if isinstance(section, dict):
+                                    full_content += f"\n\n## {section.get('title', '')}\n{section.get('content', '')}"
+                                else:
+                                    full_content += f"\n\n{section}"
+                        
+                        # Apply variations
+                        variations = variation_engine.vary_content(full_content, keyword, 1)
+                        if variations:
+                            content_data['content'] = variations[0]['content']
+                        
+                        # Enhance quality
+                        if enhance_content_quality:
+                            content_data['content'] = enhance_content_quality(
+                                content_data.get('content', full_content),
+                                keyword,
+                                business_info
+                            )
+                        
+                        # Add unique elements
+                        content_data['unique_elements'] = structure.get('unique_elements', [])
+                    
+                    return content_data
+            except Exception as e:
+                print(f"Content generation error: {e}")
+                
+        # Fallback response
+        return {
+            'title': f"{keyword.title()} - Expert Guide for {business_info.get('industry', 'Your Industry')}",
+            'meta_description': f"Discover expert insights on {keyword}. Comprehensive guide with practical tips and strategies.",
+            'intro': f"Looking for information about {keyword}? This comprehensive guide provides expert insights tailored for {business_info.get('target_audience', 'professionals')}.",
+            'outline': ["Introduction", "Key Concepts", "Implementation Guide", "Best Practices", "Common Challenges", "Conclusion"],
+            'content': "Content generation in progress..."
+        }
