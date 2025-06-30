@@ -10,31 +10,69 @@ class UsageTracker:
         self.load_usage_data()
         
         # Perplexity API actual pricing (as of 2024)
-        # Using llama-3.1-sonar-small-128k-online model pricing:
-        # $5 per 1,000 requests + $0.2 per 1M tokens ($0.0002 per 1K tokens)
-        self.pricing = {
+        # Complete pricing structure for all models
+        self.models = {
+            'sonar': {
+                'name': 'Sonar (Standard)',
+                'input_cost_per_1m': 1.0,  # $1 per million input tokens
+                'output_cost_per_1m': 1.0,  # $1 per million output tokens
+                'request_cost_low': 0.005,  # $5 per 1000 requests
+                'request_cost_medium': 0.008,  # $8 per 1000 requests
+                'request_cost_high': 0.012  # $12 per 1000 requests
+            },
+            'sonar-pro': {
+                'name': 'Sonar Pro',
+                'input_cost_per_1m': 3.0,  # $3 per million input tokens
+                'output_cost_per_1m': 15.0,  # $15 per million output tokens
+                'request_cost_low': 0.006,  # $6 per 1000 requests
+                'request_cost_medium': 0.010,  # $10 per 1000 requests
+                'request_cost_high': 0.014  # $14 per 1000 requests
+            },
+            'sonar-reasoning': {
+                'name': 'Sonar Reasoning',
+                'input_cost_per_1m': 1.0,  # $1 per million input tokens
+                'output_cost_per_1m': 5.0,  # $5 per million output tokens
+                'request_cost_low': 0.005,
+                'request_cost_medium': 0.008,
+                'request_cost_high': 0.012
+            },
+            'sonar-reasoning-pro': {
+                'name': 'Sonar Reasoning Pro',
+                'input_cost_per_1m': 2.0,  # $2 per million input tokens
+                'output_cost_per_1m': 8.0,  # $8 per million output tokens
+                'request_cost_low': 0.006,
+                'request_cost_medium': 0.010,
+                'request_cost_high': 0.014
+            }
+        }
+        
+        # Default model for calculations (can be changed by user)
+        self.current_model = 'sonar'
+        
+        # Endpoint configurations with token estimates
+        self.endpoints = {
             'analyze_business': {
-                'tokens_avg': 500,  # ~250 input + 250 output
-                'cost_per_request': 0.005,  # $5/1000 requests = $0.005 per request
-                'cost_per_1k_tokens': 0.0002,  # $0.2/1M tokens = $0.0002 per 1K tokens
+                'input_tokens_avg': 250,
+                'output_tokens_avg': 250,
+                'request_complexity': 'low',  # low/medium/high affects request pricing
                 'description': 'Business analysis with AI'
             },
             'generate_keywords': {
-                'tokens_avg': 300,  # ~150 input + 150 output
-                'cost_per_request': 0.005,
-                'cost_per_1k_tokens': 0.0002,
+                'input_tokens_avg': 150,
+                'output_tokens_avg': 150,
+                'request_complexity': 'low',
                 'description': 'Keyword generation'
             },
             'generate_keywords_seed': {
-                'tokens_avg': 100,  # Minimal tokens for suggestions
-                'cost_per_request': 0.005,
-                'cost_per_1k_tokens': 0.0002,
+                'input_tokens_avg': 50,
+                'output_tokens_avg': 50,
+                'request_complexity': 'low',
                 'description': 'Seed keyword suggestions'
             },
             'generate_content': {
-                'tokens_avg': 2500,  # ~500 input + 2000 output
-                'cost_per_request': 0.005,
-                'cost_per_1k_tokens': 0.0002,
+                'input_tokens_avg': 500,
+                'output_tokens_avg': 2000,
+                'request_complexity': 'medium',
                 'description': 'Content generation per article'
             }
         }
@@ -61,23 +99,41 @@ class UsageTracker:
         except Exception as e:
             print(f"Error saving usage data: {e}")
     
-    def track_usage(self, endpoint: str, tokens: int = None, count: int = 1):
-        """Track API usage for an endpoint"""
+    def track_usage(self, endpoint: str, input_tokens: int = None, output_tokens: int = None, 
+                   count: int = 1, model: str = None):
+        """Track API usage for an endpoint with separate input/output tokens"""
         today = datetime.now().strftime('%Y-%m-%d')
         month = datetime.now().strftime('%Y-%m')
         
-        # Use estimated tokens if not provided
-        if tokens is None and endpoint in self.pricing:
-            tokens = self.pricing[endpoint]['tokens_avg'] * count
+        # Use current model if not specified
+        if model is None:
+            model = self.current_model
+            
+        # Get endpoint config
+        endpoint_config = self.endpoints.get(endpoint, {})
         
-        # Calculate cost (per-request fee + token cost)
+        # Use estimated tokens if not provided
+        if input_tokens is None:
+            input_tokens = endpoint_config.get('input_tokens_avg', 100) * count
+        if output_tokens is None:
+            output_tokens = endpoint_config.get('output_tokens_avg', 100) * count
+            
+        total_tokens = input_tokens + output_tokens
+        
+        # Calculate cost based on model and complexity
         cost = 0
-        if endpoint in self.pricing:
-            # Add per-request fee
-            cost = self.pricing[endpoint]['cost_per_request'] * count
-            # Add token cost if tokens provided
-            if tokens:
-                cost += (tokens / 1000) * self.pricing[endpoint]['cost_per_1k_tokens']
+        if model in self.models and endpoint in self.endpoints:
+            model_pricing = self.models[model]
+            complexity = endpoint_config.get('request_complexity', 'low')
+            
+            # Get request cost based on complexity
+            request_cost_key = f'request_cost_{complexity}'
+            request_cost = model_pricing.get(request_cost_key, 0.005)
+            
+            # Calculate total cost
+            cost = request_cost * count  # Request fee
+            cost += (input_tokens / 1_000_000) * model_pricing['input_cost_per_1m']  # Input tokens
+            cost += (output_tokens / 1_000_000) * model_pricing['output_cost_per_1m']  # Output tokens
         
         # Update total stats
         self.usage_data['total_requests'] += count
@@ -98,12 +154,18 @@ class UsageTracker:
             self.usage_data['daily_usage'][today]['endpoints'][endpoint] = {
                 'count': 0,
                 'cost': 0,
-                'tokens': 0
+                'tokens': 0,
+                'input_tokens': 0,
+                'output_tokens': 0,
+                'model': model
             }
         
         self.usage_data['daily_usage'][today]['endpoints'][endpoint]['count'] += count
         self.usage_data['daily_usage'][today]['endpoints'][endpoint]['cost'] += cost
-        self.usage_data['daily_usage'][today]['endpoints'][endpoint]['tokens'] += tokens or 0
+        self.usage_data['daily_usage'][today]['endpoints'][endpoint]['tokens'] += total_tokens
+        self.usage_data['daily_usage'][today]['endpoints'][endpoint]['input_tokens'] += input_tokens
+        self.usage_data['daily_usage'][today]['endpoints'][endpoint]['output_tokens'] += output_tokens
+        self.usage_data['daily_usage'][today]['endpoints'][endpoint]['model'] = model
         
         # Update monthly usage
         if month not in self.usage_data['monthly_usage']:
@@ -121,12 +183,26 @@ class UsageTracker:
             self.usage_data['endpoint_usage'][endpoint] = {
                 'total_count': 0,
                 'total_cost': 0,
-                'total_tokens': 0
+                'total_tokens': 0,
+                'total_input_tokens': 0,
+                'total_output_tokens': 0,
+                'models_used': {}
             }
         
         self.usage_data['endpoint_usage'][endpoint]['total_count'] += count
         self.usage_data['endpoint_usage'][endpoint]['total_cost'] += cost
-        self.usage_data['endpoint_usage'][endpoint]['total_tokens'] += tokens or 0
+        self.usage_data['endpoint_usage'][endpoint]['total_tokens'] += total_tokens
+        self.usage_data['endpoint_usage'][endpoint]['total_input_tokens'] += input_tokens
+        self.usage_data['endpoint_usage'][endpoint]['total_output_tokens'] += output_tokens
+        
+        # Track model usage
+        if model not in self.usage_data['endpoint_usage'][endpoint]['models_used']:
+            self.usage_data['endpoint_usage'][endpoint]['models_used'][model] = {
+                'count': 0,
+                'cost': 0
+            }
+        self.usage_data['endpoint_usage'][endpoint]['models_used'][model]['count'] += count
+        self.usage_data['endpoint_usage'][endpoint]['models_used'][model]['cost'] += cost
         
         # Save data
         self.save_usage_data()
@@ -171,14 +247,17 @@ class UsageTracker:
         # Calculate endpoint breakdown with descriptions
         endpoint_breakdown = []
         for endpoint, data in self.usage_data['endpoint_usage'].items():
-            pricing_info = self.pricing.get(endpoint, {})
+            endpoint_info = self.endpoints.get(endpoint, {})
             endpoint_breakdown.append({
                 'endpoint': endpoint,
-                'description': pricing_info.get('description', endpoint),
+                'description': endpoint_info.get('description', endpoint),
                 'count': data['total_count'],
                 'cost': data['total_cost'],
                 'avg_cost': data['total_cost'] / data['total_count'] if data['total_count'] > 0 else 0,
-                'tokens': data['total_tokens']
+                'total_tokens': data.get('total_tokens', 0),
+                'input_tokens': data.get('total_input_tokens', 0),
+                'output_tokens': data.get('total_output_tokens', 0),
+                'models_used': data.get('models_used', {})
             })
         
         # Sort by cost
@@ -206,7 +285,9 @@ class UsageTracker:
             'last_7_days': last_7_days,
             'endpoint_breakdown': endpoint_breakdown,
             'today_breakdown': today_data.get('endpoints', {}),
-            'pricing_info': self.pricing
+            'models': self.models,
+            'endpoints_config': self.endpoints,
+            'current_model': self.current_model
         }
     
     def reset_usage(self, period: str = 'all'):
@@ -229,6 +310,45 @@ class UsageTracker:
                 del self.usage_data['monthly_usage'][month]
         
         self.save_usage_data()
+    
+    def set_model(self, model: str):
+        """Change the current model being used"""
+        if model in self.models:
+            self.current_model = model
+            return True
+        return False
+    
+    def get_model_cost_estimate(self, endpoint: str, model: str = None) -> Dict[str, float]:
+        """Get cost estimate for an endpoint with a specific model"""
+        if model is None:
+            model = self.current_model
+            
+        if model not in self.models or endpoint not in self.endpoints:
+            return {'error': 'Invalid model or endpoint'}
+            
+        model_pricing = self.models[model]
+        endpoint_config = self.endpoints[endpoint]
+        
+        # Get costs
+        complexity = endpoint_config.get('request_complexity', 'low')
+        request_cost_key = f'request_cost_{complexity}'
+        request_cost = model_pricing.get(request_cost_key, 0.005)
+        
+        input_tokens = endpoint_config.get('input_tokens_avg', 100)
+        output_tokens = endpoint_config.get('output_tokens_avg', 100)
+        
+        input_cost = (input_tokens / 1_000_000) * model_pricing['input_cost_per_1m']
+        output_cost = (output_tokens / 1_000_000) * model_pricing['output_cost_per_1m']
+        
+        return {
+            'model': model_pricing['name'],
+            'request_cost': request_cost,
+            'input_cost': input_cost,
+            'output_cost': output_cost,
+            'total_cost': request_cost + input_cost + output_cost,
+            'input_tokens': input_tokens,
+            'output_tokens': output_tokens
+        }
 
 # Global instance
 usage_tracker = UsageTracker()

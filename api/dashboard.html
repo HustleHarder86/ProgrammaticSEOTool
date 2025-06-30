@@ -258,6 +258,23 @@
             </div>
         </div>
 
+        <!-- Model Selection -->
+        <div class="chart-section">
+            <h2>🤖 Model Selection</h2>
+            <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                <label style="font-weight: 600;">Current Model:</label>
+                <select id="modelSelect" onchange="changeModel()" style="padding: 8px 12px; border-radius: 6px; border: 1px solid #d9d9d9;">
+                    <option value="sonar">Sonar (Standard) - Balanced</option>
+                    <option value="sonar-pro">Sonar Pro - High Quality</option>
+                    <option value="sonar-reasoning">Sonar Reasoning - Complex Tasks</option>
+                    <option value="sonar-reasoning-pro">Sonar Reasoning Pro - Best Quality</option>
+                </select>
+                <div id="modelCostPreview" style="padding: 10px; background: #f0f9ff; border-radius: 6px; font-size: 0.9em;">
+                    <!-- Model cost preview will be shown here -->
+                </div>
+            </div>
+        </div>
+
         <!-- Endpoint Breakdown -->
         <div class="chart-section">
             <h2>🎯 Cost by Endpoint</h2>
@@ -267,6 +284,8 @@
                         <th>Endpoint</th>
                         <th>Description</th>
                         <th>Requests</th>
+                        <th>Input Tokens</th>
+                        <th>Output Tokens</th>
                         <th>Total Cost</th>
                         <th>Avg Cost/Request</th>
                     </tr>
@@ -288,15 +307,26 @@
         <!-- Pricing Information -->
         <div class="chart-section">
             <h2>💰 Pricing Information</h2>
-            <div class="pricing-info">
-                <h3>Perplexity API Actual Costs (llama-3.1-sonar-small-128k-online)</h3>
-                <p><strong>Pricing Model:</strong> $5 per 1,000 requests + $0.20 per 1M tokens</p>
-                <ul style="margin-top: 10px; list-style: none;">
-                    <li>📊 <strong>Analyze Business:</strong> ~$0.0051 per analysis (500 tokens avg)</li>
-                    <li>🔍 <strong>Generate Keywords:</strong> ~$0.0050 per batch (300 tokens avg)</li>
-                    <li>🌱 <strong>Seed Keywords:</strong> ~$0.0050 per request (100 tokens avg)</li>
-                    <li>📝 <strong>Generate Content:</strong> ~$0.0055 per article (2500 tokens avg)</li>
-                </ul>
+            <div id="modelPricingTable">
+                <!-- Will be populated by JavaScript with model-specific pricing -->
+            </div>
+            
+            <div class="pricing-info" style="margin-top: 20px;">
+                <h3>Token Usage by Endpoint</h3>
+                <table style="width: 100%; font-size: 0.9em;">
+                    <thead>
+                        <tr style="background: #fafafa;">
+                            <th style="padding: 8px; text-align: left;">Endpoint</th>
+                            <th style="padding: 8px;">Input Tokens</th>
+                            <th style="padding: 8px;">Output Tokens</th>
+                            <th style="padding: 8px;">Request Type</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tokenUsageTable">
+                        <!-- Will be populated by JavaScript -->
+                    </tbody>
+                </table>
+                
                 <div style="margin-top: 15px; padding: 10px; background: #f0f9ff; border-radius: 4px;">
                     <strong>💡 Pro Tip:</strong> Perplexity Pro subscribers get $5 monthly API credit!
                 </div>
@@ -354,7 +384,11 @@
         function updateDashboard() {
             if (!dashboardData) return;
             
-            const { summary, last_7_days, endpoint_breakdown, today_breakdown } = dashboardData;
+            const { summary, last_7_days, endpoint_breakdown, today_breakdown, 
+                    models, endpoints_config, current_model } = dashboardData;
+            
+            // Set current model in dropdown
+            document.getElementById('modelSelect').value = current_model;
             
             // Update summary metrics
             document.getElementById('todayCost').textContent = `$${summary.today_cost.toFixed(4)}`;
@@ -376,6 +410,11 @@
             
             // Update today's breakdown
             updateTodayBreakdown(today_breakdown);
+            
+            // Update model pricing and token usage
+            updateModelPricing(models, current_model);
+            updateTokenUsage(endpoints_config);
+            updateModelCostPreview(current_model);
         }
 
         function updateWeekChart(data) {
@@ -429,6 +468,8 @@
                     <td><strong>${endpoint.endpoint}</strong></td>
                     <td>${endpoint.description}</td>
                     <td>${endpoint.count}</td>
+                    <td>${endpoint.input_tokens ? endpoint.input_tokens.toLocaleString() : '0'}</td>
+                    <td>${endpoint.output_tokens ? endpoint.output_tokens.toLocaleString() : '0'}</td>
                     <td><span class="cost-badge ${costClass}">$${endpoint.cost.toFixed(4)}</span></td>
                     <td>$${endpoint.avg_cost.toFixed(4)}</td>
                 `;
@@ -474,6 +515,89 @@
 
         function hideTooltip() {
             document.getElementById('tooltip').style.display = 'none';
+        }
+        
+        function updateModelPricing(models, currentModel) {
+            const container = document.getElementById('modelPricingTable');
+            
+            let html = '<div class="pricing-info">';
+            html += '<h3>Model Pricing Comparison</h3>';
+            html += '<table style="width: 100%; font-size: 0.9em;">';
+            html += '<thead><tr style="background: #fafafa;">';
+            html += '<th style="padding: 8px; text-align: left;">Model</th>';
+            html += '<th style="padding: 8px;">Input (per 1M)</th>';
+            html += '<th style="padding: 8px;">Output (per 1M)</th>';
+            html += '<th style="padding: 8px;">Request (Low)</th>';
+            html += '<th style="padding: 8px;">Request (Med)</th>';
+            html += '<th style="padding: 8px;">Request (High)</th>';
+            html += '</tr></thead><tbody>';
+            
+            for (const [key, model] of Object.entries(models)) {
+                const isActive = key === currentModel;
+                html += `<tr style="${isActive ? 'background: #e6f7ff; font-weight: bold;' : ''}">`;
+                html += `<td style="padding: 8px;">${model.name} ${isActive ? '✓' : ''}</td>`;
+                html += `<td style="padding: 8px;">$${model.input_cost_per_1m}</td>`;
+                html += `<td style="padding: 8px;">$${model.output_cost_per_1m}</td>`;
+                html += `<td style="padding: 8px;">$${(model.request_cost_low * 1000).toFixed(0)}/1k</td>`;
+                html += `<td style="padding: 8px;">$${(model.request_cost_medium * 1000).toFixed(0)}/1k</td>`;
+                html += `<td style="padding: 8px;">$${(model.request_cost_high * 1000).toFixed(0)}/1k</td>`;
+                html += '</tr>';
+            }
+            
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+        
+        function updateTokenUsage(endpointsConfig) {
+            const tbody = document.getElementById('tokenUsageTable');
+            tbody.innerHTML = '';
+            
+            for (const [endpoint, config] of Object.entries(endpointsConfig)) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="padding: 8px;"><strong>${endpoint}</strong></td>
+                    <td style="padding: 8px; text-align: center;">${config.input_tokens_avg}</td>
+                    <td style="padding: 8px; text-align: center;">${config.output_tokens_avg}</td>
+                    <td style="padding: 8px; text-align: center;">
+                        <span style="text-transform: capitalize;">${config.request_complexity}</span>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            }
+        }
+        
+        function updateModelCostPreview(model) {
+            if (!dashboardData) return;
+            
+            const models = dashboardData.models;
+            const modelInfo = models[model];
+            
+            if (!modelInfo) return;
+            
+            const preview = document.getElementById('modelCostPreview');
+            preview.innerHTML = `
+                <strong>${modelInfo.name}</strong> - 
+                Input: $${modelInfo.input_cost_per_1m}/1M tokens, 
+                Output: $${modelInfo.output_cost_per_1m}/1M tokens
+            `;
+        }
+        
+        async function changeModel() {
+            const newModel = document.getElementById('modelSelect').value;
+            
+            try {
+                const response = await fetch(`${API_URL}/api/set-model`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model: newModel })
+                });
+                
+                if (response.ok) {
+                    refreshDashboard();
+                }
+            } catch (error) {
+                console.error('Error changing model:', error);
+            }
         }
 
         // Auto-refresh every 30 seconds

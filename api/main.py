@@ -175,6 +175,17 @@ class handler(BaseHTTPRequestHandler):
             response = self._generate_content(data)
         elif path == '/api/projects':
             response = self._create_project(data)
+        elif path == '/api/set-model':
+            # Change the model being used
+            if usage_tracker:
+                model = data.get('model', 'sonar')
+                success = usage_tracker.set_model(model)
+                response = {
+                    'success': success,
+                    'model': model if success else usage_tracker.current_model
+                }
+            else:
+                response = {'error': 'Usage tracker not available'}
         else:
             response = {'error': 'Endpoint not found', 'path': path}
             

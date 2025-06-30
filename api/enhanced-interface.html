@@ -838,9 +838,9 @@
                 renderKeywords();
                 updateStats();
                 
-                // Show cost estimate (accurate Perplexity API pricing)
-                const costPerBatch = 0.0050;
-                showCostNotification('generate_keywords', costPerBatch);
+                // Show cost estimate (dynamic based on model)
+                const keywordCost = await getEndpointCost('generate_keywords');
+                showCostNotification('generate_keywords', keywordCost);
             } catch (error) {
                 resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
             }
@@ -1166,8 +1166,9 @@
                 // Load intelligent seed templates based on business
                 await loadSeedTemplates();
                 
-                // Show cost estimate (accurate Perplexity API pricing)
-                showCostNotification('analyze_business', 0.0051);
+                // Show cost estimate (dynamic based on model)
+                const analyzeBaseCost = await getEndpointCost('analyze_business');
+                showCostNotification('analyze_business', analyzeBaseCost);
                 
             } catch (error) {
                 resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
@@ -1394,9 +1395,10 @@
                     saveProject(true); // Silent save
                 }
                 
-                // Show cost for content generation (accurate Perplexity API pricing)
-                const contentCost = keywordsToGenerate.length * 0.0055;
-                showCostNotification(`generate ${keywordsToGenerate.length} articles`, contentCost);
+                // Show cost for content generation (dynamic based on model)
+                const contentCostPerArticle = await getEndpointCost('generate_content');
+                const totalContentCost = keywordsToGenerate.length * contentCostPerArticle;
+                showCostNotification(`generate ${keywordsToGenerate.length} articles`, totalContentCost);
             } catch (error) {
                 resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
             }
@@ -2068,6 +2070,38 @@
             }
         `;
         document.head.appendChild(style);
+        
+        // Get endpoint cost based on current model
+        async function getEndpointCost(endpoint) {
+            try {
+                const response = await fetch(`${API_URL}/api/usage-dashboard`);
+                const data = await response.json();
+                
+                const model = data.current_model || 'sonar';
+                const modelPricing = data.models[model];
+                const endpointConfig = data.endpoints_config[endpoint];
+                
+                if (modelPricing && endpointConfig) {
+                    const complexity = endpointConfig.request_complexity || 'low';
+                    const requestCost = modelPricing[`request_cost_${complexity}`] || 0.005;
+                    const inputCost = (endpointConfig.input_tokens_avg / 1000000) * modelPricing.input_cost_per_1m;
+                    const outputCost = (endpointConfig.output_tokens_avg / 1000000) * modelPricing.output_cost_per_1m;
+                    
+                    return requestCost + inputCost + outputCost;
+                }
+            } catch (error) {
+                console.error('Error getting endpoint cost:', error);
+            }
+            
+            // Fallback costs
+            const fallbackCosts = {
+                'analyze_business': 0.0051,
+                'generate_keywords': 0.0050,
+                'generate_content': 0.0070
+            };
+            
+            return fallbackCosts[endpoint] || 0.005;
+        }
     </script>
 </body>
 </html>
