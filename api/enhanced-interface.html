@@ -770,17 +770,25 @@
         }
         
         function updateSeedEstimate() {
-            const estimates = {
-                'seed_location_property': 3500,
-                'seed_comparison': 1120,
-                'seed_calculator_tools': 1500,
-                'seed_market_analysis': 11200
-            };
-            
             let total = 0;
-            Object.keys(estimates).forEach(id => {
-                if (document.getElementById(id) && document.getElementById(id).checked) {
-                    total += estimates[id];
+            
+            // Get all checked seed checkboxes
+            const checkboxes = document.querySelectorAll('input[type="checkbox"][id^="seed_"]:checked');
+            
+            checkboxes.forEach(checkbox => {
+                // Try to find the estimated count from the template's displayed text
+                const templateDiv = checkbox.closest('div').querySelector('strong[style*="color: #1890ff"]');
+                if (templateDiv) {
+                    const estimatedText = templateDiv.textContent;
+                    // Handle ranges like "500-2000" by taking the max value
+                    if (estimatedText.includes('-')) {
+                        const values = estimatedText.split('-').map(v => parseInt(v.replace(/\D/g, '')) || 0);
+                        total += Math.max(...values);
+                    } else {
+                        // Handle single numbers
+                        const value = parseInt(estimatedText.replace(/\D/g, '')) || 100;
+                        total += value;
+                    }
                 }
             });
             
@@ -795,9 +803,14 @@
             
             // Get selected seeds
             const selectedSeeds = [];
-            ['location_property', 'comparison', 'calculator_tools', 'market_analysis'].forEach(id => {
-                if (document.getElementById(`seed_${id}`).checked) {
-                    selectedSeeds.push(id);
+            
+            // Get all checkboxes that start with 'seed_'
+            const checkboxes = document.querySelectorAll('input[type="checkbox"][id^="seed_"]');
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    // Extract the ID without the 'seed_' prefix
+                    const seedId = checkbox.id.replace('seed_', '');
+                    selectedSeeds.push(seedId);
                 }
             });
             
@@ -931,6 +944,18 @@
             
             document.getElementById('contentBtn').disabled = false;
             updateStats();
+            
+            // Automatically cluster the keywords
+            clusterView = true;
+            document.getElementById('clusterMethod').value = 'semantic'; // Use semantic clustering for seed results
+            clusterKeywords();
+            
+            // Show cluster view
+            document.getElementById('viewToggleBtn').style.display = 'inline-block';
+            document.getElementById('selectAllBtn').style.display = 'inline-block';
+            
+            // Show success message
+            showCostNotification('generate_keywords_seed', 0.0050);
         }
 
         function updateStats() {
@@ -1896,6 +1921,31 @@
             };
             
             return icons[pattern] || '📊';
+        }
+        
+        function downloadSeedKeywords() {
+            if (allKeywords.length === 0) {
+                alert('No keywords to download');
+                return;
+            }
+            
+            // Prepare CSV content
+            let csv = 'Keyword,Search Volume,Difficulty,CPC,Intent,Category\n';
+            
+            allKeywords.forEach(kw => {
+                csv += `"${kw.keyword}",${kw.search_volume},${kw.difficulty},${kw.cpc},${kw.intent},${kw.seed_category || 'general'}\n`;
+            });
+            
+            // Create download
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `seed-keywords-${Date.now()}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
         }
         
         function renderClusters() {
