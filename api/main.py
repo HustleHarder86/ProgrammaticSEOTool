@@ -278,6 +278,20 @@ class handler(BaseHTTPRequestHandler):
         
         # Try AI generation first
         if ai_handler and ai_handler.has_ai_provider():
+            # Get intelligent seed suggestions
+            if ko:
+                from .seed_generator import SeedKeywordGenerator
+                sg = SeedKeywordGenerator()
+                seed_suggestions = sg.get_seed_suggestions(business_info)
+                
+                # If seed suggestions requested, return them
+                if data.get('get_suggestions', False):
+                    return {
+                        'success': True,
+                        'seed_suggestions': seed_suggestions,
+                        'business_info': business_info
+                    }
+            
             # Check if we should use enhanced real estate generation
             industry = business_info.get('industry', '').lower()
             if ko and 'real estate' in industry:

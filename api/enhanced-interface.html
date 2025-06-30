@@ -669,41 +669,48 @@
             }
         }
         
-        function loadSeedTemplates() {
+        async function loadSeedTemplates() {
             const templatesDiv = document.getElementById('seedTemplates');
             
-            // Generic seed templates adaptable to any business
-            const seedTemplates = [
-                {
-                    id: 'location_based',
-                    name: '📍 Location-Based Keywords',
-                    template: '{location} {service}',
-                    description: 'Generate location-specific keywords for your business',
-                    variables: {
-                        locations: 50,
-                        services: 10,
-                        modifiers: 10
+            // First, get intelligent seed suggestions from the API
+            let seedTemplates = [];
+            
+            if (businessInfo) {
+                try {
+                    const response = await fetch(`${API_URL}/api/generate-keywords`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            business_info: businessInfo,
+                            get_suggestions: true
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    if (data.seed_suggestions) {
+                        seedTemplates = data.seed_suggestions;
+                    }
+                } catch (error) {
+                    console.error('Failed to get seed suggestions:', error);
+                }
+            }
+            
+            // Fallback to generic templates if no suggestions
+            if (seedTemplates.length === 0) {
+                seedTemplates = [
+                    {
+                        id: 'location_based',
+                        name: '📍 Location-Based Keywords',
+                        template: '{location} {service}',
+                        description: 'Generate location-specific keywords for your business',
+                        estimated_keywords: '500-2000',
+                        example: 'Best [your business] in Austin, [your service] near me Dallas'
                     },
-                    estimated: 50 * 10 * 10,
-                    example: 'Best [your business] in Austin, [your service] near me Dallas'
-                },
-                {
-                    id: 'comparison_based',
-                    name: '⚖️ Comparison Keywords',
-                    template: '{item1} vs {item2} for {use_case}',
-                    description: 'Compare your business with competitors or alternatives',
-                    variables: {
-                        items: 10,
-                        use_cases: 20
-                    },
-                    estimated: 10 * 10 * 20,
-                    example: '[your business] vs competitor, alternatives to [your service]'
-                },
-                {
-                    id: 'how_to_based',
-                    name: '📚 How-To & Guide Keywords',
-                    template: 'how to {action} {topic} {modifier}',
-                    description: 'Educational content around your products/services',
+                    {
+                        id: 'comparison_based',
+                        name: '⚖️ Comparison Keywords',
+                        template: '{item1} vs {item2} for {use_case}',
+                        description: 'Compare your business with competitors or alternatives',
                     variables: {
                         metrics: 15,
                         locations: 50,
@@ -737,10 +744,10 @@
                             <div style="flex: 1;">
                                 <h4 style="margin: 0;">${template.name}</h4>
                                 <p style="margin: 5px 0; color: #666; font-size: 0.9em;">${template.description}</p>
-                                <code style="background: #f5f5f5; padding: 4px 8px; border-radius: 4px; font-size: 0.85em;">${template.template}</code>
+                                ${template.template ? `<code style="background: #f5f5f5; padding: 4px 8px; border-radius: 4px; font-size: 0.85em;">${template.template}</code>` : ''}
                                 <div style="margin-top: 8px; font-size: 0.85em; color: #888;">
-                                    <strong>Variables:</strong> ${Object.entries(template.variables).map(([k,v]) => `${v} ${k}`).join(' × ')} = 
-                                    <strong style="color: #1890ff;">${template.estimated.toLocaleString()} variations</strong>
+                                    <strong>Estimated Keywords:</strong> 
+                                    <strong style="color: #1890ff;">${template.estimated_keywords || template.estimated || '100+'}</strong>
                                 </div>
                                 <div style="margin-top: 5px; font-size: 0.85em; color: #666;">
                                     <em>Example: ${template.example}</em>
@@ -1146,6 +1153,10 @@
                 
                 document.getElementById('keywordBtn').disabled = false;
                 document.getElementById('saveBtn').disabled = false;
+                
+                // Load intelligent seed templates based on business
+                await loadSeedTemplates();
+                
             } catch (error) {
                 resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
             }

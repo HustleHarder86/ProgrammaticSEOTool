@@ -35,6 +35,28 @@ class SeedKeywordGenerator:
                     ]
                 }
             },
+            "problem_solution": {
+                "templates": [
+                    "how to fix {problem} with {solution}",
+                    "{problem} solutions for {audience}",
+                    "solve {problem} using {method}",
+                    "{audience} {problem} {solution_type}",
+                    "best way to {solve} {problem}",
+                    "{problem} {solution} guide",
+                    "fix {problem} without {avoid}",
+                    "{problem} troubleshooting {year}"
+                ],
+                "variables": {
+                    "problem": [],  # Will be populated based on business
+                    "solution": [],  # Will be populated based on business
+                    "audience": ["beginners", "professionals", "small business", "enterprises"],
+                    "method": [],  # Will be populated based on business
+                    "solution_type": ["software", "service", "tool", "guide", "checklist"],
+                    "solve": ["fix", "resolve", "handle", "manage", "overcome"],
+                    "avoid": ["expensive tools", "technical knowledge", "hiring experts"],
+                    "year": ["2024", "2025"]
+                }
+            },
             "comparison_based": {
                 "templates": [
                     "{item1} vs {item2}",
@@ -103,6 +125,90 @@ class SeedKeywordGenerator:
                     "action": [],  # Will be populated based on business
                     "attribute": ["worth it", "legit", "safe", "reliable", "good"],
                     "capability": []  # Will be populated based on business
+                }
+            },
+            "integration_based": {
+                "templates": [
+                    "{product} integration with {platform}",
+                    "how to connect {product} to {platform}",
+                    "{product} {platform} API",
+                    "{product} and {platform} workflow",
+                    "sync {product} with {platform}"
+                ],
+                "variables": {
+                    "product": [],  # Will be populated based on business
+                    "platform": ["Salesforce", "HubSpot", "Slack", "Google Workspace", "Microsoft 365", "Zapier", "Stripe", "QuickBooks"]
+                }
+            },
+            "pricing_based": {
+                "templates": [
+                    "{product} pricing {year}",
+                    "{product} {plan_type} plan",
+                    "is {product} {price_attribute}",
+                    "{product} cost for {user_type}",
+                    "{product} pricing vs {competitor}"
+                ],
+                "variables": {
+                    "product": [],  # Will be populated based on business
+                    "plan_type": ["free", "starter", "pro", "enterprise", "basic", "premium"],
+                    "price_attribute": ["free", "worth it", "expensive", "affordable"],
+                    "user_type": ["small business", "startups", "enterprises", "freelancers"],
+                    "competitor": [],  # Will be populated based on business
+                    "year": ["2024", "2025"]
+                }
+            },
+            "product_based": {
+                "templates": [
+                    "best {product_type} for {use_case}",
+                    "{product_type} {attribute} {year}",
+                    "top {number} {product_type} {category}",
+                    "{product_type} under {price}",
+                    "{product_type} with {feature}"
+                ],
+                "variables": {
+                    "product_type": [],  # Will be populated based on business
+                    "use_case": ["beginners", "professionals", "students", "home use", "business"],
+                    "attribute": ["reviews", "comparison", "guide", "recommendations"],
+                    "number": ["10", "5", "20", "15"],
+                    "category": ["2024", "budget", "premium", "new"],
+                    "price": ["$50", "$100", "$200", "$500"],
+                    "feature": [],  # Will be populated based on business
+                    "year": ["2024", "2025"]
+                }
+            },
+            "deals_based": {
+                "templates": [
+                    "{product} {deal_type} {time_period}",
+                    "{product} promo code {year}",
+                    "{product} {percent} off",
+                    "save on {product} {method}",
+                    "{product} {holiday} sale"
+                ],
+                "variables": {
+                    "product": [],  # Will be populated based on business
+                    "deal_type": ["coupon", "discount", "deals", "sale", "clearance"],
+                    "time_period": ["today", "this week", "this month", "2024", "2025"],
+                    "percent": ["10%", "20%", "30%", "50%", "25%"],
+                    "method": ["student discount", "bulk pricing", "annual plan", "referral"],
+                    "holiday": ["black friday", "cyber monday", "christmas", "new year"],
+                    "year": ["2024", "2025"]
+                }
+            },
+            "service_based": {
+                "templates": [
+                    "{service} for {business_type}",
+                    "{location} {service} {specialization}",
+                    "hire {service} {modifier}",
+                    "{service} {price_range} {location}",
+                    "find {service} near {location}"
+                ],
+                "variables": {
+                    "service": [],  # Will be populated based on business
+                    "business_type": ["small business", "startups", "enterprises", "nonprofits", "agencies"],
+                    "location": [],  # Will be populated if location-based
+                    "specialization": [],  # Will be populated based on business
+                    "modifier": ["online", "remote", "local", "certified", "experienced"],
+                    "price_range": ["affordable", "cheap", "premium", "budget-friendly"]
                 }
             }
         }
@@ -305,62 +411,314 @@ class SeedKeywordGenerator:
         return keywords
 
     def get_seed_suggestions(self, business_info: Dict = None) -> List[Dict]:
-        """Get generic seed suggestions adaptable to any business"""
+        """Get intelligent seed suggestions based on business type"""
         
+        if not business_info:
+            return []
+            
         # Extract business context
-        business_name = business_info.get('name', 'business') if business_info else 'business'
-        industry = business_info.get('industry', '').lower() if business_info else ''
+        business_name = business_info.get('name', 'business')
+        industry = business_info.get('industry', '').lower()
+        description = business_info.get('description', '').lower()
+        services = business_info.get('services', [])
         
-        # Generic suggestions that adapt to any business
-        suggestions = [
-            {
-                "name": "Location-Based Keywords",
+        # Determine business characteristics
+        is_local = self._is_location_dependent(industry, description)
+        is_saas = self._is_software_service(industry, description)
+        is_ecommerce = self._is_ecommerce(industry, description)
+        is_professional = self._is_professional_service(industry, description)
+        is_educational = self._is_educational(industry, description)
+        
+        suggestions = []
+        
+        # Location-based (only for location-dependent businesses)
+        if is_local:
+            suggestions.append({
+                "name": "📍 Location-Based Keywords",
                 "category": "location_based",
                 "template_group": "location_services",
-                "estimated_keywords": "500-2000 per location",
-                "description": f"Generate location-specific keywords for {business_name}",
-                "example": f"best {business_name} in Austin, {business_name} near me New York",
-                "id": "location_based"
-            },
-            {
-                "name": "Comparison Keywords",
+                "estimated_keywords": "500-3000 per location",
+                "description": f"Target local searches for {business_name}",
+                "example": f"best {business_name} in [city], {business_name} near me",
+                "id": "location_based",
+                "relevance": "high",
+                "templates": self._get_location_templates(industry)
+            })
+        
+        # Comparison keywords (relevant for most businesses)
+        if is_saas or is_ecommerce or is_professional:
+            suggestions.append({
+                "name": "⚖️ Comparison & Alternative Keywords",
                 "category": "comparison_based",
                 "template_group": "vs_comparisons",
-                "estimated_keywords": "200-800",
-                "description": "Compare your business with competitors or alternatives",
-                "example": f"{business_name} vs competitors, alternatives to {business_name}",
-                "id": "comparison_based"
-            },
-            {
-                "name": "How-To & Guide Keywords",
+                "estimated_keywords": "300-1200",
+                "description": "Capture users comparing solutions",
+                "example": f"{business_name} vs [competitor], alternatives to {business_name}",
+                "id": "comparison_based",
+                "relevance": "high" if is_saas else "medium",
+                "templates": self._get_comparison_templates(industry)
+            })
+        
+        # How-to content (based on business type)
+        if is_saas or is_educational or is_professional:
+            suggestions.append({
+                "name": "📚 How-To & Tutorial Keywords",
                 "category": "how_to_based",
                 "template_group": "guides",
-                "estimated_keywords": "300-1500",
-                "description": "Educational content around your products/services",
-                "example": f"how to use {business_name}, guide to {business_name} features",
-                "id": "how_to_based"
-            },
-            {
-                "name": "Tool & Calculator Keywords",
-                "category": "tool_based",
-                "template_group": "tools",
-                "estimated_keywords": "200-1000",
-                "description": "Keywords for tools, calculators, and resources",
-                "example": f"{business_name} calculator, free {business_name} tool",
-                "id": "tool_based"
-            },
-            {
-                "name": "Question-Based Keywords",
-                "category": "question_based",
-                "template_group": "questions",
                 "estimated_keywords": "400-2000",
-                "description": "Answer common questions about your business",
-                "example": f"what is {business_name}, is {business_name} worth it",
-                "id": "question_based"
-            }
-        ]
+                "description": "Educational content for your audience",
+                "example": self._get_howto_example(business_name, industry),
+                "id": "how_to_based",
+                "relevance": "high",
+                "templates": self._get_howto_templates(industry)
+            })
+        
+        # Problem/Solution keywords
+        suggestions.append({
+            "name": "🎯 Problem & Solution Keywords",
+            "category": "problem_solution",
+            "template_group": "solutions",
+            "estimated_keywords": "500-2500",
+            "description": "Target users searching for solutions",
+            "example": self._get_problem_example(business_name, industry),
+            "id": "problem_solution",
+            "relevance": "high",
+            "templates": self._get_problem_templates(industry)
+        })
+        
+        # Industry-specific templates
+        if is_saas:
+            suggestions.extend(self._get_saas_specific_suggestions(business_name))
+        elif is_ecommerce:
+            suggestions.extend(self._get_ecommerce_specific_suggestions(business_name))
+        elif is_professional:
+            suggestions.extend(self._get_professional_specific_suggestions(business_name, industry))
+        
+        # Question-based (universal but customized)
+        suggestions.append({
+            "name": "❓ Question-Based Keywords",
+            "category": "question_based",
+            "template_group": "questions",
+            "estimated_keywords": "300-1500",
+            "description": "Answer common questions in your industry",
+            "example": self._get_question_example(business_name, industry),
+            "id": "question_based",
+            "relevance": "medium",
+            "templates": self._get_question_templates(industry)
+        })
+        
+        # Sort by relevance
+        suggestions.sort(key=lambda x: {"high": 0, "medium": 1, "low": 2}.get(x.get("relevance", "medium"), 1))
         
         return suggestions
+    
+    def _is_location_dependent(self, industry: str, description: str) -> bool:
+        """Check if business depends on location"""
+        location_keywords = [
+            'real estate', 'restaurant', 'clinic', 'hospital', 'store', 'shop',
+            'service', 'repair', 'salon', 'gym', 'fitness', 'dental', 'medical',
+            'law firm', 'accounting', 'local', 'contractor', 'plumber', 'electrician'
+        ]
+        return any(keyword in industry or keyword in description for keyword in location_keywords)
+    
+    def _is_software_service(self, industry: str, description: str) -> bool:
+        """Check if business is SaaS/software"""
+        saas_keywords = [
+            'software', 'saas', 'app', 'platform', 'tool', 'api', 'cloud',
+            'automation', 'crm', 'management system', 'analytics', 'dashboard'
+        ]
+        return any(keyword in industry or keyword in description for keyword in saas_keywords)
+    
+    def _is_ecommerce(self, industry: str, description: str) -> bool:
+        """Check if business is e-commerce"""
+        ecommerce_keywords = [
+            'ecommerce', 'e-commerce', 'online store', 'shop', 'marketplace',
+            'products', 'selling', 'retail', 'wholesale', 'dropship'
+        ]
+        return any(keyword in industry or keyword in description for keyword in ecommerce_keywords)
+    
+    def _is_professional_service(self, industry: str, description: str) -> bool:
+        """Check if business is professional service"""
+        prof_keywords = [
+            'consulting', 'agency', 'law', 'legal', 'accounting', 'financial',
+            'marketing', 'design', 'development', 'freelance', 'coaching'
+        ]
+        return any(keyword in industry or keyword in description for keyword in prof_keywords)
+    
+    def _is_educational(self, industry: str, description: str) -> bool:
+        """Check if business is educational"""
+        edu_keywords = [
+            'education', 'course', 'training', 'tutorial', 'learning',
+            'academy', 'school', 'certification', 'workshop', 'bootcamp'
+        ]
+        return any(keyword in industry or keyword in description for keyword in edu_keywords)
+    
+    def _get_location_templates(self, industry: str) -> List[str]:
+        """Get location templates based on industry"""
+        if 'real estate' in industry:
+            return [
+                "{location} {property_type} for {purpose}",
+                "{property_type} in {location} {price_range}",
+                "{location} real estate {metric}"
+            ]
+        elif 'restaurant' in industry or 'food' in industry:
+            return [
+                "best {cuisine} restaurant in {location}",
+                "{location} {meal_type} delivery",
+                "restaurants near me in {location}"
+            ]
+        else:
+            return [
+                "best {service} in {location}",
+                "{service} near me {location}",
+                "{location} {service} reviews"
+            ]
+    
+    def _get_comparison_templates(self, industry: str) -> List[str]:
+        """Get comparison templates based on industry"""
+        if 'software' in industry or 'saas' in industry:
+            return [
+                "{product} vs {competitor} {year}",
+                "{product} alternatives for {use_case}",
+                "compare {product} and {competitor} pricing"
+            ]
+        else:
+            return [
+                "{service} vs {alternative}",
+                "is {service} better than {alternative}",
+                "{service} compared to {alternative}"
+            ]
+    
+    def _get_howto_templates(self, industry: str) -> List[str]:
+        """Get how-to templates based on industry"""
+        if 'software' in industry:
+            return [
+                "how to {action} with {product}",
+                "{product} {feature} tutorial",
+                "getting started with {product}"
+            ]
+        elif 'service' in industry:
+            return [
+                "how to {achieve_goal} with {service}",
+                "guide to {service_type} services",
+                "{service} process explained"
+            ]
+        else:
+            return [
+                "how to {action} {topic}",
+                "step by step {process} guide",
+                "{topic} tutorial for beginners"
+            ]
+    
+    def _get_problem_templates(self, industry: str) -> List[str]:
+        """Get problem/solution templates"""
+        return [
+            "how to fix {problem} with {solution}",
+            "{problem} solutions for {audience}",
+            "solve {problem} using {method}",
+            "{audience} {problem} {solution_type}",
+            "best way to {solve} {problem}"
+        ]
+    
+    def _get_question_templates(self, industry: str) -> List[str]:
+        """Get question templates based on industry"""
+        return [
+            "what is {concept} in {industry}",
+            "why {action} is important for {audience}",
+            "when to {action} your {topic}",
+            "how much does {service} cost",
+            "is {product} worth it for {use_case}"
+        ]
+    
+    def _get_saas_specific_suggestions(self, business_name: str) -> List[Dict]:
+        """Get SaaS-specific seed suggestions"""
+        return [
+            {
+                "name": "🔌 Integration & API Keywords",
+                "category": "integration_based",
+                "template_group": "integrations",
+                "estimated_keywords": "200-800",
+                "description": "Target integration searches",
+                "example": f"{business_name} {{'integration'}} with {{'platform'}}",
+                "id": "integration_based",
+                "relevance": "high"
+            },
+            {
+                "name": "💰 Pricing & Plans Keywords",
+                "category": "pricing_based",
+                "template_group": "pricing",
+                "estimated_keywords": "100-400",
+                "description": "Capture pricing research searches",
+                "example": f"{business_name} pricing, {business_name} free trial",
+                "id": "pricing_based",
+                "relevance": "high"
+            }
+        ]
+    
+    def _get_ecommerce_specific_suggestions(self, business_name: str) -> List[Dict]:
+        """Get e-commerce specific suggestions"""
+        return [
+            {
+                "name": "🛍️ Product Category Keywords",
+                "category": "product_based",
+                "template_group": "products",
+                "estimated_keywords": "1000-5000",
+                "description": "Target product searches",
+                "example": "best {{'product_type'}} for {{'use_case'}}",
+                "id": "product_based",
+                "relevance": "high"
+            },
+            {
+                "name": "💸 Deals & Discount Keywords",
+                "category": "deals_based",
+                "template_group": "deals",
+                "estimated_keywords": "200-1000",
+                "description": "Capture bargain hunters",
+                "example": f"{business_name} coupon code, {business_name} black friday",
+                "id": "deals_based",
+                "relevance": "medium"
+            }
+        ]
+    
+    def _get_professional_specific_suggestions(self, business_name: str, industry: str) -> List[Dict]:
+        """Get professional service specific suggestions"""
+        return [
+            {
+                "name": "💼 Service-Specific Keywords",
+                "category": "service_based",
+                "template_group": "services",
+                "estimated_keywords": "300-1500",
+                "description": "Target specific service searches",
+                "example": f"{industry} services for {{'business_type'}}",
+                "id": "service_based",
+                "relevance": "high"
+            }
+        ]
+    
+    def _get_howto_example(self, business_name: str, industry: str) -> str:
+        """Get relevant how-to example"""
+        if 'software' in industry:
+            return f"how to integrate {business_name}, {business_name} API tutorial"
+        elif 'marketing' in industry:
+            return "how to improve SEO, content marketing guide"
+        else:
+            return f"how to use {business_name}, getting started guide"
+    
+    def _get_problem_example(self, business_name: str, industry: str) -> str:
+        """Get relevant problem/solution example"""
+        if 'software' in industry:
+            return "fix slow website loading, automate repetitive tasks"
+        elif 'health' in industry:
+            return "reduce back pain naturally, improve sleep quality"
+        else:
+            return f"solve {{'problem'}} with {business_name}"
+    
+    def _get_question_example(self, business_name: str, industry: str) -> str:
+        """Get relevant question example"""
+        if 'software' in industry:
+            return f"what is {business_name}, how much does {business_name} cost"
+        else:
+            return f"is {business_name} worth it, {business_name} reviews"
     
     def _extract_business_variables(self, business_info: Dict) -> Dict[str, List[str]]:
         """Extract variables from business info for seed templates"""
@@ -369,49 +727,106 @@ class SeedKeywordGenerator:
             
         variables = {}
         
-        # Extract service/product names
+        # Extract basic info
         business_name = business_info.get('name', 'service')
-        description = business_info.get('description', '')
+        description = business_info.get('description', '').lower()
+        industry = business_info.get('industry', '').lower()
+        services = business_info.get('services', [])
         
-        # Basic service variations
+        # Core business variations
+        name_parts = business_name.lower().split()
         variables['service'] = [
             business_name.lower(),
             business_name.lower().replace(' ', ''),
-            business_name.lower().replace(' ', '-')
+            business_name.lower().replace(' ', '-'),
+            name_parts[0] if name_parts else business_name.lower()
         ]
         
+        # Product/service names for different contexts
+        variables['product'] = variables['service']
+        variables['product_type'] = services[:3] if services else variables['service']
+        
         # Extract actions based on business type
-        if 'software' in description.lower() or 'app' in description.lower():
-            variables['action'] = ['use', 'install', 'setup', 'integrate', 'optimize']
-            variables['tool_type'] = ['software', 'app', 'platform', 'tool', 'solution']
-        elif 'service' in description.lower():
-            variables['action'] = ['book', 'hire', 'find', 'choose', 'compare']
-            variables['tool_type'] = ['service', 'provider', 'company', 'professional']
+        actions = business_info.get('customer_actions', [])
+        if actions:
+            variables['action'] = actions[:5]
+        elif 'software' in description or 'saas' in industry:
+            variables['action'] = ['use', 'setup', 'integrate', 'optimize', 'configure']
+        elif 'service' in description:
+            variables['action'] = ['book', 'hire', 'find', 'choose', 'schedule']
+        elif 'ecommerce' in industry or 'shop' in description:
+            variables['action'] = ['buy', 'order', 'purchase', 'shop', 'find']
         else:
-            variables['action'] = ['get', 'find', 'choose', 'buy', 'use']
-            variables['tool_type'] = ['solution', 'option', 'choice', 'provider']
+            variables['action'] = ['get', 'find', 'choose', 'learn', 'start']
+            
+        # Tool types based on business
+        if 'software' in industry or 'saas' in industry:
+            variables['tool_type'] = ['software', 'app', 'platform', 'tool', 'system']
+        elif 'service' in industry:
+            variables['tool_type'] = ['service', 'provider', 'professional', 'expert']
+        else:
+            variables['tool_type'] = ['solution', 'tool', 'resource', 'platform']
             
         # Common use cases
         variables['use_case'] = [
-            'small business', 'enterprise', 'startups', 'personal use',
-            'professionals', 'teams', 'freelancers'
+            'small business', 'enterprises', 'startups', 'freelancers',
+            'agencies', 'teams', 'individuals', 'professionals'
         ]
         
-        # Extract from content types if available
+        # Topics from content types or services
         content_types = business_info.get('content_types', [])
         if content_types:
-            variables['topic'] = [ct.replace(' ', '-') for ct in content_types[:5]]
+            variables['topic'] = [ct.lower().replace(' ', '-') for ct in content_types[:5]]
+        elif services:
+            variables['topic'] = [s.lower().replace(' ', '-') for s in services[:5]]
         else:
-            variables['topic'] = [business_name.lower()]
+            variables['topic'] = [business_name.lower(), 'features', 'benefits']
             
-        # Items for comparison
-        variables['item1'] = variables['service'][:3]
-        variables['item2'] = ['competitor', 'alternative', 'other-option']
+        # Competitors for comparisons
+        competitors = business_info.get('competitors', [])
+        if competitors:
+            variables['item1'] = [business_name.lower()]
+            variables['item2'] = [c.lower() for c in competitors[:3]]
+            variables['competitor'] = competitors[:3]
+        else:
+            variables['item1'] = variables['service'][:3]
+            variables['item2'] = ['alternative-1', 'alternative-2', 'competitor']
+            variables['competitor'] = ['competitor']
+        
+        # Problems and solutions
+        if 'software' in industry:
+            variables['problem'] = ['slow processes', 'data silos', 'manual tasks', 'inefficiency', 'errors']
+            variables['solution'] = ['automation', 'integration', 'optimization', 'streamlining']
+            variables['method'] = ['API', 'automation', 'integration', 'workflow']
+        elif 'marketing' in industry:
+            variables['problem'] = ['low traffic', 'poor conversion', 'no leads', 'low engagement']
+            variables['solution'] = ['SEO', 'content strategy', 'optimization', 'campaigns']
+            variables['method'] = ['content marketing', 'SEO', 'social media', 'email']
+        else:
+            variables['problem'] = ['high costs', 'inefficiency', 'complexity', 'time waste']
+            variables['solution'] = [business_name.lower(), 'automation', 'optimization']
+            variables['method'] = ['technology', 'expertise', 'tools', 'strategy']
         
         # Capabilities
         variables['capability'] = [
-            'help', 'improve', 'automate', 'simplify', 'enhance'
+            'help you', 'improve', 'automate', 'simplify', 'enhance',
+            'streamline', 'optimize', 'scale'
         ]
+        
+        # Features (extract from description or use generic)
+        if 'features' in business_info:
+            variables['feature'] = business_info['features'][:5]
+        else:
+            variables['feature'] = ['advanced analytics', 'easy integration', 'user-friendly', 'automation']
+        
+        # Specializations
+        if services:
+            variables['specialization'] = services[:3]
+        else:
+            variables['specialization'] = ['expertise', 'solutions', 'services']
+        
+        # Additional solve variations
+        variables['solve'] = ['fix', 'resolve', 'handle', 'eliminate', 'overcome']
         
         return variables
     
