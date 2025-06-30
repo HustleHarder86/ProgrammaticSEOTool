@@ -9,27 +9,32 @@ class UsageTracker:
         self.usage_file = os.path.join(os.path.dirname(__file__), 'usage_data.json')
         self.load_usage_data()
         
-        # Perplexity API pricing (estimated based on typical LLM pricing)
-        # These are estimates - adjust based on actual Perplexity pricing
+        # Perplexity API actual pricing (as of 2024)
+        # Using llama-3.1-sonar-small-128k-online model pricing:
+        # $5 per 1,000 requests + $0.2 per 1M tokens ($0.0002 per 1K tokens)
         self.pricing = {
             'analyze_business': {
-                'tokens_avg': 500,
-                'cost_per_1k_tokens': 0.001,  # $0.001 per 1K tokens
+                'tokens_avg': 500,  # ~250 input + 250 output
+                'cost_per_request': 0.005,  # $5/1000 requests = $0.005 per request
+                'cost_per_1k_tokens': 0.0002,  # $0.2/1M tokens = $0.0002 per 1K tokens
                 'description': 'Business analysis with AI'
             },
             'generate_keywords': {
-                'tokens_avg': 300,
-                'cost_per_1k_tokens': 0.001,
+                'tokens_avg': 300,  # ~150 input + 150 output
+                'cost_per_request': 0.005,
+                'cost_per_1k_tokens': 0.0002,
                 'description': 'Keyword generation'
             },
             'generate_keywords_seed': {
-                'tokens_avg': 100,  # Less tokens for seed mode
-                'cost_per_1k_tokens': 0.001,
+                'tokens_avg': 100,  # Minimal tokens for suggestions
+                'cost_per_request': 0.005,
+                'cost_per_1k_tokens': 0.0002,
                 'description': 'Seed keyword suggestions'
             },
             'generate_content': {
-                'tokens_avg': 2000,  # Much more for content
-                'cost_per_1k_tokens': 0.001,
+                'tokens_avg': 2500,  # ~500 input + 2000 output
+                'cost_per_request': 0.005,
+                'cost_per_1k_tokens': 0.0002,
                 'description': 'Content generation per article'
             }
         }
@@ -65,10 +70,14 @@ class UsageTracker:
         if tokens is None and endpoint in self.pricing:
             tokens = self.pricing[endpoint]['tokens_avg'] * count
         
-        # Calculate cost
+        # Calculate cost (per-request fee + token cost)
         cost = 0
-        if endpoint in self.pricing and tokens:
-            cost = (tokens / 1000) * self.pricing[endpoint]['cost_per_1k_tokens']
+        if endpoint in self.pricing:
+            # Add per-request fee
+            cost = self.pricing[endpoint]['cost_per_request'] * count
+            # Add token cost if tokens provided
+            if tokens:
+                cost += (tokens / 1000) * self.pricing[endpoint]['cost_per_1k_tokens']
         
         # Update total stats
         self.usage_data['total_requests'] += count

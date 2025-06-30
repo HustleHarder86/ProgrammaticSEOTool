@@ -838,8 +838,8 @@
                 renderKeywords();
                 updateStats();
                 
-                // Show cost estimate
-                const costPerBatch = 0.0003;
+                // Show cost estimate (accurate Perplexity API pricing)
+                const costPerBatch = 0.0050;
                 showCostNotification('generate_keywords', costPerBatch);
             } catch (error) {
                 resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
@@ -1166,8 +1166,8 @@
                 // Load intelligent seed templates based on business
                 await loadSeedTemplates();
                 
-                // Show cost estimate
-                showCostNotification('analyze_business', 0.0005);
+                // Show cost estimate (accurate Perplexity API pricing)
+                showCostNotification('analyze_business', 0.0051);
                 
             } catch (error) {
                 resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
@@ -1394,8 +1394,8 @@
                     saveProject(true); // Silent save
                 }
                 
-                // Show cost for content generation
-                const contentCost = keywordsToGenerate.length * 0.002;
+                // Show cost for content generation (accurate Perplexity API pricing)
+                const contentCost = keywordsToGenerate.length * 0.0055;
                 showCostNotification(`generate ${keywordsToGenerate.length} articles`, contentCost);
             } catch (error) {
                 resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
