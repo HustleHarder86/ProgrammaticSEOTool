@@ -147,12 +147,16 @@ class AIHandler:
 Business: {business_info.get('name', 'Unknown')}
 Description: {business_info.get('description', 'No description')}
 URL: {business_info.get('url', 'No URL')}
+Target Audience Type: {business_info.get('target_audience_type', 'Not specified')}
 
 Provide a JSON response with:
-1. industry (string)
-2. target_audience (string)
-3. content_types (array of 5 content type suggestions)
-4. main_keywords (array of 5 main keywords)
+1. industry (string - be specific about the business type)
+2. target_audience (string - detailed description)
+3. content_types (array of 5 content type suggestions like guides, comparisons, calculators)
+4. main_keywords (array of 5 primary terms)
+5. services (array of 3-5 main services/products)
+6. customer_actions (array of common actions like buy, book, learn)
+7. competitors (array of 2-3 competitor examples)
 """
         
         response = self.generate(prompt, 300)

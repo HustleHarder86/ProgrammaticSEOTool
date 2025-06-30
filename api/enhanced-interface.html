@@ -606,6 +606,49 @@
             loadSeedTemplates();
         };
         
+        function updateBusinessContext() {
+            const marketContext = document.getElementById('marketContext').value;
+            const locationContext = document.getElementById('locationContext').value;
+            const additionalContext = document.getElementById('additionalContext').value;
+            
+            // Update business info with context
+            if (marketContext) {
+                businessInfo.market_context = marketContext;
+            }
+            
+            if (locationContext) {
+                // Parse locations and store as array
+                businessInfo.target_locations = locationContext.split(',').map(loc => loc.trim()).filter(loc => loc);
+                // Use first location as primary
+                if (businessInfo.target_locations.length > 0) {
+                    businessInfo.location = businessInfo.target_locations[0];
+                }
+            }
+            
+            if (additionalContext) {
+                businessInfo.additional_context = additionalContext;
+            }
+            
+            // Update display
+            const contextDisplay = document.createElement('div');
+            contextDisplay.style.cssText = 'margin-top: 10px; padding: 10px; background: #f0fff4; border-radius: 4px;';
+            contextDisplay.innerHTML = `
+                <strong>✓ Context Updated:</strong><br>
+                ${marketContext ? `Market: ${marketContext}<br>` : ''}
+                ${locationContext ? `Locations: ${businessInfo.target_locations.join(', ')}<br>` : ''}
+                ${additionalContext ? `Context: ${additionalContext}` : ''}
+            `;
+            
+            // Insert after the update button
+            const updateBtn = event.target;
+            updateBtn.parentNode.appendChild(contextDisplay);
+            
+            // Disable inputs to show they've been saved
+            document.getElementById('marketContext').style.background = '#f0fff4';
+            document.getElementById('locationContext').style.background = '#f0fff4';
+            document.getElementById('additionalContext').style.background = '#f0fff4';
+        }
+        
         function toggleKeywordMode(mode) {
             keywordMode = mode;
             
@@ -629,38 +672,38 @@
         function loadSeedTemplates() {
             const templatesDiv = document.getElementById('seedTemplates');
             
-            // Real estate seed templates
+            // Generic seed templates adaptable to any business
             const seedTemplates = [
                 {
-                    id: 'location_property',
-                    name: '📍 Location + Property Type',
-                    template: '{location} {property_type} {action}',
-                    description: 'Generate location-specific property keywords',
+                    id: 'location_based',
+                    name: '📍 Location-Based Keywords',
+                    template: '{location} {service}',
+                    description: 'Generate location-specific keywords for your business',
                     variables: {
                         locations: 50,
-                        property_types: 7,
-                        actions: 10
+                        services: 10,
+                        modifiers: 10
                     },
-                    estimated: 50 * 7 * 10,
-                    example: 'Austin condo for sale, Dallas townhouse rental income'
+                    estimated: 50 * 10 * 10,
+                    example: 'Best [your business] in Austin, [your service] near me Dallas'
                 },
                 {
-                    id: 'comparison',
-                    name: '⚖️ Investment Comparisons',
-                    template: '{strategy1} vs {strategy2} in {location}',
-                    description: 'Compare different investment strategies',
+                    id: 'comparison_based',
+                    name: '⚖️ Comparison Keywords',
+                    template: '{item1} vs {item2} for {use_case}',
+                    description: 'Compare your business with competitors or alternatives',
                     variables: {
-                        strategies: 8,
-                        locations: 20
+                        items: 10,
+                        use_cases: 20
                     },
-                    estimated: 8 * 7 * 20,
-                    example: 'airbnb vs long term rental in Austin'
+                    estimated: 10 * 10 * 20,
+                    example: '[your business] vs competitor, alternatives to [your service]'
                 },
                 {
-                    id: 'calculator_tools',
-                    name: '🧮 Calculator Keywords',
-                    template: '{metric} calculator {location} {year}',
-                    description: 'Location-specific calculator searches',
+                    id: 'how_to_based',
+                    name: '📚 How-To & Guide Keywords',
+                    template: 'how to {action} {topic} {modifier}',
+                    description: 'Educational content around your products/services',
                     variables: {
                         metrics: 15,
                         locations: 50,
@@ -752,6 +795,11 @@
             resultDiv.innerHTML = '<p class="loading"><span class="spinner"></span> Generating keyword variations from seeds...</p>';
             
             try {
+                // Get market context
+                const marketContext = document.getElementById('marketContext').value || '';
+                const locationList = document.getElementById('locationContext').value || '';
+                const additionalContext = document.getElementById('additionalContext').value || '';
+                
                 const response = await fetch(`${API_URL}/api/generate-keywords`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -759,7 +807,10 @@
                         business_info: businessInfo,
                         seed_mode: true,
                         selected_seeds: selectedSeeds,
-                        location: businessInfo.location || 'Austin'
+                        location: businessInfo.location || 'online',
+                        market_context: marketContext,
+                        location_list: locationList,
+                        additional_context: additionalContext
                     })
                 });
                 
@@ -1058,6 +1109,37 @@
                             <strong>Industry:</strong> ${businessInfo.industry}<br>
                             <strong>Target:</strong> ${businessInfo.target_audience}<br>
                             <strong>Content Types:</strong> ${businessInfo.content_types?.join(', ') || 'Various'}
+                        </div>
+                        
+                        <!-- Editable Context Section -->
+                        <div style="margin-top: 20px; padding: 15px; background: #f7f9fc; border-radius: 6px;">
+                            <h4 style="margin: 0 0 10px 0;">🎯 Customize Target Market</h4>
+                            <p style="margin: 0 0 10px 0; font-size: 0.9em; color: #666;">
+                                Add specific constraints or focus areas before generating keywords:
+                            </p>
+                            
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Market/Region:</label>
+                                <input type="text" id="marketContext" placeholder="e.g., Canadian market, UK only, Texas cities"
+                                       style="width: 100%; padding: 8px; border: 1px solid #d9d9d9; border-radius: 4px;">
+                            </div>
+                            
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Specific Locations (comma-separated):</label>
+                                <input type="text" id="locationContext" placeholder="e.g., Toronto, Vancouver, Montreal"
+                                       style="width: 100%; padding: 8px; border: 1px solid #d9d9d9; border-radius: 4px;">
+                            </div>
+                            
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Additional Context:</label>
+                                <textarea id="additionalContext" rows="2" 
+                                    placeholder="e.g., Focus on luxury properties, First-time buyers only, Commercial properties excluded"
+                                    style="width: 100%; padding: 8px; border: 1px solid #d9d9d9; border-radius: 4px;"></textarea>
+                            </div>
+                            
+                            <button onclick="updateBusinessContext()" style="background: #52c41a; margin-top: 10px;">
+                                ✓ Update Context
+                            </button>
                         </div>
                     </div>
                 `;

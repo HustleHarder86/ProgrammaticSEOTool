@@ -250,30 +250,21 @@ class handler(BaseHTTPRequestHandler):
                 # Map selected seeds to seed configurations
                 seed_configs = []
                 for seed_id in selected_seeds:
-                    if seed_id == 'location_property':
-                        seed_configs.append({
-                            "category": "location_based",
-                            "template_group": "property_analysis"
-                        })
-                    elif seed_id == 'comparison':
-                        seed_configs.append({
-                            "category": "comparison_based",
-                            "template_group": "strategy_comparison",
-                            "include_location": True
-                        })
-                    elif seed_id == 'calculator_tools':
-                        seed_configs.append({
-                            "category": "tool_based",
-                            "template_group": "calculators"
-                        })
-                    elif seed_id == 'market_analysis':
-                        seed_configs.append({
-                            "category": "location_based",
-                            "template_group": "market_analysis"
-                        })
+                    # Use the generic template categories
+                    seed_configs.append({
+                        "category": seed_id,
+                        "template_group": seed_id
+                    })
                 
-                # Generate from seeds
-                seed_results = sg.generate_from_seeds(seed_configs, location)
+                # Get market context from request
+                market_context = {
+                    'location': data.get('location', 'online'),
+                    'location_list': data.get('location_list', ''),
+                    'market_region': data.get('market_context', '')
+                }
+                
+                # Generate from seeds with business info and market context
+                seed_results = sg.generate_from_seeds(seed_configs, business_info, market_context)
                 
                 return {
                     'success': True,
