@@ -353,16 +353,23 @@
             <div class="section">
                 <h2><span class="step-number">3</span> Generate Content</h2>
                 <div style="margin-bottom: 15px;">
-                    <label style="display: flex; align-items: center; gap: 10px;">
-                        <input type="checkbox" id="bulkMode" checked>
-                        <span>Bulk generate for all selected keywords</span>
+                    <label style="display: block; margin-bottom: 10px;">
+                        How many articles to generate now?
                     </label>
+                    <input type="number" id="articlesToGenerate" value="5" min="1" max="50" style="width: 100px; margin-bottom: 10px;">
+                    <div style="font-size: 0.85em; color: #718096;">
+                        <span id="remainingKeywords">0</span> keywords selected
+                        <span id="previouslyGenerated" style="display: none;"> • <strong></strong> already generated</span>
+                    </div>
                 </div>
                 <button onclick="generateContent()" id="contentBtn" disabled>
                     <span>📝</span> Generate Content
                 </button>
                 <button onclick="exportContent()" class="secondary-btn" id="exportBtn" style="display:none;">
-                    <span>💾</span> Export Content
+                    <span>💾</span> Export All
+                </button>
+                <button onclick="showGenerationHistory()" class="secondary-btn" id="historyBtn" style="display:none;">
+                    <span>📜</span> History
                 </button>
                 <div id="contentResult"></div>
             </div>
@@ -400,6 +407,7 @@
         let allKeywords = [];
         let selectedKeywords = [];
         let generatedContent = [];
+        let generationHistory = {}; // Track which keywords have been generated
 
         // Initialize
         window.onload = () => {
@@ -412,6 +420,18 @@
             document.getElementById('statContent').textContent = generatedContent.length;
             document.getElementById('statSelected').textContent = selectedKeywords.length;
             document.getElementById('stats').style.display = allKeywords.length > 0 ? 'grid' : 'none';
+            
+            // Update remaining keywords count
+            const remaining = selectedKeywords.filter(kw => !generationHistory[kw]).length;
+            const generated = selectedKeywords.filter(kw => generationHistory[kw]).length;
+            
+            document.getElementById('remainingKeywords').textContent = `${remaining} keywords remaining`;
+            
+            if (generated > 0) {
+                const genSpan = document.getElementById('previouslyGenerated');
+                genSpan.style.display = 'inline';
+                genSpan.querySelector('strong').textContent = `${generated}`;
+            }
         }
 
         async function analyzeBusiness() {
@@ -492,32 +512,14 @@
                     allKeywords = allKeywords.filter(k => k.intent === intent);
                 }
                 
-                let html = `
+                resultDiv.innerHTML = `
                     <div class="success">
                         ✓ Generated ${allKeywords.length} keywords!
                         ${data.ai_generated ? '(AI-generated)' : '(Template-based)'}
                     </div>
-                    <div class="keywords-grid">
                 `;
                 
-                allKeywords.forEach((kw, index) => {
-                    html += `
-                        <div class="keyword-card" onclick="toggleKeyword(${index})" id="keyword-${index}">
-                            <h4>${kw.keyword}</h4>
-                            <div class="keyword-metrics">
-                                <div class="metric">📊 ${kw.search_volume}</div>
-                                <div class="metric">💪 ${kw.difficulty}%</div>
-                                <div class="metric">💰 $${kw.cpc}</div>
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                html += '</div>';
-                resultDiv.innerHTML = html;
-                
-                document.getElementById('contentBtn').disabled = false;
-                document.getElementById('selectAllBtn').style.display = 'inline-block';
+                renderKeywords();
                 updateStats();
             } catch (error) {
                 resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
@@ -557,38 +559,56 @@
         }
 
         async function generateContent() {
-            const bulkMode = document.getElementById('bulkMode').checked;
-            const keywords = bulkMode ? selectedKeywords : selectedKeywords.slice(0, 1);
+            const articlesToGen = parseInt(document.getElementById('articlesToGenerate').value) || 5;
             
-            if (keywords.length === 0) {
-                alert('Please select at least one keyword');
+            // Get ungenerated keywords only
+            const ungeneratedKeywords = selectedKeywords.filter(kw => !generationHistory[kw]);
+            
+            if (ungeneratedKeywords.length === 0) {
+                alert('All selected keywords have been generated. Select new keywords or clear history.');
                 return;
             }
             
+            // Take only the number requested
+            const keywordsToGenerate = ungeneratedKeywords.slice(0, articlesToGen);
+            
             const resultDiv = document.getElementById('contentResult');
-            resultDiv.innerHTML = `<p class="loading"><span class="spinner"></span> Generating content for ${keywords.length} keywords...</p>`;
+            resultDiv.innerHTML = `<p class="loading"><span class="spinner"></span> Generating ${keywordsToGenerate.length} articles...</p>`;
             
             try {
                 const response = await fetch(`${API_URL}/api/generate-content`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        keywords: keywords,
+                        keywords: keywordsToGenerate,
                         business_info: businessInfo
                     })
                 });
                 
                 const data = await response.json();
-                generatedContent = data.contents;
+                const newContent = data.contents;
+                
+                // Mark keywords as generated and add to content
+                newContent.forEach(content => {
+                    generationHistory[content.keyword] = true;
+                    // Check if already exists and update or add
+                    const existingIndex = generatedContent.findIndex(c => c.keyword === content.keyword);
+                    if (existingIndex >= 0) {
+                        generatedContent[existingIndex] = content;
+                    } else {
+                        generatedContent.push(content);
+                    }
+                });
                 
                 let html = `
                     <div class="success">
-                        ✓ Generated ${generatedContent.length} pieces of content!
+                        ✓ Generated ${newContent.length} articles!
                         ${data.ai_enabled ? '(AI-powered)' : '(Template-based)'}
                     </div>
                 `;
                 
-                generatedContent.forEach(content => {
+                // Show only the newly generated content
+                newContent.forEach(content => {
                     html += `
                         <div class="content-item">
                             <h3>${content.title}</h3>
@@ -603,9 +623,27 @@
                     `;
                 });
                 
+                // Show remaining count
+                const remaining = ungeneratedKeywords.length - keywordsToGenerate.length;
+                if (remaining > 0) {
+                    html += `<div style="margin-top: 20px; padding: 15px; background: #e6f4ff; border-radius: 6px;">
+                        <strong>${remaining} keywords remaining.</strong> Click "Generate Content" again to continue.
+                    </div>`;
+                } else {
+                    html += `<div style="margin-top: 20px; padding: 15px; background: #f0fff4; border-radius: 6px;">
+                        <strong>All selected keywords have been generated!</strong>
+                    </div>`;
+                }
+                
                 resultDiv.innerHTML = html;
                 document.getElementById('exportBtn').style.display = 'inline-block';
+                document.getElementById('historyBtn').style.display = 'inline-block';
                 updateStats();
+                
+                // Auto-save progress
+                if (document.getElementById('projectName').value) {
+                    saveProject(true); // Silent save
+                }
             } catch (error) {
                 resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
             }
@@ -670,8 +708,36 @@
             document.getElementById('exportModal').style.display = 'none';
         }
 
+        function showGenerationHistory() {
+            const modal = document.getElementById('exportModal');
+            const modalContent = modal.querySelector('.modal-content');
+            
+            let html = `
+                <span class="close-modal" onclick="closeModal()">&times;</span>
+                <h2>Generation History</h2>
+                <div style="margin: 20px 0;">
+                    <p><strong>Total Generated:</strong> ${generatedContent.length} articles</p>
+                    <p><strong>Keywords Used:</strong> ${Object.keys(generationHistory).length}</p>
+                </div>
+                <div style="max-height: 400px; overflow-y: auto;">
+            `;
+            
+            generatedContent.forEach(content => {
+                html += `
+                    <div style="padding: 10px; border-bottom: 1px solid #e2e8f0;">
+                        <strong>${content.title}</strong><br>
+                        <span style="color: #718096; font-size: 0.9em;">Keyword: ${content.keyword}</span>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            modalContent.innerHTML = html;
+            modal.style.display = 'flex';
+        }
+
         // Project Management
-        function saveProject() {
+        function saveProject(silent = false) {
             const name = document.getElementById('projectName').value || `Project ${new Date().toLocaleDateString()}`;
             const project = {
                 id: Date.now(),
@@ -680,16 +746,27 @@
                 keywords: allKeywords,
                 selectedKeywords: selectedKeywords,
                 content: generatedContent,
+                generationHistory: generationHistory,
                 savedAt: new Date().toISOString()
             };
             
             let projects = JSON.parse(localStorage.getItem('seoProjects') || '[]');
-            projects.unshift(project);
+            
+            // Check if updating existing project
+            const existingIndex = projects.findIndex(p => p.name === name);
+            if (existingIndex >= 0) {
+                projects[existingIndex] = project;
+            } else {
+                projects.unshift(project);
+            }
+            
             localStorage.setItem('seoProjects', JSON.stringify(projects.slice(0, 10))); // Keep last 10
             
-            document.getElementById('projectName').value = '';
-            loadProjects();
-            alert('Project saved!');
+            if (!silent) {
+                document.getElementById('projectName').value = '';
+                loadProjects();
+                alert('Project saved!');
+            }
         }
 
         function loadProjects() {
@@ -731,6 +808,7 @@
                 allKeywords = project.keywords || [];
                 selectedKeywords = project.selectedKeywords || [];
                 generatedContent = project.content || [];
+                generationHistory = project.generationHistory || {};
                 
                 // Update UI
                 if (businessInfo) {
@@ -742,14 +820,56 @@
                         </div>
                     `;
                     document.getElementById('keywordBtn').disabled = false;
+                    document.getElementById('saveBtn').disabled = false;
                 }
                 
                 if (allKeywords.length > 0) {
-                    generateKeywords(); // Re-render keywords
+                    // Re-render keywords with their selection state
+                    renderKeywords();
                 }
                 
+                if (generatedContent.length > 0) {
+                    document.getElementById('exportBtn').style.display = 'inline-block';
+                    document.getElementById('historyBtn').style.display = 'inline-block';
+                }
+                
+                // Set project name for auto-save
+                document.getElementById('projectName').value = project.name;
+                
                 updateStats();
+                alert(`Project "${project.name}" loaded! ${generatedContent.length} articles ready.`);
             }
+        }
+        
+        function renderKeywords() {
+            const resultDiv = document.getElementById('keywordResult');
+            let html = `<div class="keywords-grid">`;
+            
+            allKeywords.forEach((kw, index) => {
+                const isSelected = selectedKeywords.includes(kw.keyword);
+                const isGenerated = generationHistory[kw.keyword];
+                
+                html += `
+                    <div class="keyword-card ${isSelected ? 'selected' : ''}" 
+                         onclick="toggleKeyword(${index})" 
+                         id="keyword-${index}"
+                         style="${isGenerated ? 'background: #f0fff4; border-color: #9ae6b4;' : ''}">
+                        <h4>${kw.keyword}</h4>
+                        <div class="keyword-metrics">
+                            <div class="metric">📊 ${kw.search_volume}</div>
+                            <div class="metric">💪 ${kw.difficulty}%</div>
+                            <div class="metric">💰 $${kw.cpc}</div>
+                        </div>
+                        ${isGenerated ? '<div style="color: #38a169; font-size: 0.8em; margin-top: 5px;">✓ Generated</div>' : ''}
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            resultDiv.innerHTML = html;
+            
+            document.getElementById('contentBtn').disabled = false;
+            document.getElementById('selectAllBtn').style.display = 'inline-block';
         }
 
         function deleteProject(id) {
