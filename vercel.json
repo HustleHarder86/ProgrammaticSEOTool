@@ -1,8 +1,26 @@
 {
   "rewrites": [
     {
-      "source": "/(.*)",
-      "destination": "/api/test"
+      "source": "/api/(.*)",
+      "destination": "/api/main"
+    },
+    {
+      "source": "/health",
+      "destination": "/api/main"
+    },
+    {
+      "source": "/",
+      "destination": "/api/main"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type" }
+      ]
     }
   ]
 }
