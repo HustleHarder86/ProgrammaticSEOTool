@@ -926,77 +926,8 @@
             
             console.log('Rendering seed results:', seedResults);
             
-            let html = `
-                <div class="success" style="margin-bottom: 20px;">
-                    ✓ Generated ${seedResults.summary.total_variations.toLocaleString()} keyword variations!
-                </div>
-                
-                <div style="background: #f0fff4; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                    <h3 style="margin: 0 0 15px 0;">🌱 Programmatic SEO Results</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-            `;
-            
-            // Show breakdown by category
-            Object.entries(seedResults.summary.by_category).forEach(([category, count]) => {
-                html += `
-                    <div style="background: white; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0;">
-                        <h4 style="margin: 0; color: #667eea;">${count.toLocaleString()}</h4>
-                        <p style="margin: 5px 0 0 0; font-size: 0.9em; color: #666;">${category.replace('_', ' ').toUpperCase()}</p>
-                    </div>
-                `;
-            });
-            
-            html += `
-                    </div>
-                </div>
-                
-                <div style="margin-bottom: 20px;">
-                    <h4>Seed Template Details:</h4>
-            `;
-            
-            // Show seed details
-            seedResults.seed_details.forEach(seed => {
-                html += `
-                    <div style="background: #f7f9fc; padding: 15px; border-radius: 6px; margin-bottom: 10px;">
-                        <strong>${seed.category}</strong>
-                        <div style="margin-top: 5px; font-size: 0.9em; color: #666;">
-                            ${seed.template_count} templates × ${seed.variable_combinations} combinations = 
-                            <strong>${seed.total_variations.toLocaleString()} keywords</strong>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            html += `
-                </div>
-                
-                <div style="background: #e6f7ff; padding: 15px; border-radius: 6px;">
-                    <h4 style="margin: 0 0 10px 0;">Sample Keywords (First 50):</h4>
-                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-            `;
-            
-            // Show sample keywords
-            seedResults.keywords.slice(0, 50).forEach(kw => {
-                html += `<span style="background: white; padding: 4px 12px; border-radius: 4px; font-size: 0.85em; border: 1px solid #d9d9d9;">${kw.keyword}</span>`;
-            });
-            
-            html += `
-                    </div>
-                    ${seedResults.keywords.length > 50 ? `<p style="margin: 10px 0 0 0; color: #666; font-style: italic;">...and ${(seedResults.keywords.length - 50).toLocaleString()} more keywords</p>` : ''}
-                </div>
-                
-                <div style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <button onclick="downloadSeedKeywords()" style="width: 100%;">
-                        📥 Download All ${seedResults.keywords.length} Keywords
-                    </button>
-                    <button onclick="proceedToClusterView()" style="width: 100%; background: #52c41a;">
-                        📊 View Keywords in Clusters
-                    </button>
-                </div>
-            `;
-            
-            // Show the initial results summary
-            resultDiv.innerHTML = html;
+            // Don't show preview - go straight to storing keywords
+            console.log('Storing keywords and displaying clusters...');
             
             // Store for content generation
             allKeywords = seedResults.keywords.map(k => ({
@@ -1017,26 +948,18 @@
             
             updateStats();
             
-            // Clear the seed results display and show keywords
-            setTimeout(() => {
-                // Show the keywords in cluster view
-                if (allKeywords.length > 50) {
-                    // For many keywords, use cluster view
-                    clusterView = true;
-                    document.getElementById('clusterMethod').value = 'semantic';
-                    clusterKeywords();
-                } else {
-                    // For fewer keywords, show list view
-                    clusterView = false;
-                    renderKeywords();
-                }
-                
-                // Scroll to the results
-                document.getElementById('keywordResult').scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 1000); // Wait a second to let user see the summary
+            // Immediately show the keywords in cluster view
+            clusterView = true;
+            document.getElementById('clusterMethod').value = 'semantic';
+            clusterKeywords();
             
             // Show success message
             showCostNotification('generate_keywords_seed', 0.0050);
+            
+            // Scroll to the results
+            setTimeout(() => {
+                document.getElementById('keywordResult').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
         }
 
         function updateStats() {
