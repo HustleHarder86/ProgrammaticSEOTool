@@ -1374,9 +1374,10 @@
                         };
                     }
                 
-                clusters[clusterName].keywords.push(kw);
-                clusters[clusterName].totalVolume += kw.search_volume;
-            });
+                    clusters[clusterName].keywords.push(kw);
+                    clusters[clusterName].totalVolume += kw.search_volume;
+                });
+            }
             
             // Calculate averages
             Object.values(clusters).forEach(cluster => {
