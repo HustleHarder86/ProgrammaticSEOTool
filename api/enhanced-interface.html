@@ -136,6 +136,61 @@
             background: #f0f4ff;
             border-color: #667eea;
         }
+        
+        /* Clustering styles */
+        .cluster-container {
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            background: white;
+        }
+        .cluster-header {
+            background: #f7fafc;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .cluster-header:hover {
+            background: #edf2f7;
+        }
+        .cluster-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        .cluster-icon {
+            font-size: 1.2em;
+        }
+        .cluster-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9em;
+            color: #718096;
+        }
+        .cluster-content {
+            padding: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .cluster-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .cluster-collapsed .cluster-content {
+            display: none;
+        }
+        .cluster-toggle {
+            transition: transform 0.2s;
+        }
+        .cluster-collapsed .cluster-toggle {
+            transform: rotate(-90deg);
+        }
         .keyword-card h4 { 
             color: #2d3748; 
             margin-bottom: 8px;
@@ -330,7 +385,7 @@
 
             <!-- Step 2: Generate Keywords -->
             <div class="section">
-                <h2><span class="step-number">2</span> Generate Keywords</h2>
+                <h2><span class="step-number">2</span> Generate & Cluster Keywords</h2>
                 <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                     <input type="number" id="numKeywords" value="20" min="5" max="100" style="width: 100px;">
                     <select id="keywordIntent" style="flex: 1;">
@@ -340,11 +395,25 @@
                         <option value="transactional">Transactional</option>
                     </select>
                 </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="autoCluster" checked>
+                        <span>Auto-cluster keywords by topic</span>
+                    </label>
+                    <select id="clusterMethod" style="margin-top: 10px; width: 200px;">
+                        <option value="semantic">Semantic Similarity</option>
+                        <option value="intent">Search Intent</option>
+                        <option value="pattern">Keyword Pattern</option>
+                    </select>
+                </div>
                 <button onclick="generateKeywords()" id="keywordBtn" disabled>
                     <span>🎯</span> Generate Keywords
                 </button>
                 <button onclick="selectAllKeywords()" class="secondary-btn" id="selectAllBtn" style="display:none;">
                     Select All
+                </button>
+                <button onclick="toggleView()" class="secondary-btn" id="viewToggleBtn" style="display:none;">
+                    <span id="viewToggleIcon">📊</span> <span id="viewToggleText">List View</span>
                 </button>
                 <div id="keywordResult"></div>
             </div>
@@ -408,6 +477,8 @@
         let selectedKeywords = [];
         let generatedContent = [];
         let generationHistory = {}; // Track which keywords have been generated
+        let keywordClusters = {}; // Store clustered keywords
+        let clusterView = true; // Toggle between cluster and list view
 
         // Initialize
         window.onload = () => {
@@ -519,7 +590,12 @@
                     </div>
                 `;
                 
-                renderKeywords();
+                // Check if clustering is enabled
+                if (document.getElementById('autoCluster').checked) {
+                    clusterKeywords();
+                } else {
+                    renderKeywords();
+                }
                 updateStats();
             } catch (error) {
                 resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
@@ -747,6 +823,7 @@
                 selectedKeywords: selectedKeywords,
                 content: generatedContent,
                 generationHistory: generationHistory,
+                keywordClusters: keywordClusters,
                 savedAt: new Date().toISOString()
             };
             
@@ -809,6 +886,7 @@
                 selectedKeywords = project.selectedKeywords || [];
                 generatedContent = project.content || [];
                 generationHistory = project.generationHistory || {};
+                keywordClusters = project.keywordClusters || {};
                 
                 // Update UI
                 if (businessInfo) {
@@ -886,6 +964,307 @@
             const modal = document.getElementById('exportModal');
             if (event.target === modal) {
                 closeModal();
+            }
+        }
+        
+        // Clustering Functions
+        function clusterKeywords() {
+            const method = document.getElementById('clusterMethod').value;
+            keywordClusters = {};
+            
+            switch(method) {
+                case 'semantic':
+                    keywordClusters = clusterBySemantic(allKeywords);
+                    break;
+                case 'intent':
+                    keywordClusters = clusterByIntent(allKeywords);
+                    break;
+                case 'pattern':
+                    keywordClusters = clusterByPattern(allKeywords);
+                    break;
+            }
+            
+            renderClusters();
+        }
+        
+        function clusterBySemantic(keywords) {
+            const clusters = {};
+            
+            keywords.forEach(kw => {
+                // Extract main topic words
+                const words = kw.keyword.toLowerCase().split(' ');
+                let clusterName = '';
+                
+                // Find most significant word (usually noun)
+                const significantWords = words.filter(w => 
+                    w.length > 3 && 
+                    !['best', 'how', 'what', 'where', 'when', 'why', 'top', 'for', 'the', 'and'].includes(w)
+                );
+                
+                if (significantWords.length > 0) {
+                    clusterName = significantWords[0];
+                } else {
+                    clusterName = words[0];
+                }
+                
+                // Capitalize cluster name
+                clusterName = clusterName.charAt(0).toUpperCase() + clusterName.slice(1);
+                
+                if (!clusters[clusterName]) {
+                    clusters[clusterName] = {
+                        name: clusterName,
+                        keywords: [],
+                        totalVolume: 0,
+                        avgDifficulty: 0,
+                        icon: getClusterIcon(clusterName)
+                    };
+                }
+                
+                clusters[clusterName].keywords.push(kw);
+                clusters[clusterName].totalVolume += kw.search_volume;
+            });
+            
+            // Calculate averages
+            Object.values(clusters).forEach(cluster => {
+                const difficulties = cluster.keywords.map(k => k.difficulty);
+                cluster.avgDifficulty = Math.round(difficulties.reduce((a,b) => a+b, 0) / difficulties.length);
+            });
+            
+            return clusters;
+        }
+        
+        function clusterByIntent(keywords) {
+            const clusters = {
+                'Informational': { name: 'Informational', keywords: [], totalVolume: 0, icon: '📚' },
+                'Commercial': { name: 'Commercial', keywords: [], totalVolume: 0, icon: '🛍️' },
+                'Transactional': { name: 'Transactional', keywords: [], totalVolume: 0, icon: '💳' },
+                'Navigational': { name: 'Navigational', keywords: [], totalVolume: 0, icon: '🧭' }
+            };
+            
+            keywords.forEach(kw => {
+                const intent = detectIntent(kw.keyword);
+                clusters[intent].keywords.push(kw);
+                clusters[intent].totalVolume += kw.search_volume;
+            });
+            
+            // Remove empty clusters
+            Object.keys(clusters).forEach(key => {
+                if (clusters[key].keywords.length === 0) {
+                    delete clusters[key];
+                }
+            });
+            
+            return clusters;
+        }
+        
+        function clusterByPattern(keywords) {
+            const clusters = {};
+            
+            keywords.forEach(kw => {
+                let pattern = 'Other';
+                const lower = kw.keyword.toLowerCase();
+                
+                if (lower.includes(' vs ') || lower.includes(' versus ')) {
+                    pattern = 'Comparisons';
+                } else if (lower.startsWith('how to') || lower.startsWith('how do')) {
+                    pattern = 'How-to Guides';
+                } else if (lower.startsWith('best') || lower.startsWith('top')) {
+                    pattern = 'Best/Top Lists';
+                } else if (lower.includes(' for ')) {
+                    pattern = 'Use Cases';
+                } else if (lower.includes(' near me') || lower.includes(' in ')) {
+                    pattern = 'Local/Location';
+                } else if (lower.includes('review') || lower.includes('guide')) {
+                    pattern = 'Reviews & Guides';
+                }
+                
+                if (!clusters[pattern]) {
+                    clusters[pattern] = {
+                        name: pattern,
+                        keywords: [],
+                        totalVolume: 0,
+                        icon: getPatternIcon(pattern)
+                    };
+                }
+                
+                clusters[pattern].keywords.push(kw);
+                clusters[pattern].totalVolume += kw.search_volume;
+            });
+            
+            return clusters;
+        }
+        
+        function detectIntent(keyword) {
+            const lower = keyword.toLowerCase();
+            
+            if (lower.includes('buy') || lower.includes('price') || lower.includes('cost') || lower.includes('cheap')) {
+                return 'Transactional';
+            } else if (lower.includes('best') || lower.includes('top') || lower.includes('review')) {
+                return 'Commercial';
+            } else if (lower.includes('how') || lower.includes('what') || lower.includes('why') || lower.includes('guide')) {
+                return 'Informational';
+            } else {
+                return 'Navigational';
+            }
+        }
+        
+        function getClusterIcon(name) {
+            const icons = {
+                'pizza': '🍕', 'food': '🍽️', 'restaurant': '🏪', 'delivery': '🚚',
+                'service': '🛎️', 'product': '📦', 'guide': '📖', 'tips': '💡',
+                'business': '💼', 'software': '💻', 'health': '🏥', 'fitness': '💪'
+            };
+            
+            const lower = name.toLowerCase();
+            return icons[lower] || '📊';
+        }
+        
+        function getPatternIcon(pattern) {
+            const icons = {
+                'Comparisons': '⚖️',
+                'How-to Guides': '📖',
+                'Best/Top Lists': '🏆',
+                'Use Cases': '🎯',
+                'Local/Location': '📍',
+                'Reviews & Guides': '⭐',
+                'Other': '📊'
+            };
+            
+            return icons[pattern] || '📊';
+        }
+        
+        function renderClusters() {
+            const resultDiv = document.getElementById('keywordResult');
+            document.getElementById('viewToggleBtn').style.display = 'inline-block';
+            
+            let html = '<div class="clusters-view">';
+            
+            Object.entries(keywordClusters).forEach(([clusterName, cluster]) => {
+                const clusterKey = clusterName.replace(/\s+/g, '-');
+                
+                html += `
+                    <div class="cluster-container" id="cluster-${clusterKey}">
+                        <div class="cluster-header" onclick="toggleCluster('${clusterKey}')">
+                            <div class="cluster-title">
+                                <span class="cluster-toggle">▼</span>
+                                <span class="cluster-icon">${cluster.icon || '📊'}</span>
+                                <span>${cluster.name} (${cluster.keywords.length})</span>
+                            </div>
+                            <div class="cluster-stats">
+                                <span>📊 ${cluster.totalVolume.toLocaleString()} vol</span>
+                                ${cluster.avgDifficulty ? `<span>💪 ${cluster.avgDifficulty}% avg</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="cluster-content">
+                            <div class="cluster-actions">
+                                <button onclick="selectCluster('${clusterKey}')" class="secondary-btn">
+                                    Select All in Cluster
+                                </button>
+                                <button onclick="generateClusterContent('${clusterKey}')" class="secondary-btn">
+                                    Generate Cluster Content
+                                </button>
+                            </div>
+                            <div class="keywords-grid">
+                `;
+                
+                cluster.keywords.forEach((kw, index) => {
+                    const globalIndex = allKeywords.findIndex(k => k.keyword === kw.keyword);
+                    const isSelected = selectedKeywords.includes(kw.keyword);
+                    const isGenerated = generationHistory[kw.keyword];
+                    
+                    html += `
+                        <div class="keyword-card ${isSelected ? 'selected' : ''}" 
+                             onclick="toggleKeyword(${globalIndex})" 
+                             id="keyword-${globalIndex}"
+                             style="${isGenerated ? 'background: #f0fff4; border-color: #9ae6b4;' : ''}">
+                            <h4>${kw.keyword}</h4>
+                            <div class="keyword-metrics">
+                                <div class="metric">📊 ${kw.search_volume}</div>
+                                <div class="metric">💪 ${kw.difficulty}%</div>
+                                <div class="metric">💰 $${kw.cpc}</div>
+                            </div>
+                            ${isGenerated ? '<div style="color: #38a169; font-size: 0.8em; margin-top: 5px;">✓ Generated</div>' : ''}
+                        </div>
+                    `;
+                });
+                
+                html += `
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            resultDiv.innerHTML = html;
+            
+            document.getElementById('contentBtn').disabled = false;
+            document.getElementById('selectAllBtn').style.display = 'inline-block';
+        }
+        
+        function toggleCluster(clusterKey) {
+            const container = document.getElementById(`cluster-${clusterKey}`);
+            container.classList.toggle('cluster-collapsed');
+        }
+        
+        function selectCluster(clusterKey) {
+            const cluster = Object.values(keywordClusters).find(c => 
+                c.name.replace(/\s+/g, '-') === clusterKey
+            );
+            
+            if (cluster) {
+                cluster.keywords.forEach(kw => {
+                    const index = allKeywords.findIndex(k => k.keyword === kw.keyword);
+                    const card = document.getElementById(`keyword-${index}`);
+                    
+                    if (!selectedKeywords.includes(kw.keyword)) {
+                        selectedKeywords.push(kw.keyword);
+                        card.classList.add('selected');
+                    }
+                });
+                
+                updateStats();
+            }
+        }
+        
+        function generateClusterContent(clusterKey) {
+            const cluster = Object.values(keywordClusters).find(c => 
+                c.name.replace(/\s+/g, '-') === clusterKey
+            );
+            
+            if (cluster) {
+                // Select only this cluster's keywords
+                selectedKeywords = cluster.keywords.map(k => k.keyword);
+                
+                // Update UI to show selection
+                allKeywords.forEach((kw, index) => {
+                    const card = document.getElementById(`keyword-${index}`);
+                    if (selectedKeywords.includes(kw.keyword)) {
+                        card.classList.add('selected');
+                    } else {
+                        card.classList.remove('selected');
+                    }
+                });
+                
+                updateStats();
+                
+                // Trigger content generation
+                generateContent();
+            }
+        }
+        
+        function toggleView() {
+            clusterView = !clusterView;
+            const btn = document.getElementById('viewToggleBtn');
+            
+            if (clusterView) {
+                btn.querySelector('#viewToggleIcon').textContent = '📊';
+                btn.querySelector('#viewToggleText').textContent = 'List View';
+                clusterKeywords();
+            } else {
+                btn.querySelector('#viewToggleIcon').textContent = '🗂️';
+                btn.querySelector('#viewToggleText').textContent = 'Cluster View';
+                renderKeywords();
             }
         }
     </script>
