@@ -948,18 +948,33 @@
             
             updateStats();
             
-            // Immediately show the keywords in cluster view
+            // Make sure the keyword result div is visible and clear
+            const keywordResultDiv = document.getElementById('keywordResult');
+            if (keywordResultDiv) {
+                keywordResultDiv.style.display = 'block';
+                keywordResultDiv.innerHTML = '<p class="loading">Organizing keywords into clusters...</p>';
+            }
+            
+            // Show the keywords in cluster view
             clusterView = true;
             document.getElementById('clusterMethod').value = 'semantic';
-            clusterKeywords();
+            
+            // Small delay to ensure DOM is ready
+            setTimeout(() => {
+                clusterKeywords();
+                
+                // Ensure the section is visible
+                const keywordSection = keywordResultDiv.closest('.section');
+                if (keywordSection) {
+                    keywordSection.style.display = 'block';
+                }
+                
+                // Scroll to the results
+                keywordResultDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
             
             // Show success message
             showCostNotification('generate_keywords_seed', 0.0050);
-            
-            // Scroll to the results
-            setTimeout(() => {
-                document.getElementById('keywordResult').scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
         }
 
         function updateStats() {
@@ -1681,8 +1696,16 @@
         
         // Clustering Functions
         function clusterKeywords() {
-            const method = document.getElementById('clusterMethod').value;
+            console.log('Clustering keywords. Total keywords:', allKeywords.length);
+            
+            const method = document.getElementById('clusterMethod') ? document.getElementById('clusterMethod').value : 'semantic';
             keywordClusters = {};
+            
+            if (allKeywords.length === 0) {
+                console.error('No keywords to cluster!');
+                document.getElementById('keywordResult').innerHTML = '<p class="error">No keywords available to display.</p>';
+                return;
+            }
             
             switch(method) {
                 case 'semantic':
@@ -1696,6 +1719,7 @@
                     break;
             }
             
+            console.log('Clusters created:', Object.keys(keywordClusters).length);
             renderClusters();
         }
         
