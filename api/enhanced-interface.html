@@ -727,18 +727,20 @@
                     example: 'rental roi calculator Austin 2024'
                 },
                 {
-                    id: 'market_analysis',
-                    name: '📊 Market Analysis',
-                    template: '{location} {property_type} market {metric} {time}',
-                    description: 'Market trends and analysis keywords',
-                    variables: {
-                        locations: 50,
-                        property_types: 7,
-                        metrics: 8,
-                        timeframes: 4
-                    },
-                    estimated: 50 * 7 * 8 * 4,
-                    example: 'Austin condo market forecast 2025'
+                    id: 'tool_based',
+                    name: '🛠️ Tool & Calculator Keywords',
+                    template: '{tool_type} for {use_case}',
+                    description: 'Tool and calculator related keywords',
+                    estimated_keywords: '1000-3000',
+                    example: 'ROI calculator for real estate investment'
+                },
+                {
+                    id: 'how_to_based',
+                    name: '📖 How-To Keywords',
+                    template: 'how to {action} {target}',
+                    description: 'Educational and guide keywords',
+                    estimated_keywords: '800-2000',
+                    example: 'How to analyze real estate deals'
                 }
             ];
             

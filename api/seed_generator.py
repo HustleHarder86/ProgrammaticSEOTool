@@ -330,6 +330,7 @@ class SeedKeywordGenerator:
             config = self.generic_templates.get(category, {}).copy()
             
             if not config:
+                print(f"Warning: No template found for category '{category}'")
                 continue
                 
             # Populate variables with business-specific data
@@ -346,6 +347,7 @@ class SeedKeywordGenerator:
             
             # Calculate variations for this seed
             variation_count = self.calculate_variations(config)
+            print(f"Category '{category}': {len(config['templates'])} templates, {variation_count} total variations")
             
             seed_detail = {
                 "category": category,
@@ -833,12 +835,24 @@ class SeedKeywordGenerator:
     def _get_generic_variables(self, var_name: str) -> List[str]:
         """Get generic fallback variables"""
         generic_vars = {
-            'service': ['service', 'product', 'solution'],
-            'action': ['use', 'get', 'find', 'choose'],
-            'topic': ['features', 'benefits', 'options'],
-            'tool_type': ['tool', 'resource', 'solution'],
-            'use_case': ['business', 'personal', 'professional'],
-            'item1': ['option1', 'choice1', 'solution1'],
-            'item2': ['option2', 'choice2', 'solution2']
+            'service': ['service', 'product', 'solution', 'software', 'platform'],
+            'action': ['use', 'get', 'find', 'choose', 'implement', 'setup'],
+            'topic': ['features', 'benefits', 'options', 'capabilities', 'functions'],
+            'tool_type': ['tool', 'calculator', 'analyzer', 'tracker', 'dashboard'],
+            'use_case': ['business', 'startups', 'enterprises', 'teams', 'projects'],
+            'item1': ['option1', 'choice1', 'solution1', 'tool1', 'platform1'],
+            'item2': ['option2', 'choice2', 'solution2', 'tool2', 'platform2'],
+            'problem': ['challenges', 'issues', 'difficulties', 'problems', 'obstacles'],
+            'solution': ['solutions', 'fixes', 'remedies', 'approaches', 'methods'],
+            'audience': ['businesses', 'teams', 'professionals', 'users', 'companies'],
+            'method': ['approach', 'strategy', 'technique', 'process', 'system'],
+            'solve': ['fix', 'resolve', 'address', 'handle', 'overcome'],
+            'avoid': ['mistakes', 'errors', 'pitfalls', 'problems', 'issues'],
+            'year': ['2024', '2025'],
+            'price_range': ['affordable', 'budget', 'premium', 'enterprise', 'free'],
+            'modifier': ['best', 'top', 'leading', 'popular', 'recommended'],
+            'metric': ['cost', 'price', 'roi', 'performance', 'efficiency'],
+            'property_type': ['homes', 'condos', 'apartments', 'properties', 'real estate'],
+            'time': ['2024', '2025', 'this year', 'forecast', 'trends']
         }
         return generic_vars.get(var_name, [var_name])
