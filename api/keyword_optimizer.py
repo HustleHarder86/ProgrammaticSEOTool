@@ -6,6 +6,80 @@ class KeywordOptimizer:
     def __init__(self):
         # Industry-specific keyword patterns
         self.industry_patterns = {
+            "real_estate_b2b": {
+                "realtor_tools": [
+                    "investment property analysis tool for realtors",
+                    "best rental analysis software for real estate agents",
+                    "property investment calculator for agents",
+                    "realtor tools for investor clients",
+                    "real estate agent investment property software",
+                    "rental property analysis app for realtors",
+                    "client investment property presentation tools",
+                    "realtor rental income calculator",
+                    "real estate agent ROI analysis tools",
+                    "property investment report generator for agents"
+                ],
+                "client_acquisition": [
+                    "how to find real estate investor clients",
+                    "attracting property investors as realtor",
+                    "real estate investor lead generation",
+                    "marketing to real estate investors",
+                    "realtor specializing in investment properties {location}",
+                    "investment property realtor {location}",
+                    "how to work with real estate investors",
+                    "building investor client base as realtor",
+                    "real estate agent for rental properties {location}",
+                    "investor-friendly real estate agents {location}"
+                ],
+                "market_expertise": [
+                    "{location} investment property market report",
+                    "{location} rental market analysis for realtors",
+                    "{location} cap rates by neighborhood",
+                    "{location} rental property trends {year}",
+                    "best {location} neighborhoods for rental investment",
+                    "{location} short term rental regulations guide",
+                    "{location} investment property tax guide",
+                    "{location} rental property financing options",
+                    "{location} property management companies list",
+                    "{location} real estate investment opportunities {year}"
+                ],
+                "listing_optimization": [
+                    "how to list investment properties",
+                    "marketing rental properties to investors",
+                    "investment property listing description templates",
+                    "showcasing rental income potential in listings",
+                    "MLS keywords for investment properties",
+                    "investment property photography tips",
+                    "virtual tours for rental properties",
+                    "highlighting cap rate in property listings",
+                    "investment property listing checklist",
+                    "attracting cash buyers for investment properties"
+                ],
+                "education_certification": [
+                    "real estate investment specialist certification",
+                    "CCIM designation for realtors",
+                    "investment property courses for real estate agents",
+                    "rental property management for realtors",
+                    "1031 exchange certification for agents",
+                    "real estate investment analysis training",
+                    "airbnb specialist certification for realtors",
+                    "multifamily investment training for agents",
+                    "commercial real estate courses for residential agents",
+                    "real estate syndication for agents"
+                ],
+                "closing_deals": [
+                    "investment property offer strategies",
+                    "negotiating investment property deals",
+                    "due diligence checklist for investment properties",
+                    "investment property inspection focus areas",
+                    "closing costs for investment properties",
+                    "investment property contract clauses",
+                    "working with investor-friendly lenders",
+                    "fast closing for investment properties",
+                    "wholesale real estate for agents",
+                    "investment property commission strategies"
+                ]
+            },
             "real_estate_investment": {
                 "roi_analysis": [
                     "{location} rental property roi calculator",
@@ -138,11 +212,22 @@ class KeywordOptimizer:
         """Detect target audience from business info"""
         description = f"{business_info.get('description', '')} {business_info.get('name', '')}".lower()
         
+        # Check if explicitly set
+        if business_info.get('target_audience_type'):
+            return business_info['target_audience_type']
+        
+        # Keywords indicating B2B realtor focus
+        b2b_keywords = [
+            'realtors', 'agents', 'brokers', 'real estate professionals',
+            'for agents', 'for realtors', 'agent tool', 'realtor software',
+            'b2b', 'real estate crm', 'mls', 'listing tool'
+        ]
+        
         # Keywords indicating investment/realtor focus
         investment_keywords = [
             'investment', 'investor', 'roi', 'rental', 'airbnb', 'short term', 
             'long term', 'cash flow', 'cap rate', 'yield', 'analysis', 'analyzer',
-            'realtor', 'agent', 'broker', 'property management', 'rental income'
+            'property management', 'rental income'
         ]
         
         # Keywords indicating home buyer focus
@@ -151,23 +236,27 @@ class KeywordOptimizer:
             'house hunting', 'home search', 'buying a home'
         ]
         
+        b2b_score = sum(2 for kw in b2b_keywords if kw in description)  # Weight B2B higher
         investment_score = sum(1 for kw in investment_keywords if kw in description)
         buyer_score = sum(1 for kw in buyer_keywords if kw in description)
         
         # If URL provided, check that too
         if business_info.get('url'):
             url_lower = business_info.get('url', '').lower()
+            b2b_score += sum(2 for kw in b2b_keywords if kw in url_lower)
             investment_score += sum(1 for kw in investment_keywords if kw in url_lower)
             buyer_score += sum(1 for kw in buyer_keywords if kw in url_lower)
         
         # Determine primary audience
-        if investment_score > buyer_score:
-            return "investors_realtors"
+        if b2b_score > investment_score and b2b_score > buyer_score:
+            return "b2b_realtors"
+        elif investment_score > buyer_score:
+            return "investors"
         elif buyer_score > investment_score:
             return "home_buyers"
         else:
-            # Default to investment if unclear (based on your use case)
-            return "investors_realtors"
+            # Default to B2B for your use case
+            return "b2b_realtors"
 
     def generate_real_estate_keywords(self, business_info: Dict, num_keywords: int = 50) -> List[Dict]:
         """Generate comprehensive real estate keywords based on target audience"""
@@ -178,7 +267,9 @@ class KeywordOptimizer:
         business_info['detected_audience'] = target_audience
         
         # Use appropriate patterns based on audience
-        if target_audience == "investors_realtors":
+        if target_audience == "b2b_realtors":
+            patterns = self.industry_patterns["real_estate_b2b"]
+        elif target_audience == "investors" or target_audience == "investors_realtors":
             patterns = self.industry_patterns["real_estate_investment"]
         else:
             patterns = self.industry_patterns.get("real_estate", self.industry_patterns["real_estate_investment"])
@@ -188,8 +279,39 @@ class KeywordOptimizer:
         year = "2024"
         season = "fall"
         
+        # Generate B2B Realtor keywords
+        if "realtor_tools" in patterns:
+            # Generate tool-focused keywords (no location needed for most)
+            for pattern in patterns["realtor_tools"][:10]:
+                keywords.append(self.create_keyword_object(pattern, "tools", "commercial", is_b2b=True))
+            
+            # Generate client acquisition keywords
+            for pattern in patterns["client_acquisition"][:8]:
+                if "{location}" in pattern and main_location:
+                    keyword = pattern.format(location=main_location)
+                else:
+                    keyword = pattern
+                keywords.append(self.create_keyword_object(keyword, "client_acquisition", "informational", is_b2b=True))
+            
+            # Generate market expertise keywords
+            for pattern in patterns["market_expertise"][:8]:
+                keyword = pattern.format(location=main_location, year=year)
+                keywords.append(self.create_keyword_object(keyword, "market_expertise", "informational", is_b2b=True))
+            
+            # Generate listing optimization keywords
+            for pattern in patterns["listing_optimization"][:6]:
+                keywords.append(self.create_keyword_object(pattern, "listing_optimization", "informational", is_b2b=True))
+            
+            # Generate education keywords
+            for pattern in patterns["education_certification"][:5]:
+                keywords.append(self.create_keyword_object(pattern, "education", "informational", is_b2b=True))
+            
+            # Generate deal closing keywords
+            for pattern in patterns["closing_deals"][:5]:
+                keywords.append(self.create_keyword_object(pattern, "closing_deals", "commercial", is_b2b=True))
+        
         # Generate ROI analysis keywords (most important for investors)
-        if "roi_analysis" in patterns:
+        elif "roi_analysis" in patterns:
             for pattern in patterns["roi_analysis"][:8]:
                 if main_location:
                     keyword = pattern.format(location=main_location, year=year)
@@ -278,31 +400,51 @@ class KeywordOptimizer:
         
         return location_groups.get(location, ["Suburbs", "Metro Area", "Downtown"])
 
-    def create_keyword_object(self, keyword: str, category: str, intent: str) -> Dict:
+    def create_keyword_object(self, keyword: str, category: str, intent: str, is_b2b: bool = False) -> Dict:
         """Create a structured keyword object"""
         # Estimate metrics based on keyword characteristics
         word_count = len(keyword.split())
         has_location = any(loc.lower() in keyword.lower() 
                           for loc in self.locations["major_cities"] + self.locations["tech_hubs"])
         
-        # More specific = lower volume but easier to rank
-        if word_count >= 5:
-            volume = 100 + (50 * (6 - word_count))
-            difficulty = 25 + (word_count * 2)
+        # B2B keywords have different metrics
+        if is_b2b:
+            # B2B keywords typically have lower volume but higher value
+            if "tool" in keyword.lower() or "software" in keyword.lower():
+                volume = 300 + (50 * max(0, 6 - word_count))
+                difficulty = 45  # Tools are competitive
+                cpc_base = 8.0  # High CPC for B2B software
+            elif "how to" in keyword.lower() or "guide" in keyword.lower():
+                volume = 200 + (100 * max(0, 5 - word_count))
+                difficulty = 35
+                cpc_base = 4.0
+            else:
+                volume = 150 + (50 * max(0, 5 - word_count))
+                difficulty = 40
+                cpc_base = 5.0
+                
+            # Realtor-specific terms have decent volume
+            if any(term in keyword.lower() for term in ["realtor", "agent", "broker"]):
+                volume = int(volume * 1.3)
         else:
-            volume = 500 + (200 * (5 - word_count))
-            difficulty = 40 + (word_count * 5)
+            # Original logic for non-B2B
+            if word_count >= 5:
+                volume = 100 + (50 * (6 - word_count))
+                difficulty = 25 + (word_count * 2)
+            else:
+                volume = 500 + (200 * (5 - word_count))
+                difficulty = 40 + (word_count * 5)
+            
+            # Commercial intent increases CPC
+            cpc_base = 1.5
+            if intent == "commercial":
+                cpc_base = 3.5
+            elif intent == "transactional":
+                cpc_base = 4.5
         
         # Location keywords typically have good volume
         if has_location:
             volume = int(volume * 1.5)
-        
-        # Commercial intent increases CPC
-        cpc_base = 1.5
-        if intent == "commercial":
-            cpc_base = 3.5
-        elif intent == "transactional":
-            cpc_base = 4.5
         
         return {
             "keyword": keyword,
@@ -311,6 +453,7 @@ class KeywordOptimizer:
             "intent": intent,
             "cpc": round(cpc_base + (volume / 1000), 2),
             "category": category,
+            "is_b2b": is_b2b,
             "priority": self.calculate_priority(volume, difficulty, cpc_base)
         }
 
@@ -337,7 +480,46 @@ class KeywordOptimizer:
     def generate_keyword_clusters(self, keywords: List[Dict], target_audience: str = None) -> Dict[str, List[Dict]]:
         """Create smart keyword clusters based on target audience"""
         
-        if target_audience == "investors_realtors":
+        if target_audience == "b2b_realtors":
+            clusters = {
+                "realtor_tools": {
+                    "name": "Tools & Software for Realtors",
+                    "keywords": [],
+                    "content_hub": "Real Estate Agent Tool Comparison Hub",
+                    "icon": "🛠️"
+                },
+                "client_acquisition": {
+                    "name": "Finding Investor Clients",
+                    "keywords": [],
+                    "content_hub": "Realtor's Guide to Working with Investors",
+                    "icon": "🤝"
+                },
+                "market_expertise": {
+                    "name": "Market Analysis & Reports",
+                    "keywords": [],
+                    "content_hub": "Local Investment Market Intelligence",
+                    "icon": "📊"
+                },
+                "listing_strategies": {
+                    "name": "Investment Property Listings",
+                    "keywords": [],
+                    "content_hub": "Marketing Investment Properties Guide",
+                    "icon": "📝"
+                },
+                "education": {
+                    "name": "Realtor Education & Certification",
+                    "keywords": [],
+                    "content_hub": "Investment Property Specialist Training",
+                    "icon": "🎓"
+                },
+                "deal_closing": {
+                    "name": "Closing Investment Deals",
+                    "keywords": [],
+                    "content_hub": "Investment Property Transaction Guide",
+                    "icon": "✅"
+                }
+            }
+        elif target_audience == "investors_realtors" or target_audience == "investors":
             clusters = {
                 "roi_calculators": {
                     "name": "ROI Calculators & Analysis Tools",
@@ -416,7 +598,40 @@ class KeywordOptimizer:
             keyword_lower = kw["keyword"].lower()
             assigned = False
             
-            if target_audience == "investors_realtors":
+            if target_audience == "b2b_realtors":
+                # B2B Realtor clustering
+                if any(term in keyword_lower for term in ["tool", "software", "calculator", "app", "platform"]):
+                    clusters["realtor_tools"]["keywords"].append(kw)
+                    assigned = True
+                elif any(term in keyword_lower for term in ["find", "attract", "client", "lead", "marketing to"]):
+                    clusters["client_acquisition"]["keywords"].append(kw)
+                    assigned = True
+                elif any(term in keyword_lower for term in ["market", "analysis", "report", "trends", "cap rate"]):
+                    clusters["market_expertise"]["keywords"].append(kw)
+                    assigned = True
+                elif any(term in keyword_lower for term in ["listing", "mls", "showcase", "photography", "description"]):
+                    clusters["listing_strategies"]["keywords"].append(kw)
+                    assigned = True
+                elif any(term in keyword_lower for term in ["certification", "course", "training", "designation", "education"]):
+                    clusters["education"]["keywords"].append(kw)
+                    assigned = True
+                elif any(term in keyword_lower for term in ["closing", "negotiat", "offer", "contract", "due diligence"]):
+                    clusters["deal_closing"]["keywords"].append(kw)
+                    assigned = True
+                
+                # Default based on category
+                if not assigned:
+                    category = kw.get("category", "")
+                    if category == "tools":
+                        clusters["realtor_tools"]["keywords"].append(kw)
+                    elif category == "client_acquisition":
+                        clusters["client_acquisition"]["keywords"].append(kw)
+                    elif category == "market_expertise":
+                        clusters["market_expertise"]["keywords"].append(kw)
+                    else:
+                        clusters["realtor_tools"]["keywords"].append(kw)
+                        
+            elif target_audience == "investors_realtors" or target_audience == "investors":
                 # Investor-specific clustering
                 if any(term in keyword_lower for term in ["roi", "calculator", "analyzer", "yield", "cap rate", "cash flow"]):
                     clusters["roi_calculators"]["keywords"].append(kw)
