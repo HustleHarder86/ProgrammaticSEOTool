@@ -28,7 +28,7 @@ class handler(BaseHTTPRequestHandler):
             self.end_headers()
             
             # Read and serve the HTML file
-            html_path = os.path.join(os.path.dirname(__file__), 'index.html')
+            html_path = os.path.join(os.path.dirname(__file__), 'interface.html')
             try:
                 with open(html_path, 'r') as f:
                     self.wfile.write(f.read().encode())
