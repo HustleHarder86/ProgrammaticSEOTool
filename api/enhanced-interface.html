@@ -415,13 +415,25 @@
                 <h2><span class="step-number">1</span> Analyze Your Business</h2>
                 <input type="url" id="businessUrl" placeholder="https://yourbusiness.com (optional)">
                 <textarea id="businessDesc" rows="4" placeholder="Describe your business, products, services, and target audience..."></textarea>
-                <select id="contentType">
-                    <option value="all">All Content Types</option>
-                    <option value="blog">Blog Posts</option>
-                    <option value="landing">Landing Pages</option>
-                    <option value="comparison">Comparison Pages</option>
-                    <option value="guide">How-to Guides</option>
-                </select>
+                
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <select id="targetAudience" style="flex: 1;">
+                        <option value="auto">Auto-detect Target Audience</option>
+                        <option value="investors_realtors">Real Estate Investors & Realtors</option>
+                        <option value="home_buyers">Home Buyers</option>
+                        <option value="b2b_saas">B2B SaaS Customers</option>
+                        <option value="ecommerce">E-commerce Shoppers</option>
+                        <option value="local_services">Local Service Seekers</option>
+                    </select>
+                    <select id="contentType" style="flex: 1;">
+                        <option value="all">All Content Types</option>
+                        <option value="blog">Blog Posts</option>
+                        <option value="landing">Landing Pages</option>
+                        <option value="comparison">Comparison Pages</option>
+                        <option value="guide">How-to Guides</option>
+                    </select>
+                </div>
+                
                 <button onclick="analyzeBusiness()">
                     <span>🔍</span> Analyze Business
                 </button>
@@ -577,6 +589,7 @@
             const url = document.getElementById('businessUrl').value;
             const desc = document.getElementById('businessDesc').value;
             const contentType = document.getElementById('contentType').value;
+            const targetAudience = document.getElementById('targetAudience').value;
             const resultDiv = document.getElementById('analyzeResult');
             
             if (!url && !desc) {
@@ -592,12 +605,18 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         business_url: url,
-                        business_description: desc
+                        business_description: desc,
+                        target_audience: targetAudience
                     })
                 });
                 
                 const data = await response.json();
                 businessInfo = data.business_info;
+                
+                // Add target audience to business info if specified
+                if (targetAudience !== 'auto') {
+                    businessInfo.target_audience_type = targetAudience;
+                }
                 
                 resultDiv.innerHTML = `
                     <div class="success">

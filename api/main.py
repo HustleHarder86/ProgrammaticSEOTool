@@ -157,12 +157,14 @@ class handler(BaseHTTPRequestHandler):
         """Analyze business from URL or description"""
         business_url = data.get('business_url', '')
         business_description = data.get('business_description', '')
+        target_audience = data.get('target_audience', 'auto')
         
         # Get basic info first
         business_info = {
             'name': 'Your Business',
             'url': business_url,
-            'description': business_description or 'No description provided'
+            'description': business_description or 'No description provided',
+            'target_audience_type': target_audience if target_audience != 'auto' else None
         }
         
         # Try to fetch title from URL

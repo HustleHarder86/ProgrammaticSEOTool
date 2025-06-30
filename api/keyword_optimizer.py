@@ -6,58 +6,79 @@ class KeywordOptimizer:
     def __init__(self):
         # Industry-specific keyword patterns
         self.industry_patterns = {
-            "real_estate": {
-                "location_based": [
-                    "{location} homes for sale",
-                    "{location} real estate market analysis",
-                    "{location} property values {year}",
-                    "{location} neighborhood guide",
-                    "best neighborhoods in {location}",
-                    "{location} housing market trends",
-                    "{location} real estate investment opportunities",
-                    "cost of living in {location}",
-                    "{location} school districts and homes",
-                    "moving to {location} guide"
-                ],
-                "property_types": [
-                    "{property_type} for sale in {location}",
-                    "best {property_type} in {location}",
-                    "{property_type} vs {property_type2} in {location}",
-                    "investing in {property_type} {location}",
-                    "{property_type} market analysis {location}",
-                    "buying {property_type} tips {location}",
-                    "{property_type} financing options",
-                    "{property_type} inspection checklist"
-                ],
-                "buyer_intent": [
-                    "first time home buyer {location}",
-                    "how to buy a house in {location}",
-                    "down payment assistance {location}",
-                    "mortgage calculator {location}",
-                    "home buying process {location}",
-                    "best time to buy in {location}",
-                    "real estate agents in {location}",
-                    "home inspection {location}"
+            "real_estate_investment": {
+                "roi_analysis": [
+                    "{location} rental property roi calculator",
+                    "{location} airbnb vs long term rental income",
+                    "{location} short term rental analysis",
+                    "{location} rental yield calculator",
+                    "cap rate {location} investment properties",
+                    "{location} cash flow positive properties",
+                    "{location} rental property profit calculator",
+                    "best roi neighborhoods {location}",
+                    "{location} investment property analyzer",
+                    "{location} real estate investment returns {year}"
                 ],
                 "market_analysis": [
-                    "{location} housing market forecast {year}",
-                    "{location} real estate trends {season} {year}",
-                    "is {location} a buyers or sellers market",
-                    "{location} median home price trends",
-                    "{location} real estate roi analysis",
-                    "{location} rental market analysis",
-                    "airbnb investment {location}",
-                    "{location} property tax guide"
+                    "{location} rental market analysis {year}",
+                    "{location} airbnb occupancy rates",
+                    "{location} average rental income by neighborhood",
+                    "{location} short term rental regulations",
+                    "{location} rental demand forecast",
+                    "{location} investment property hotspots",
+                    "{location} rental price trends {year}",
+                    "{location} vacation rental market analysis",
+                    "{location} rental property appreciation rates",
+                    "{location} tenant demographics analysis"
                 ],
-                "comparison": [
-                    "{location1} vs {location2} real estate",
-                    "living in {location1} vs {location2}",
-                    "{neighborhood1} vs {neighborhood2} {city}",
-                    "buying vs renting in {location}",
-                    "condo vs house in {location}",
-                    "new construction vs existing homes {location}"
+                "property_comparison": [
+                    "long term vs short term rental {location}",
+                    "airbnb vs traditional rental income {location}",
+                    "{property_type} rental income {location}",
+                    "single family vs multifamily investment {location}",
+                    "furnished vs unfurnished rental income {location}",
+                    "vacation rental vs monthly rental {location}",
+                    "{neighborhood1} vs {neighborhood2} rental income",
+                    "new construction vs existing rental property {location}"
+                ],
+                "investment_tools": [
+                    "rental property analysis spreadsheet",
+                    "investment property calculator {location}",
+                    "rental income estimator {location}",
+                    "property management cost calculator {location}",
+                    "rental property expense tracker",
+                    "real estate investment analysis software",
+                    "rental property cash flow calculator",
+                    "1031 exchange calculator {location}",
+                    "depreciation calculator rental property",
+                    "rental property tax calculator {location}"
+                ],
+                "investor_education": [
+                    "how to analyze rental property {location}",
+                    "rental property investment guide {location}",
+                    "short term rental investment strategy {location}",
+                    "passive income real estate {location}",
+                    "rental property financing options {location}",
+                    "best areas for rental investment {location}",
+                    "rental property due diligence checklist",
+                    "real estate investment mistakes to avoid {location}",
+                    "how to evaluate rental property deals",
+                    "rental property investment for beginners {location}"
+                ],
+                "specific_strategies": [
+                    "brrrr strategy {location}",
+                    "house hacking {location}",
+                    "section 8 rental income {location}",
+                    "student housing investment {location}",
+                    "corporate rental strategy {location}",
+                    "mid term rental strategy {location}",
+                    "rental arbitrage {location}",
+                    "fix and rent strategy {location}",
+                    "turnkey rental properties {location}",
+                    "out of state rental investing {location}"
                 ]
             },
+            "real_estate": {
             "saas": {
                 "comparison": [
                     "{product} vs {competitor}",
@@ -113,75 +134,115 @@ class KeywordOptimizer:
                               "starter homes", "investment properties", "multi-family homes",
                               "waterfront properties", "historic homes", "new construction"]
 
+    def detect_target_audience(self, business_info: Dict) -> str:
+        """Detect target audience from business info"""
+        description = f"{business_info.get('description', '')} {business_info.get('name', '')}".lower()
+        
+        # Keywords indicating investment/realtor focus
+        investment_keywords = [
+            'investment', 'investor', 'roi', 'rental', 'airbnb', 'short term', 
+            'long term', 'cash flow', 'cap rate', 'yield', 'analysis', 'analyzer',
+            'realtor', 'agent', 'broker', 'property management', 'rental income'
+        ]
+        
+        # Keywords indicating home buyer focus
+        buyer_keywords = [
+            'home buyer', 'first time', 'mortgage', 'dream home', 'family home',
+            'house hunting', 'home search', 'buying a home'
+        ]
+        
+        investment_score = sum(1 for kw in investment_keywords if kw in description)
+        buyer_score = sum(1 for kw in buyer_keywords if kw in description)
+        
+        # If URL provided, check that too
+        if business_info.get('url'):
+            url_lower = business_info.get('url', '').lower()
+            investment_score += sum(1 for kw in investment_keywords if kw in url_lower)
+            buyer_score += sum(1 for kw in buyer_keywords if kw in url_lower)
+        
+        # Determine primary audience
+        if investment_score > buyer_score:
+            return "investors_realtors"
+        elif buyer_score > investment_score:
+            return "home_buyers"
+        else:
+            # Default to investment if unclear (based on your use case)
+            return "investors_realtors"
+
     def generate_real_estate_keywords(self, business_info: Dict, num_keywords: int = 50) -> List[Dict]:
-        """Generate comprehensive real estate keywords"""
+        """Generate comprehensive real estate keywords based on target audience"""
         keywords = []
-        patterns = self.industry_patterns["real_estate"]
+        
+        # Detect target audience
+        target_audience = self.detect_target_audience(business_info)
+        business_info['detected_audience'] = target_audience
+        
+        # Use appropriate patterns based on audience
+        if target_audience == "investors_realtors":
+            patterns = self.industry_patterns["real_estate_investment"]
+        else:
+            patterns = self.industry_patterns.get("real_estate", self.industry_patterns["real_estate_investment"])
         
         # Extract location from business info
         main_location = self.extract_location(business_info)
         year = "2024"
         season = "fall"
         
-        # Generate location-based keywords
-        for pattern in patterns["location_based"]:
-            if main_location:
-                keyword = pattern.format(location=main_location, year=year)
-                keywords.append(self.create_keyword_object(keyword, "local", "informational"))
-            
-            # Also generate for nearby areas
-            for nearby in self.get_nearby_locations(main_location)[:3]:
-                keyword = pattern.format(location=nearby, year=year)
-                keywords.append(self.create_keyword_object(keyword, "local", "informational"))
-        
-        # Generate property type keywords
-        for property_type in self.property_types[:5]:
-            for pattern in patterns["property_types"][:3]:
-                if "{property_type2}" in pattern:
-                    property_type2 = self.property_types[
-                        (self.property_types.index(property_type) + 1) % len(self.property_types)
-                    ]
-                    keyword = pattern.format(
-                        property_type=property_type,
-                        property_type2=property_type2,
-                        location=main_location
-                    )
-                else:
-                    keyword = pattern.format(
-                        property_type=property_type,
-                        location=main_location
-                    )
-                keywords.append(self.create_keyword_object(keyword, "property", "commercial"))
-        
-        # Generate buyer intent keywords
-        for pattern in patterns["buyer_intent"]:
-            keyword = pattern.format(location=main_location)
-            keywords.append(self.create_keyword_object(keyword, "buyer", "transactional"))
+        # Generate ROI analysis keywords (most important for investors)
+        if "roi_analysis" in patterns:
+            for pattern in patterns["roi_analysis"][:8]:
+                if main_location:
+                    keyword = pattern.format(location=main_location, year=year)
+                    keywords.append(self.create_keyword_object(keyword, "roi_analysis", "commercial"))
+                
+                # Also generate for nearby areas
+                for nearby in self.get_nearby_locations(main_location)[:2]:
+                    keyword = pattern.format(location=nearby, year=year)
+                    keywords.append(self.create_keyword_object(keyword, "roi_analysis", "commercial"))
         
         # Generate market analysis keywords
-        for pattern in patterns["market_analysis"]:
-            keyword = pattern.format(location=main_location, year=year, season=season)
-            keywords.append(self.create_keyword_object(keyword, "analysis", "informational"))
+        if "market_analysis" in patterns:
+            for pattern in patterns["market_analysis"][:6]:
+                keyword = pattern.format(location=main_location, year=year, season=season)
+                keywords.append(self.create_keyword_object(keyword, "market_analysis", "informational"))
         
-        # Generate comparison keywords
-        nearby_locations = self.get_nearby_locations(main_location)
-        if len(nearby_locations) >= 2:
-            for pattern in patterns["comparison"][:3]:
-                if "{location1}" in pattern:
-                    keyword = pattern.format(
-                        location1=main_location,
-                        location2=nearby_locations[0],
-                        city=main_location
-                    )
+        # Generate property comparison keywords
+        if "property_comparison" in patterns:
+            for pattern in patterns["property_comparison"][:5]:
+                if "{property_type}" in pattern:
+                    for prop_type in ["condo", "single family home", "townhouse"][:2]:
+                        keyword = pattern.format(property_type=prop_type, location=main_location)
+                        keywords.append(self.create_keyword_object(keyword, "comparison", "commercial"))
                 elif "{neighborhood1}" in pattern:
-                    keyword = pattern.format(
-                        neighborhood1=self.locations["neighborhoods"][0],
-                        neighborhood2=self.locations["neighborhoods"][1],
-                        city=main_location
-                    )
+                    neighborhoods = self.get_nearby_locations(main_location)
+                    if len(neighborhoods) >= 2:
+                        keyword = pattern.format(
+                            neighborhood1=neighborhoods[0],
+                            neighborhood2=neighborhoods[1]
+                        )
+                        keywords.append(self.create_keyword_object(keyword, "comparison", "commercial"))
                 else:
                     keyword = pattern.format(location=main_location)
-                keywords.append(self.create_keyword_object(keyword, "comparison", "commercial"))
+                    keywords.append(self.create_keyword_object(keyword, "comparison", "commercial"))
+        
+        # Generate investment tool keywords
+        if "investment_tools" in patterns:
+            for pattern in patterns["investment_tools"][:5]:
+                keyword = pattern.format(location=main_location)
+                keywords.append(self.create_keyword_object(keyword, "tools", "transactional"))
+        
+        # Generate education keywords
+        if "investor_education" in patterns:
+            for pattern in patterns["investor_education"][:5]:
+                keyword = pattern.format(location=main_location)
+                keywords.append(self.create_keyword_object(keyword, "education", "informational"))
+        
+        # Generate strategy keywords
+        if "specific_strategies" in patterns:
+            for pattern in patterns["specific_strategies"][:4]:
+                keyword = pattern.format(location=main_location)
+                keywords.append(self.create_keyword_object(keyword, "strategy", "informational"))
+        
         
         # Remove duplicates and limit
         unique_keywords = self.deduplicate_keywords(keywords)
@@ -273,60 +334,136 @@ class KeywordOptimizer:
         # Sort by priority
         return sorted(seen.values(), key=lambda x: x["priority"], reverse=True)
 
-    def generate_keyword_clusters(self, keywords: List[Dict]) -> Dict[str, List[Dict]]:
-        """Create smart keyword clusters for real estate"""
-        clusters = {
-            "location_guides": {
-                "name": "Location & Neighborhood Guides",
-                "keywords": [],
-                "content_hub": "Ultimate Guide to [Location] Real Estate"
-            },
-            "property_types": {
-                "name": "Property Type Guides",
-                "keywords": [],
-                "content_hub": "Complete Property Type Comparison Guide"
-            },
-            "buyer_resources": {
-                "name": "Home Buyer Resources",
-                "keywords": [],
-                "content_hub": "First-Time Home Buyer's Complete Guide"
-            },
-            "market_analysis": {
-                "name": "Market Analysis & Trends",
-                "keywords": [],
-                "content_hub": "[Location] Real Estate Market Report {Year}"
-            },
-            "comparisons": {
-                "name": "Comparisons & Versus Guides",
-                "keywords": [],
-                "content_hub": "Real Estate Comparison Hub"
-            },
-            "investment": {
-                "name": "Real Estate Investment",
-                "keywords": [],
-                "content_hub": "Real Estate Investment Strategy Guide"
+    def generate_keyword_clusters(self, keywords: List[Dict], target_audience: str = None) -> Dict[str, List[Dict]]:
+        """Create smart keyword clusters based on target audience"""
+        
+        if target_audience == "investors_realtors":
+            clusters = {
+                "roi_calculators": {
+                    "name": "ROI Calculators & Analysis Tools",
+                    "keywords": [],
+                    "content_hub": "Investment Property Analysis Hub",
+                    "icon": "🧮"
+                },
+                "rental_comparison": {
+                    "name": "Short-Term vs Long-Term Rental Analysis",
+                    "keywords": [],
+                    "content_hub": "Rental Strategy Comparison Guide",
+                    "icon": "⚖️"
+                },
+                "market_data": {
+                    "name": "Market Data & Trends",
+                    "keywords": [],
+                    "content_hub": "Real Estate Market Intelligence Center",
+                    "icon": "📊"
+                },
+                "investment_strategies": {
+                    "name": "Investment Strategies",
+                    "keywords": [],
+                    "content_hub": "Real Estate Investment Playbook",
+                    "icon": "🎯"
+                },
+                "location_analysis": {
+                    "name": "Location Investment Analysis",
+                    "keywords": [],
+                    "content_hub": "Best Investment Neighborhoods Guide",
+                    "icon": "📍"
+                },
+                "tools_resources": {
+                    "name": "Tools & Resources",
+                    "keywords": [],
+                    "content_hub": "Investor Toolkit",
+                    "icon": "🛠️"
+                }
             }
-        }
+        else:
+            # Original home buyer clusters
+            clusters = {
+                "location_guides": {
+                    "name": "Location & Neighborhood Guides",
+                    "keywords": [],
+                    "content_hub": "Ultimate Guide to [Location] Real Estate"
+                },
+                "property_types": {
+                    "name": "Property Type Guides",
+                    "keywords": [],
+                    "content_hub": "Complete Property Type Comparison Guide"
+                },
+                "buyer_resources": {
+                    "name": "Home Buyer Resources",
+                    "keywords": [],
+                    "content_hub": "First-Time Home Buyer's Complete Guide"
+                },
+                "market_analysis": {
+                    "name": "Market Analysis & Trends",
+                    "keywords": [],
+                    "content_hub": "[Location] Real Estate Market Report {Year}"
+                },
+                "comparisons": {
+                    "name": "Comparisons & Versus Guides",
+                    "keywords": [],
+                    "content_hub": "Real Estate Comparison Hub"
+                },
+                "investment": {
+                    "name": "Real Estate Investment",
+                    "keywords": [],
+                    "content_hub": "Real Estate Investment Strategy Guide"
+                }
+            }
         
         # Categorize keywords into clusters
         for kw in keywords:
             keyword_lower = kw["keyword"].lower()
+            assigned = False
             
-            if any(term in keyword_lower for term in ["neighborhood", "guide", "living in", "cost of", "moving to"]):
-                clusters["location_guides"]["keywords"].append(kw)
-            elif any(term in keyword_lower for term in ["condo", "townhouse", "home", "property", "house"]) and "vs" not in keyword_lower:
-                clusters["property_types"]["keywords"].append(kw)
-            elif any(term in keyword_lower for term in ["buyer", "buying", "mortgage", "down payment", "financing"]):
-                clusters["buyer_resources"]["keywords"].append(kw)
-            elif any(term in keyword_lower for term in ["market", "forecast", "trends", "analysis", "median"]):
-                clusters["market_analysis"]["keywords"].append(kw)
-            elif "vs" in keyword_lower or "versus" in keyword_lower:
-                clusters["comparisons"]["keywords"].append(kw)
-            elif any(term in keyword_lower for term in ["investment", "roi", "rental", "airbnb", "flip"]):
-                clusters["investment"]["keywords"].append(kw)
+            if target_audience == "investors_realtors":
+                # Investor-specific clustering
+                if any(term in keyword_lower for term in ["roi", "calculator", "analyzer", "yield", "cap rate", "cash flow"]):
+                    clusters["roi_calculators"]["keywords"].append(kw)
+                    assigned = True
+                elif any(term in keyword_lower for term in ["short term", "long term", "airbnb", "vrbo", "vacation rental"]) and any(term in keyword_lower for term in ["vs", "versus", "comparison"]):
+                    clusters["rental_comparison"]["keywords"].append(kw)
+                    assigned = True
+                elif any(term in keyword_lower for term in ["market", "forecast", "trends", "analysis", "occupancy", "demand"]):
+                    clusters["market_data"]["keywords"].append(kw)
+                    assigned = True
+                elif any(term in keyword_lower for term in ["strategy", "brrrr", "house hack", "section 8", "arbitrage", "turnkey"]):
+                    clusters["investment_strategies"]["keywords"].append(kw)
+                    assigned = True
+                elif any(term in keyword_lower for term in ["neighborhood", "area", "location"]) and any(term in keyword_lower for term in ["investment", "roi", "rental"]):
+                    clusters["location_analysis"]["keywords"].append(kw)
+                    assigned = True
+                elif any(term in keyword_lower for term in ["tool", "spreadsheet", "template", "checklist", "guide"]):
+                    clusters["tools_resources"]["keywords"].append(kw)
+                    assigned = True
+                
+                # Default to most relevant cluster
+                if not assigned:
+                    if kw.get("category") == "roi_analysis":
+                        clusters["roi_calculators"]["keywords"].append(kw)
+                    elif kw.get("category") == "comparison":
+                        clusters["rental_comparison"]["keywords"].append(kw)
+                    elif kw.get("category") == "market_analysis":
+                        clusters["market_data"]["keywords"].append(kw)
+                    else:
+                        clusters["location_analysis"]["keywords"].append(kw)
             else:
-                # Default to location guides
-                clusters["location_guides"]["keywords"].append(kw)
+                # Home buyer clustering (original logic)
+                if any(term in keyword_lower for term in ["neighborhood", "guide", "living in", "cost of", "moving to"]):
+                    clusters["location_guides"]["keywords"].append(kw)
+                elif any(term in keyword_lower for term in ["condo", "townhouse", "home", "property", "house"]) and "vs" not in keyword_lower:
+                    clusters["property_types"]["keywords"].append(kw)
+                elif any(term in keyword_lower for term in ["buyer", "buying", "mortgage", "down payment", "financing"]):
+                    clusters["buyer_resources"]["keywords"].append(kw)
+                elif any(term in keyword_lower for term in ["market", "forecast", "trends", "analysis", "median"]):
+                    clusters["market_analysis"]["keywords"].append(kw)
+                elif "vs" in keyword_lower or "versus" in keyword_lower:
+                    clusters["comparisons"]["keywords"].append(kw)
+                elif any(term in keyword_lower for term in ["investment", "roi", "rental", "airbnb", "flip"]):
+                    clusters["investment"]["keywords"].append(kw)
+                else:
+                    # Default to location guides
+                    clusters["location_guides"]["keywords"].append(kw)
         
         # Remove empty clusters
         return {k: v for k, v in clusters.items() if v["keywords"]}
