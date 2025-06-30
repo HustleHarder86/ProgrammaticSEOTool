@@ -13,9 +13,5 @@
       "src": "/(.*)",
       "dest": "api/minimal.py"
     }
-  ],
-  "installCommand": "pip install -r requirements-minimal.txt",
-  "env": {
-    "PYTHON_VERSION": "3.9"
-  }
+  ]
 }
