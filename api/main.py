@@ -170,15 +170,24 @@ class handler(BaseHTTPRequestHandler):
         # Try to fetch title from URL
         if business_url:
             try:
-                with urlopen(business_url, timeout=5) as response:
+                # Add headers to avoid being blocked
+                req = Request(business_url, headers={
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                })
+                with urlopen(req, timeout=5) as response:
                     html = response.read().decode('utf-8')
                     if '<title>' in html:
                         start = html.find('<title>') + 7
                         end = html.find('</title>')
                         title = html[start:end] if end > start else "Business Website"
                         business_info['name'] = title
-            except:
-                pass
+            except Exception as e:
+                # If URL fetch fails, extract domain as name
+                from urllib.parse import urlparse
+                parsed = urlparse(business_url)
+                domain = parsed.netloc.replace('www.', '').split('.')[0]
+                business_info['name'] = domain.title() + " Business"
+                print(f"URL fetch error: {e}")
         
         # Use AI for deeper analysis if available
         if ai_handler and ai_handler.has_ai_provider():
@@ -191,18 +200,22 @@ class handler(BaseHTTPRequestHandler):
                     'main_keywords': ai_analysis.get('main_keywords', [])
                 })
             else:
-                # AI failed, use defaults
+                # AI failed, check if real estate based on URL/description
+                is_real_estate = any(term in (business_url + business_description).lower() 
+                                   for term in ['real estate', 'property', 'investment', 'rental', 'realty'])
                 business_info.update({
-                    'industry': 'General',
-                    'target_audience': 'General audience',
-                    'content_types': ['blog posts', 'tutorials', 'guides']
+                    'industry': 'Real Estate' if is_real_estate else 'General',
+                    'target_audience': 'Real estate investors and agents' if is_real_estate else 'General audience',
+                    'content_types': ['analysis tools', 'calculators', 'guides'] if is_real_estate else ['blog posts', 'tutorials', 'guides']
                 })
         else:
-            # No AI, use defaults
+            # No AI, check if real estate
+            is_real_estate = any(term in (business_url + business_description).lower() 
+                               for term in ['real estate', 'property', 'investment', 'rental', 'realty'])
             business_info.update({
-                'industry': 'General',
-                'target_audience': 'General audience',
-                'content_types': ['blog posts', 'tutorials', 'guides']
+                'industry': 'Real Estate' if is_real_estate else 'General',
+                'target_audience': 'Real estate investors and agents' if is_real_estate else 'General audience',
+                'content_types': ['analysis tools', 'calculators', 'guides'] if is_real_estate else ['blog posts', 'tutorials', 'guides']
             })
         
         return {
