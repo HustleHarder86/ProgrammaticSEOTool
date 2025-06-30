@@ -867,10 +867,14 @@
             resultDiv.innerHTML = '<p class="loading"><span class="spinner"></span> Generating keyword variations from seeds...</p>';
             
             try {
-                // Get market context
-                const marketContext = document.getElementById('marketContext').value || '';
-                const locationList = document.getElementById('locationContext').value || '';
-                const additionalContext = document.getElementById('additionalContext').value || '';
+                // Get market context - with null checks
+                const marketContextEl = document.getElementById('marketContext');
+                const locationContextEl = document.getElementById('locationContext');
+                const additionalContextEl = document.getElementById('additionalContext');
+                
+                const marketContext = marketContextEl ? marketContextEl.value : '';
+                const locationList = locationContextEl ? locationContextEl.value : '';
+                const additionalContext = additionalContextEl ? additionalContextEl.value : '';
                 
                 console.log('Sending seed request with:', {
                     selectedSeeds,
