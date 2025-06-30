@@ -611,7 +611,7 @@
             loadSeedTemplates();
         };
         
-        function updateBusinessContext() {
+        function updateBusinessContext(event) {
             const marketContext = document.getElementById('marketContext').value;
             const locationContext = document.getElementById('locationContext').value;
             const additionalContext = document.getElementById('additionalContext').value;
@@ -645,8 +645,10 @@
             `;
             
             // Insert after the update button
-            const updateBtn = event.target;
-            updateBtn.parentNode.appendChild(contextDisplay);
+            const updateBtn = event ? event.target : document.querySelector('button[onclick*="updateBusinessContext"]');
+            if (updateBtn && updateBtn.parentNode) {
+                updateBtn.parentNode.appendChild(contextDisplay);
+            }
             
             // Disable inputs to show they've been saved
             document.getElementById('marketContext').style.background = '#f0fff4';
@@ -1154,7 +1156,7 @@
                                     style="width: 100%; padding: 8px; border: 1px solid #d9d9d9; border-radius: 4px;"></textarea>
                             </div>
                             
-                            <button onclick="updateBusinessContext()" style="background: #52c41a; margin-top: 10px;">
+                            <button onclick="updateBusinessContext(event)" style="background: #52c41a; margin-top: 10px;">
                                 ✓ Update Context
                             </button>
                         </div>
@@ -2103,6 +2105,7 @@
             
             return fallbackCosts[endpoint] || 0.005;
         }
+    }
     </script>
 </body>
 </html>
