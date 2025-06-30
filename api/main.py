@@ -288,6 +288,9 @@ class handler(BaseHTTPRequestHandler):
                 selected_seeds = data.get('selected_seeds', [])
                 location = data.get('location', 'Austin')
                 
+                print(f"Seed mode request - Selected seeds: {selected_seeds}")
+                print(f"Business info: {business_info}")
+                
                 # Map selected seeds to seed configurations
                 seed_configs = []
                 for seed_id in selected_seeds:
@@ -297,6 +300,8 @@ class handler(BaseHTTPRequestHandler):
                         "template_group": seed_id
                     })
                 
+                print(f"Seed configs: {seed_configs}")
+                
                 # Get market context from request
                 market_context = {
                     'location': data.get('location', 'online'),
@@ -304,8 +309,12 @@ class handler(BaseHTTPRequestHandler):
                     'market_region': data.get('market_context', '')
                 }
                 
+                print(f"Market context: {market_context}")
+                
                 # Generate from seeds with business info and market context
                 seed_results = sg.generate_from_seeds(seed_configs, business_info, market_context)
+                
+                print(f"Seed results summary: {seed_results.get('summary', {})}")
                 
                 return {
                     'success': True,
@@ -315,6 +324,8 @@ class handler(BaseHTTPRequestHandler):
                 }
             except Exception as e:
                 print(f"Seed generation error: {e}")
+                import traceback
+                traceback.print_exc()
                 # Fall back to regular generation
         
         # Try AI generation first

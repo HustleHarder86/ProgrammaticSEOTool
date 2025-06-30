@@ -828,6 +828,13 @@
                 const locationList = document.getElementById('locationContext').value || '';
                 const additionalContext = document.getElementById('additionalContext').value || '';
                 
+                console.log('Sending seed request with:', {
+                    selectedSeeds,
+                    businessInfo,
+                    marketContext,
+                    locationList
+                });
+                
                 const response = await fetch(`${API_URL}/api/generate-keywords`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -843,20 +850,25 @@
                 });
                 
                 const data = await response.json();
+                console.log('API Response:', data);
                 
                 if (data.seed_results) {
                     renderSeedResults(data.seed_results);
                     return;
+                } else if (data.keywords && data.keywords.length > 0) {
+                    // Fallback to regular keywords
+                    allKeywords = data.keywords;
+                    renderKeywords();
+                    updateStats();
+                    
+                    // Show cost estimate
+                    showCostNotification('generate_keywords', 0.0050);
+                } else {
+                    // No results
+                    resultDiv.innerHTML = `<div class="error">No keywords generated. Please check your seed selection and try again.</div>`;
                 }
-                
-                // Fallback to regular keywords
-                allKeywords = data.keywords;
-                renderKeywords();
-                updateStats();
-                
-                // Show cost estimate
-                showCostNotification('generate_keywords', 0.0050);
             } catch (error) {
+                console.error('Seed generation error:', error);
                 resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
             }
         }
