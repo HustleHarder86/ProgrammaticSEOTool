@@ -258,12 +258,62 @@ class KeywordOptimizer:
             # Default to B2B for your use case
             return "b2b_realtors"
 
+    def generate_multi_audience_projects(self, business_info: Dict, num_keywords_per_audience: int = 30) -> Dict[str, Any]:
+        """Generate separate keyword sets for B2B and B2C audiences"""
+        projects = {
+            "b2b_project": {
+                "name": "B2B - Real Estate Agents & Brokers",
+                "description": "Target real estate professionals who need tools for their investor clients",
+                "keywords": [],
+                "clusters": {},
+                "audience": "b2b_realtors"
+            },
+            "b2c_project": {
+                "name": "B2C - Property Investors",
+                "description": "Target individual property investors looking for analysis tools",
+                "keywords": [],
+                "clusters": {},
+                "audience": "investors"
+            }
+        }
+        
+        # Generate B2B keywords
+        b2b_info = business_info.copy()
+        b2b_info['target_audience_type'] = 'b2b_realtors'
+        projects["b2b_project"]["keywords"] = self.generate_real_estate_keywords(b2b_info, num_keywords_per_audience)
+        projects["b2b_project"]["clusters"] = self.generate_keyword_clusters(
+            projects["b2b_project"]["keywords"], 
+            "b2b_realtors"
+        )
+        
+        # Generate B2C keywords
+        b2c_info = business_info.copy()
+        b2c_info['target_audience_type'] = 'investors'
+        projects["b2c_project"]["keywords"] = self.generate_real_estate_keywords(b2c_info, num_keywords_per_audience)
+        projects["b2c_project"]["clusters"] = self.generate_keyword_clusters(
+            projects["b2c_project"]["keywords"], 
+            "investors"
+        )
+        
+        # Add summary statistics
+        projects["summary"] = {
+            "total_keywords": len(projects["b2b_project"]["keywords"]) + len(projects["b2c_project"]["keywords"]),
+            "b2b_keywords": len(projects["b2b_project"]["keywords"]),
+            "b2c_keywords": len(projects["b2c_project"]["keywords"]),
+            "recommended_approach": "Create separate content silos for each audience to maximize relevance and conversion"
+        }
+        
+        return projects
+
     def generate_real_estate_keywords(self, business_info: Dict, num_keywords: int = 50) -> List[Dict]:
         """Generate comprehensive real estate keywords based on target audience"""
         keywords = []
         
         # Detect target audience
-        target_audience = self.detect_target_audience(business_info)
+        if business_info.get('target_audience_type'):
+            target_audience = business_info['target_audience_type']
+        else:
+            target_audience = self.detect_target_audience(business_info)
         business_info['detected_audience'] = target_audience
         
         # Use appropriate patterns based on audience

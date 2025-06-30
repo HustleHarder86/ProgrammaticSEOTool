@@ -419,9 +419,9 @@
                 <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                     <select id="targetAudience" style="flex: 1;">
                         <option value="auto">Auto-detect Target Audience</option>
-                        <option value="b2b_realtors">B2B - Real Estate Agents/Realtors</option>
-                        <option value="investors">Property Investors</option>
-                        <option value="investors_realtors">Both Investors & Realtors</option>
+                        <option value="multi_project">🎯 Create Both B2B & B2C Projects</option>
+                        <option value="b2b_realtors">B2B Only - Real Estate Agents</option>
+                        <option value="investors">B2C Only - Property Investors</option>
                         <option value="home_buyers">Home Buyers</option>
                         <option value="b2b_saas">B2B SaaS Customers</option>
                         <option value="ecommerce">E-commerce Shoppers</option>
@@ -560,6 +560,8 @@
         let generationHistory = {}; // Track which keywords have been generated
         let keywordClusters = {}; // Store clustered keywords
         let clusterView = true; // Toggle between cluster and list view
+        let multiProjectMode = false;
+        let currentProjects = {}; // Store B2B and B2C projects
 
         // Initialize
         window.onload = () => {
@@ -577,13 +579,138 @@
             const remaining = selectedKeywords.filter(kw => !generationHistory[kw]).length;
             const generated = selectedKeywords.filter(kw => generationHistory[kw]).length;
             
-            document.getElementById('remainingKeywords').textContent = `${remaining} keywords remaining`;
+            if (document.getElementById('remainingKeywords')) {
+                document.getElementById('remainingKeywords').textContent = `${remaining} keywords remaining`;
+            }
             
-            if (generated > 0) {
+            if (generated > 0 && document.getElementById('previouslyGenerated')) {
                 const genSpan = document.getElementById('previouslyGenerated');
                 genSpan.style.display = 'inline';
                 genSpan.querySelector('strong').textContent = `${generated}`;
             }
+        }
+        
+        function renderMultiProjectKeywords(projects) {
+            const resultDiv = document.getElementById('keywordResult');
+            
+            let html = `
+                <div class="success" style="margin-bottom: 20px;">
+                    ✓ Generated ${projects.summary.total_keywords} keywords across 2 target audiences!
+                </div>
+                
+                <div style="background: #f7f9fc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3 style="margin: 0 0 10px 0;">📊 Multi-Project Summary</h3>
+                    <p style="margin: 5px 0;"><strong>B2B Keywords:</strong> ${projects.summary.b2b_keywords} for Real Estate Professionals</p>
+                    <p style="margin: 5px 0;"><strong>B2C Keywords:</strong> ${projects.summary.b2c_keywords} for Property Investors</p>
+                    <p style="margin: 10px 0 0 0; font-style: italic;">${projects.summary.recommended_approach}</p>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button onclick="selectProject('b2b')" id="b2bBtn" style="flex: 1;">
+                        🏢 View B2B Keywords
+                    </button>
+                    <button onclick="selectProject('b2c')" id="b2cBtn" style="flex: 1;">
+                        🏠 View B2C Keywords
+                    </button>
+                    <button onclick="selectProject('both')" id="bothBtn" style="flex: 1;">
+                        🎯 View Both Projects
+                    </button>
+                </div>
+                
+                <div id="projectContent"></div>
+            `;
+            
+            resultDiv.innerHTML = html;
+            
+            // Default to showing both
+            selectProject('both');
+        }
+        
+        function selectProject(type) {
+            // Update button states
+            document.getElementById('b2bBtn').style.background = type === 'b2b' ? '#667eea' : '#e2e8f0';
+            document.getElementById('b2cBtn').style.background = type === 'b2c' ? '#667eea' : '#e2e8f0';
+            document.getElementById('bothBtn').style.background = type === 'both' ? '#667eea' : '#e2e8f0';
+            
+            const contentDiv = document.getElementById('projectContent');
+            
+            if (type === 'both') {
+                // Show both projects side by side
+                contentDiv.innerHTML = `
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <h3>🏢 B2B - ${currentProjects.b2b_project.name}</h3>
+                            <p style="font-size: 0.9em; color: #666; margin-bottom: 15px;">${currentProjects.b2b_project.description}</p>
+                            ${renderProjectClusters(currentProjects.b2b_project, 'b2b')}
+                        </div>
+                        <div>
+                            <h3>🏠 B2C - ${currentProjects.b2c_project.name}</h3>
+                            <p style="font-size: 0.9em; color: #666; margin-bottom: 15px;">${currentProjects.b2c_project.description}</p>
+                            ${renderProjectClusters(currentProjects.b2c_project, 'b2c')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Show single project
+                const project = type === 'b2b' ? currentProjects.b2b_project : currentProjects.b2c_project;
+                const icon = type === 'b2b' ? '🏢' : '🏠';
+                
+                // Set allKeywords for other functions to work
+                allKeywords = project.keywords;
+                keywordClusters = project.clusters;
+                
+                contentDiv.innerHTML = `
+                    <h3>${icon} ${project.name}</h3>
+                    <p style="font-size: 0.9em; color: #666; margin-bottom: 15px;">${project.description}</p>
+                    ${renderProjectClusters(project, type)}
+                    
+                    <div style="margin-top: 20px;">
+                        <button onclick="generateContentForProject('${type}')" style="width: 100%;">
+                            📝 Generate Content for ${type.toUpperCase()} Keywords
+                        </button>
+                    </div>
+                `;
+                
+                // Enable content generation
+                document.getElementById('contentBtn').disabled = false;
+                updateStats();
+            }
+        }
+        
+        function renderProjectClusters(project, projectType) {
+            let html = '<div class="clusters-container">';
+            
+            Object.entries(project.clusters).forEach(([clusterId, cluster]) => {
+                const totalVolume = cluster.keywords.reduce((sum, k) => sum + k.search_volume, 0);
+                const avgCPC = (cluster.keywords.reduce((sum, k) => sum + k.cpc, 0) / cluster.keywords.length).toFixed(2);
+                
+                html += `
+                    <div class="cluster-card">
+                        <div class="cluster-header">
+                            <h4>${cluster.icon || '📁'} ${cluster.name}</h4>
+                            <span class="cluster-count">${cluster.keywords.length} keywords</span>
+                        </div>
+                        <div class="cluster-stats">
+                            <span>Total Volume: ${totalVolume.toLocaleString()}</span>
+                            <span>Avg CPC: $${avgCPC}</span>
+                        </div>
+                        <div class="cluster-keywords" style="max-height: 200px; overflow-y: auto;">
+                            ${cluster.keywords.slice(0, 5).map(kw => `
+                                <div class="keyword-preview" style="padding: 5px; border-bottom: 1px solid #eee;">
+                                    <div style="font-size: 0.9em;">${kw.keyword}</div>
+                                    <div style="font-size: 0.8em; color: #666;">
+                                        Vol: ${kw.search_volume} | Diff: ${kw.difficulty}% | CPC: $${kw.cpc}
+                                    </div>
+                                </div>
+                            `).join('')}
+                            ${cluster.keywords.length > 5 ? `<div style="padding: 5px; text-align: center; color: #667eea;">+${cluster.keywords.length - 5} more...</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            return html;
         }
 
         async function analyzeBusiness() {
@@ -653,17 +780,29 @@
             const resultDiv = document.getElementById('keywordResult');
             resultDiv.innerHTML = '<p class="loading"><span class="spinner"></span> Generating keywords with AI...</p>';
             
+            // Check if multi-project mode
+            multiProjectMode = businessInfo.target_audience_type === 'multi_project';
+            
             try {
                 const response = await fetch(`${API_URL}/api/generate-keywords`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         business_info: businessInfo,
-                        num_keywords: parseInt(num)
+                        num_keywords: parseInt(num),
+                        multi_project_mode: multiProjectMode
                     })
                 });
                 
                 const data = await response.json();
+                
+                if (data.multi_project) {
+                    // Handle multi-project response
+                    currentProjects = data.projects;
+                    renderMultiProjectKeywords(data.projects);
+                    return;
+                }
+                
                 allKeywords = data.keywords;
                 
                 // Filter by intent if needed

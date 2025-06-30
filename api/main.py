@@ -230,8 +230,19 @@ class handler(BaseHTTPRequestHandler):
             # Check if we should use enhanced real estate generation
             industry = business_info.get('industry', '').lower()
             if ko and 'real estate' in industry:
-                # Get full keyword objects from optimizer
-                keywords = ko.generate_real_estate_keywords(business_info, num_keywords)
+                # Check if multi-project mode is requested
+                if data.get('multi_project_mode', False):
+                    # Generate separate B2B and B2C projects
+                    multi_projects = ko.generate_multi_audience_projects(business_info, num_keywords // 2)
+                    return {
+                        'success': True,
+                        'multi_project': True,
+                        'projects': multi_projects,
+                        'ai_generated': True
+                    }
+                else:
+                    # Get full keyword objects from optimizer
+                    keywords = ko.generate_real_estate_keywords(business_info, num_keywords)
             else:
                 # Standard AI generation
                 ai_keywords = ai_handler.generate_keywords_with_ai(business_info, num_keywords)
