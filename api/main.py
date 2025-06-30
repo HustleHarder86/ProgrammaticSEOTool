@@ -67,10 +67,10 @@ class handler(BaseHTTPRequestHandler):
                     self.wfile.write(b'<h1>Programmatic SEO Tool</h1><p>API is running.</p>')
             return
         
-        # Redirect root to app
+        # Redirect root to pro version
         if path == '/' or path == '':
             self.send_response(302)
-            self.send_header('Location', '/app')
+            self.send_header('Location', '/pro')
             self.send_header('Cache-Control', 'no-cache')
             self.end_headers()
             return
