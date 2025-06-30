@@ -1,0 +1,68 @@
+# Development files
+*.pyc
+__pycache__/
+.env
+.env.local
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local directories
+venv/
+env/
+.venv/
+cache/
+exports/
+temp/
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Tests
+tests/
+test_*.py
+*_test.py
+
+# Development scripts
+run_local.py
+init_db.py
+
+# UI files (not needed for API deployment)
+streamlit_app.py
+.streamlit/
+
+# Development dependencies
+requirements.txt
+requirements-dev.txt
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Git files
+.git/
+.gitignore
+
+# Other non-essential files
+.dockerignore
+Dockerfile
+docker-compose.yml
+.github/
