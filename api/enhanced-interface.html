@@ -920,6 +920,8 @@
         function renderSeedResults(seedResults) {
             const resultDiv = document.getElementById('keywordResult');
             
+            console.log('Rendering seed results:', seedResults);
+            
             let html = `
                 <div class="success" style="margin-bottom: 20px;">
                     ✓ Generated ${seedResults.summary.total_variations.toLocaleString()} keyword variations!
@@ -979,13 +981,17 @@
                     ${seedResults.keywords.length > 50 ? `<p style="margin: 10px 0 0 0; color: #666; font-style: italic;">...and ${(seedResults.keywords.length - 50).toLocaleString()} more keywords</p>` : ''}
                 </div>
                 
-                <div style="margin-top: 20px;">
+                <div style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <button onclick="downloadSeedKeywords()" style="width: 100%;">
-                        📥 Download All ${seedResults.summary.total_variations.toLocaleString()} Keywords
+                        📥 Download All ${seedResults.keywords.length} Keywords
+                    </button>
+                    <button onclick="proceedToClusterView()" style="width: 100%; background: #52c41a;">
+                        📊 View Keywords in Clusters
                     </button>
                 </div>
             `;
             
+            // Show the initial results summary
             resultDiv.innerHTML = html;
             
             // Store for content generation
@@ -998,17 +1004,26 @@
                 seed_category: k.seed_category
             }));
             
+            console.log(`Total keywords stored: ${allKeywords.length}`);
+            
+            // Enable buttons
             document.getElementById('contentBtn').disabled = false;
-            updateStats();
-            
-            // Automatically cluster the keywords
-            clusterView = true;
-            document.getElementById('clusterMethod').value = 'semantic'; // Use semantic clustering for seed results
-            clusterKeywords();
-            
-            // Show cluster view
             document.getElementById('viewToggleBtn').style.display = 'inline-block';
             document.getElementById('selectAllBtn').style.display = 'inline-block';
+            
+            updateStats();
+            
+            // Show the keywords in cluster view
+            if (allKeywords.length > 50) {
+                // For many keywords, use cluster view
+                clusterView = true;
+                document.getElementById('clusterMethod').value = 'semantic';
+                clusterKeywords();
+            } else {
+                // For fewer keywords, show list view
+                clusterView = false;
+                renderKeywords();
+            }
             
             // Show success message
             showCostNotification('generate_keywords_seed', 0.0050);
@@ -1977,6 +1992,13 @@
             };
             
             return icons[pattern] || '📊';
+        }
+        
+        function proceedToClusterView() {
+            // Clear the summary and show clustered keywords
+            clusterView = true;
+            document.getElementById('clusterMethod').value = 'semantic';
+            clusterKeywords();
         }
         
         function downloadSeedKeywords() {

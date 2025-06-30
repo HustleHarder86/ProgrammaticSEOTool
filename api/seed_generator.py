@@ -364,8 +364,13 @@ class SeedKeywordGenerator:
                 results["summary"]["by_category"][category] = 0
             results["summary"]["by_category"][category] += variation_count
             
-            # Generate sample keywords (first 10 from each seed)
-            generated = self._generate_keywords_from_config(config, limit=10)
+            # Generate keywords (limit based on total variations)
+            # For large variation counts, generate a reasonable sample
+            max_per_seed = min(variation_count, 500)  # Cap at 500 per seed to avoid timeout
+            generated = self._generate_keywords_from_config(config, limit=max_per_seed)
+            
+            print(f"Generated {len(generated)} keywords for category '{category}'")
+            
             for kw in generated:
                 results["keywords"].append({
                     "keyword": kw,
