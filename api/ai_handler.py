@@ -8,10 +8,11 @@ class AIHandler:
     def __init__(self):
         self.openai_key = os.environ.get('OPENAI_API_KEY')
         self.anthropic_key = os.environ.get('ANTHROPIC_API_KEY')
+        self.perplexity_key = os.environ.get('PerplexityAPI')
         
     def has_ai_provider(self):
         """Check if at least one AI provider is configured"""
-        return bool(self.openai_key or self.anthropic_key)
+        return bool(self.openai_key or self.anthropic_key or self.perplexity_key)
     
     def generate_with_openai(self, prompt, max_tokens=500):
         """Generate content using OpenAI API"""
@@ -73,9 +74,44 @@ class AIHandler:
             print(f"Anthropic error: {e}")
             return None
     
+    def generate_with_perplexity(self, prompt, max_tokens=500):
+        """Generate content using Perplexity API"""
+        if not self.perplexity_key:
+            return None
+            
+        headers = {
+            'Authorization': f'Bearer {self.perplexity_key}',
+            'Content-Type': 'application/json'
+        }
+        
+        data = {
+            'model': 'llama-3.1-sonar-small-128k-online',  # Good for SEO research
+            'messages': [{'role': 'user', 'content': prompt}],
+            'max_tokens': max_tokens,
+            'temperature': 0.7
+        }
+        
+        try:
+            req = Request('https://api.perplexity.ai/chat/completions',
+                         data=json.dumps(data).encode(),
+                         headers=headers,
+                         method='POST')
+            
+            with urlopen(req, timeout=30) as response:
+                result = json.loads(response.read().decode())
+                return result['choices'][0]['message']['content']
+        except Exception as e:
+            print(f"Perplexity error: {e}")
+            return None
+    
     def generate(self, prompt, max_tokens=500):
         """Generate content using available AI provider"""
-        # Try OpenAI first
+        # Try Perplexity first (good for SEO/web research)
+        result = self.generate_with_perplexity(prompt, max_tokens)
+        if result:
+            return result
+            
+        # Try OpenAI
         result = self.generate_with_openai(prompt, max_tokens)
         if result:
             return result

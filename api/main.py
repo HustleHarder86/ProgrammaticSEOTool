@@ -83,6 +83,7 @@ class handler(BaseHTTPRequestHandler):
                     'has_firebase_config': bool(os.environ.get('FIREBASE_PROJECT_ID')),
                     'has_openai': bool(os.environ.get('OPENAI_API_KEY')),
                     'has_anthropic': bool(os.environ.get('ANTHROPIC_API_KEY')),
+                    'has_perplexity': bool(os.environ.get('PerplexityAPI')),
                 },
                 'python_version': sys.version,
                 'current_time': datetime.now().isoformat()
