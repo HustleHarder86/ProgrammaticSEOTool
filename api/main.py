@@ -3,7 +3,8 @@ from http.server import BaseHTTPRequestHandler
 import json
 import os
 from urllib.parse import urlparse, parse_qs
-import requests
+from urllib.request import urlopen
+from urllib.error import URLError
 from datetime import datetime
 
 class handler(BaseHTTPRequestHandler):
@@ -92,13 +93,14 @@ class handler(BaseHTTPRequestHandler):
         # Simple analysis without heavy dependencies
         if business_url:
             try:
-                # Basic URL fetch without BeautifulSoup
-                resp = requests.get(business_url, timeout=5)
-                title = "Business Website"
-                if '<title>' in resp.text:
-                    start = resp.text.find('<title>') + 7
-                    end = resp.text.find('</title>')
-                    title = resp.text[start:end] if end > start else title
+                # Basic URL fetch using urllib
+                with urlopen(business_url, timeout=5) as response:
+                    html = response.read().decode('utf-8')
+                    title = "Business Website"
+                    if '<title>' in html:
+                        start = html.find('<title>') + 7
+                        end = html.find('</title>')
+                        title = html[start:end] if end > start else title
                 
                 return {
                     'success': True,
