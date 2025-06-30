@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Usage Dashboard - Programmatic SEO Tool</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: #f0f2f5; 
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        
+        .header {
+            background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(24, 144, 255, 0.2);
+        }
+        .header h1 { font-size: 2.2em; margin-bottom: 10px; }
+        .header p { opacity: 0.9; }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+        .metric-card:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #1890ff;
+            margin: 10px 0;
+        }
+        .metric-label {
+            color: #8c8c8c;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .metric-change {
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+        .metric-change.positive { color: #52c41a; }
+        .metric-change.negative { color: #f5222d; }
+        
+        .chart-section {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .chart-section h2 {
+            margin-bottom: 20px;
+            color: #262626;
+            font-size: 1.4em;
+        }
+        
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+        
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 250px;
+            border-bottom: 2px solid #f0f0f0;
+            margin-bottom: 10px;
+        }
+        
+        .bar {
+            flex: 1;
+            margin: 0 5px;
+            background: #1890ff;
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .bar:hover {
+            background: #40a9ff;
+            transform: scaleY(1.05);
+        }
+        
+        .bar-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8em;
+            color: #8c8c8c;
+            white-space: nowrap;
+        }
+        
+        .bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8em;
+            font-weight: bold;
+            color: #262626;
+            white-space: nowrap;
+        }
+        
+        .endpoint-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .endpoint-table th {
+            background: #fafafa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #595959;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .endpoint-table td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .endpoint-table tr:hover {
+            background: #f5f5f5;
+        }
+        
+        .cost-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .cost-low { background: #f6ffed; color: #52c41a; }
+        .cost-medium { background: #fff7e6; color: #fa8c16; }
+        .cost-high { background: #fff1f0; color: #f5222d; }
+        
+        .pricing-info {
+            background: #e6f7ff;
+            border: 1px solid #91d5ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .pricing-info h3 {
+            color: #0050b3;
+            margin-bottom: 10px;
+        }
+        
+        .refresh-btn {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .refresh-btn:hover {
+            background: #40a9ff;
+            transform: translateY(-1px);
+        }
+        
+        .last-updated {
+            color: #8c8c8c;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+        
+        .projection-warning {
+            background: #fff7e6;
+            border: 1px solid #ffd591;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+        .projection-warning strong {
+            color: #ad6800;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 API Usage Dashboard</h1>
+            <p>Track your Perplexity API usage and estimated costs</p>
+            <button class="refresh-btn" onclick="refreshDashboard()" style="margin-top: 15px;">
+                🔄 Refresh Data
+            </button>
+            <div class="last-updated" id="lastUpdated"></div>
+        </div>
+
+        <!-- Summary Metrics -->
+        <div class="dashboard-grid">
+            <div class="metric-card">
+                <div class="metric-label">Today's Cost</div>
+                <div class="metric-value" id="todayCost">$0.00</div>
+                <div class="metric-change" id="todayRequests">0 requests</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">Month to Date</div>
+                <div class="metric-value" id="monthCost">$0.00</div>
+                <div class="metric-change" id="monthRequests">0 requests</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">Projected Monthly</div>
+                <div class="metric-value" id="projectedCost">$0.00</div>
+                <div class="metric-change">Based on current usage</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">All Time Total</div>
+                <div class="metric-value" id="totalCost">$0.00</div>
+                <div class="metric-change" id="totalRequests">0 total requests</div>
+            </div>
+        </div>
+
+        <!-- 7-Day Chart -->
+        <div class="chart-section">
+            <h2>📈 Last 7 Days Usage</h2>
+            <div class="chart-container">
+                <div class="bar-chart" id="weekChart"></div>
+            </div>
+        </div>
+
+        <!-- Endpoint Breakdown -->
+        <div class="chart-section">
+            <h2>🎯 Cost by Endpoint</h2>
+            <table class="endpoint-table">
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Description</th>
+                        <th>Requests</th>
+                        <th>Total Cost</th>
+                        <th>Avg Cost/Request</th>
+                    </tr>
+                </thead>
+                <tbody id="endpointTable">
+                    <!-- Will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Today's Activity -->
+        <div class="chart-section">
+            <h2>📅 Today's Activity Breakdown</h2>
+            <div id="todayBreakdown">
+                <!-- Will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Pricing Information -->
+        <div class="chart-section">
+            <h2>💰 Pricing Information</h2>
+            <div class="pricing-info">
+                <h3>Perplexity API Estimated Costs</h3>
+                <p><strong>Note:</strong> These are estimated costs based on typical token usage. Actual costs may vary.</p>
+                <ul style="margin-top: 10px; list-style: none;">
+                    <li>📊 <strong>Analyze Business:</strong> ~$0.0005 per analysis (500 tokens avg)</li>
+                    <li>🔍 <strong>Generate Keywords:</strong> ~$0.0003 per batch (300 tokens avg)</li>
+                    <li>🌱 <strong>Seed Keywords:</strong> ~$0.0001 per request (100 tokens avg)</li>
+                    <li>📝 <strong>Generate Content:</strong> ~$0.002 per article (2000 tokens avg)</li>
+                </ul>
+            </div>
+            
+            <div class="projection-warning">
+                <strong>⚠️ Cost Projection Notice:</strong> The projected monthly cost is based on your average daily usage. 
+                Actual costs will depend on your usage patterns and may vary significantly if you increase or decrease usage.
+            </div>
+        </div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        const API_URL = window.location.origin;
+        let dashboardData = null;
+
+        async function refreshDashboard() {
+            try {
+                const response = await fetch(`${API_URL}/api/usage-dashboard`);
+                dashboardData = await response.json();
+                updateDashboard();
+                
+                // Update last refreshed time
+                document.getElementById('lastUpdated').textContent = 
+                    `Last updated: ${new Date().toLocaleTimeString()}`;
+            } catch (error) {
+                console.error('Error fetching dashboard data:', error);
+            }
+        }
+
+        function updateDashboard() {
+            if (!dashboardData) return;
+            
+            const { summary, last_7_days, endpoint_breakdown, today_breakdown } = dashboardData;
+            
+            // Update summary metrics
+            document.getElementById('todayCost').textContent = `$${summary.today_cost.toFixed(4)}`;
+            document.getElementById('todayRequests').textContent = `${summary.today_requests} requests`;
+            
+            document.getElementById('monthCost').textContent = `$${summary.month_cost.toFixed(2)}`;
+            document.getElementById('monthRequests').textContent = `${summary.month_requests} requests`;
+            
+            document.getElementById('projectedCost').textContent = `$${summary.projected_monthly_cost.toFixed(2)}`;
+            
+            document.getElementById('totalCost').textContent = `$${summary.total_cost.toFixed(2)}`;
+            document.getElementById('totalRequests').textContent = `${summary.total_requests} total requests`;
+            
+            // Update 7-day chart
+            updateWeekChart(last_7_days);
+            
+            // Update endpoint table
+            updateEndpointTable(endpoint_breakdown);
+            
+            // Update today's breakdown
+            updateTodayBreakdown(today_breakdown);
+        }
+
+        function updateWeekChart(data) {
+            const chartDiv = document.getElementById('weekChart');
+            chartDiv.innerHTML = '';
+            
+            // Find max value for scaling
+            const maxCost = Math.max(...data.map(d => d.cost), 0.01);
+            
+            data.reverse().forEach(day => {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                bar.style.height = `${(day.cost / maxCost) * 200}px`;
+                
+                const value = document.createElement('div');
+                value.className = 'bar-value';
+                value.textContent = `$${day.cost.toFixed(3)}`;
+                bar.appendChild(value);
+                
+                const label = document.createElement('div');
+                label.className = 'bar-label';
+                const date = new Date(day.date);
+                label.textContent = date.toLocaleDateString('en-US', { weekday: 'short' });
+                bar.appendChild(label);
+                
+                bar.addEventListener('mouseenter', (e) => {
+                    showTooltip(e, `${day.date}: ${day.requests} requests, $${day.cost.toFixed(4)}`);
+                });
+                bar.addEventListener('mouseleave', hideTooltip);
+                
+                chartDiv.appendChild(bar);
+            });
+        }
+
+        function updateEndpointTable(endpoints) {
+            const tbody = document.getElementById('endpointTable');
+            tbody.innerHTML = '';
+            
+            if (endpoints.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #8c8c8c;">No API usage yet</td></tr>';
+                return;
+            }
+            
+            endpoints.forEach(endpoint => {
+                const row = document.createElement('tr');
+                
+                const costClass = endpoint.cost < 0.01 ? 'cost-low' : 
+                                 endpoint.cost < 0.1 ? 'cost-medium' : 'cost-high';
+                
+                row.innerHTML = `
+                    <td><strong>${endpoint.endpoint}</strong></td>
+                    <td>${endpoint.description}</td>
+                    <td>${endpoint.count}</td>
+                    <td><span class="cost-badge ${costClass}">$${endpoint.cost.toFixed(4)}</span></td>
+                    <td>$${endpoint.avg_cost.toFixed(4)}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateTodayBreakdown(breakdown) {
+            const container = document.getElementById('todayBreakdown');
+            
+            if (Object.keys(breakdown).length === 0) {
+                container.innerHTML = '<p style="color: #8c8c8c;">No activity today yet</p>';
+                return;
+            }
+            
+            let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">';
+            
+            for (const [endpoint, data] of Object.entries(breakdown)) {
+                html += `
+                    <div style="background: #f5f5f5; padding: 15px; border-radius: 6px;">
+                        <strong>${endpoint}</strong>
+                        <div style="margin-top: 8px; font-size: 0.9em; color: #595959;">
+                            <div>Requests: ${data.count}</div>
+                            <div>Tokens: ${data.tokens || 0}</div>
+                            <div>Cost: $${data.cost.toFixed(4)}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function showTooltip(event, text) {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.textContent = text;
+            tooltip.style.display = 'block';
+            tooltip.style.left = event.pageX + 10 + 'px';
+            tooltip.style.top = event.pageY - 30 + 'px';
+        }
+
+        function hideTooltip() {
+            document.getElementById('tooltip').style.display = 'none';
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(refreshDashboard, 30000);
+        
+        // Initial load
+        refreshDashboard();
+    </script>
+</body>
+</html>

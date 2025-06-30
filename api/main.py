@@ -16,6 +16,12 @@ try:
 except:
     ai_handler = None
 
+# Import usage tracker
+try:
+    from .usage_tracker import usage_tracker
+except:
+    usage_tracker = None
+
 class handler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         """Handle CORS preflight requests"""
@@ -75,6 +81,21 @@ class handler(BaseHTTPRequestHandler):
             self.end_headers()
             return
         
+        # Serve dashboard at /dashboard
+        if path == '/dashboard':
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            
+            # Read and serve the dashboard HTML file
+            html_path = os.path.join(os.path.dirname(__file__), 'dashboard.html')
+            try:
+                with open(html_path, 'r') as f:
+                    self.wfile.write(f.read().encode())
+            except:
+                self.wfile.write(b'<h1>Dashboard</h1><p>Error loading dashboard.</p>')
+            return
+        
         # JSON responses for API endpoints
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
@@ -98,6 +119,12 @@ class handler(BaseHTTPRequestHandler):
             }
         elif path == '/health':
             response = {'status': 'healthy', 'timestamp': datetime.now().isoformat()}
+        elif path == '/api/usage-dashboard':
+            # Get dashboard data
+            if usage_tracker:
+                response = usage_tracker.get_dashboard_data()
+            else:
+                response = {'error': 'Usage tracking not available'}
         elif path == '/api/projects':
             # In production, this would fetch from Firebase
             response = {
@@ -192,6 +219,9 @@ class handler(BaseHTTPRequestHandler):
         # Use AI for deeper analysis if available
         if ai_handler and ai_handler.has_ai_provider():
             ai_analysis = ai_handler.analyze_business_with_ai(business_info)
+            # Track API usage
+            if usage_tracker:
+                usage_tracker.track_usage('analyze_business')
             if ai_analysis:
                 business_info.update({
                     'industry': ai_analysis.get('industry', 'General'),
@@ -286,6 +316,9 @@ class handler(BaseHTTPRequestHandler):
                 
                 # If seed suggestions requested, return them
                 if data.get('get_suggestions', False):
+                    # Track minimal usage for suggestions
+                    if usage_tracker:
+                        usage_tracker.track_usage('generate_keywords_seed')
                     return {
                         'success': True,
                         'seed_suggestions': seed_suggestions,
@@ -311,6 +344,9 @@ class handler(BaseHTTPRequestHandler):
             else:
                 # Standard AI generation
                 ai_keywords = ai_handler.generate_keywords_with_ai(business_info, num_keywords)
+                # Track usage
+                if usage_tracker:
+                    usage_tracker.track_usage('generate_keywords')
                 if ai_keywords:
                     # Convert AI keywords to structured format
                     for i, kw in enumerate(ai_keywords):
@@ -363,6 +399,9 @@ class handler(BaseHTTPRequestHandler):
             if ai_handler and ai_handler.has_ai_provider():
                 # Pass all keywords for internal linking
                 ai_content = ai_handler.generate_content_with_ai(keyword, business_info)
+                # Track usage - one API call per content piece
+                if usage_tracker:
+                    usage_tracker.track_usage('generate_content')
                 if ai_content:
                     # Enhance with internal links
                     enhanced_content = ai_content.get('content', ai_content.get('intro', ''))

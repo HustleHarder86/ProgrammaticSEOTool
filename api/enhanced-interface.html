@@ -391,6 +391,11 @@
         <div class="header">
             <h1>🚀 Programmatic SEO Tool Pro</h1>
             <p>Generate hundreds of SEO-optimized pages with AI-powered content</p>
+            <div style="margin-top: 15px;">
+                <a href="/dashboard" target="_blank" style="color: white; text-decoration: none; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 6px; display: inline-block;">
+                    📊 View API Usage Dashboard →
+                </a>
+            </div>
         </div>
 
         <!-- Stats Dashboard -->
@@ -832,6 +837,10 @@
                 allKeywords = data.keywords;
                 renderKeywords();
                 updateStats();
+                
+                // Show cost estimate
+                const costPerBatch = 0.0003;
+                showCostNotification('generate_keywords', costPerBatch);
             } catch (error) {
                 resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
             }
@@ -1157,6 +1166,9 @@
                 // Load intelligent seed templates based on business
                 await loadSeedTemplates();
                 
+                // Show cost estimate
+                showCostNotification('analyze_business', 0.0005);
+                
             } catch (error) {
                 resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
             }
@@ -1381,6 +1393,10 @@
                 if (document.getElementById('projectName').value) {
                     saveProject(true); // Silent save
                 }
+                
+                // Show cost for content generation
+                const contentCost = keywordsToGenerate.length * 0.002;
+                showCostNotification(`generate ${keywordsToGenerate.length} articles`, contentCost);
             } catch (error) {
                 resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
             }
@@ -2010,6 +2026,48 @@
                 renderKeywords();
             }
         }
+        
+        // Cost notification function
+        function showCostNotification(action, cost) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: #52c41a;
+                color: white;
+                padding: 12px 20px;
+                border-radius: 6px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.innerHTML = `
+                💰 API Cost: $${cost.toFixed(4)} 
+                <span style="opacity: 0.8; font-size: 0.9em;">(${action.replace(/_/g, ' ')})</span>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+        
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(400px); }
+                to { transform: translateX(0); }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); }
+                to { transform: translateX(400px); }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>
