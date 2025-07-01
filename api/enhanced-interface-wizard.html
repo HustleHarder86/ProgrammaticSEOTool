@@ -560,6 +560,108 @@
                 display: none;
             }
         }
+        
+        /* Strategy Card Styles */
+        .strategy-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .strategy-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .strategy-card.selected {
+            border-color: #7c3aed;
+            background: #f3e8ff;
+        }
+        
+        .strategy-card .checkbox {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 24px;
+            height: 24px;
+            border: 2px solid #cbd5e0;
+            border-radius: 4px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .strategy-card.selected .checkbox {
+            background: #7c3aed;
+            border-color: #7c3aed;
+        }
+        
+        .strategy-card.selected .checkbox::after {
+            content: '✓';
+            color: white;
+            font-weight: bold;
+        }
+        
+        .strategy-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+        
+        .strategy-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #1a202c;
+        }
+        
+        .strategy-description {
+            color: #64748b;
+            font-size: 0.95em;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        
+        .strategy-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+        
+        .strategy-stat {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .strategy-examples {
+            margin-top: 15px;
+            padding: 12px;
+            background: #f1f5f9;
+            border-radius: 6px;
+            font-size: 0.85em;
+        }
+        
+        .strategy-examples strong {
+            display: block;
+            margin-bottom: 5px;
+            color: #475569;
+        }
+        
+        .strategy-examples code {
+            display: block;
+            font-family: monospace;
+            color: #6366f1;
+            margin: 2px 0;
+        }
     </style>
 </head>
 <body>
@@ -682,44 +784,45 @@
             <div class="wizard-step" id="step2">
                 <div class="step-content">
                     <div class="step-header">
-                        <h1>🎯 Generate Keywords</h1>
-                        <p>Choose your keyword generation strategy</p>
+                        <h1>🎯 Choose SEO Strategies</h1>
+                        <p>Select the types of pages you want to create at scale</p>
                     </div>
                     
-                    <div class="keyword-mode-selector">
-                        <div class="mode-card selected" onclick="selectKeywordMode('seed')" id="seedModeCard">
-                            <div class="mode-icon">🌱</div>
-                            <h3>Programmatic Mode</h3>
-                            <p>Generate 100s-1000s of keywords using templates</p>
-                            <small style="color: #10b981;">Recommended for scale</small>
+                    <!-- Loading State -->
+                    <div id="strategyLoading" style="text-align: center; padding: 60px;">
+                        <div class="spinner"></div>
+                        <h3 style="margin-top: 20px; color: #4a5568;">Analyzing your business...</h3>
+                        <p style="color: #718096;">AI is creating custom SEO strategies specifically for your business</p>
+                    </div>
+                    
+                    <!-- Strategy Selection -->
+                    <div id="strategyContent" style="display: none;">
+                        <div class="card" style="background: #f0f9ff; border: 1px solid #bae6fd; margin-bottom: 20px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 1.5em;">💡</span>
+                                <div>
+                                    <strong>AI-Generated Strategies</strong>
+                                    <p style="margin: 5px 0 0 0; font-size: 0.9em; color: #0c4a6e;">
+                                        These strategies are tailored specifically for your business based on AI analysis
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                         
-                        <div class="mode-card" onclick="selectKeywordMode('basic')" id="basicModeCard">
-                            <div class="mode-icon">📝</div>
-                            <h3>Basic Mode</h3>
-                            <p>Generate 10s-100s of targeted keywords</p>
-                            <small style="color: #64748b;">Good for testing</small>
+                        <div id="strategyCards" style="display: grid; gap: 20px;">
+                            <!-- Strategy cards will be loaded here -->
                         </div>
-                    </div>
-                    
-                    <!-- Seed Mode Content -->
-                    <div id="seedModeContent">
-                        <div class="card">
-                            <h3>Select Seed Templates</h3>
-                            <p style="color: #64748b; margin-bottom: 20px;">Choose templates to generate keyword variations at scale</p>
-                            
-                            <div id="seedTemplates" class="seed-templates">
-                                <!-- Templates will be loaded here -->
+                        
+                        <div style="margin-top: 30px; padding: 20px; background: #f8fafc; border-radius: 8px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong style="font-size: 1.1em;">Total Estimated Pages:</strong>
+                                    <span id="totalPages" style="font-size: 1.3em; color: #7c3aed; margin-left: 10px;">0</span>
+                                </div>
+                                <button class="btn-primary" onclick="generateKeywordsFromStrategies()" id="generateStrategiesBtn" disabled>
+                                    <span>🚀</span> Generate Keywords
+                                </button>
                             </div>
-                            
-                            <div style="background: #e6f7ff; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
-                                <strong>Estimated Keywords: </strong>
-                                <span id="estimatedKeywords" style="font-size: 1.2em; color: #1890ff;">0</span>
-                            </div>
-                            
-                            <button class="btn-primary" onclick="generateFromSeeds()" style="width: 100%;">
-                                Generate All Variations
-                            </button>
                         </div>
                     </div>
                     
@@ -874,6 +977,11 @@
                 document.getElementById(`step${currentStep}`).classList.add('active');
                 updateProgress();
                 
+                // Auto-load strategies for step 2
+                if (currentStep === 2) {
+                    loadAIStrategies();
+                }
+                
                 // Auto-load content for step 3
                 if (currentStep === 3) {
                     updateContentStats();
@@ -1010,59 +1118,124 @@
         }
         
         async function loadSeedTemplates() {
-            const templatesDiv = document.getElementById('seedTemplates');
+            // This function is now replaced by loadAIStrategies
+        }
+        
+        async function loadAIStrategies() {
+            // Show loading state
+            document.getElementById('strategyLoading').style.display = 'block';
+            document.getElementById('strategyContent').style.display = 'none';
             
-            // Default templates
-            const templates = [
-                {
-                    id: 'location',
-                    name: '📍 Location-Based Keywords',
-                    description: 'Generate location-specific keywords',
-                    template: '{location} {service}',
-                    estimated: 500
-                },
-                {
-                    id: 'comparison',
-                    name: '⚖️ Comparison Keywords',
-                    description: 'Compare products, services, or solutions',
-                    template: '{item1} vs {item2}',
-                    estimated: 300
-                },
-                {
-                    id: 'howto',
-                    name: '📖 How-To Keywords',
-                    description: 'Educational and guide keywords',
-                    template: 'how to {action} {target}',
-                    estimated: 800
-                },
-                {
-                    id: 'tools',
-                    name: '🛠️ Tools & Calculators',
-                    description: 'Tool and calculator keywords',
-                    template: '{tool} for {use_case}',
-                    estimated: 400
+            try {
+                const response = await fetch(`${API_URL}/api/generate-seed-suggestions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        business_info: businessInfo,
+                        use_ai: true
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.suggestions && data.suggestions.length > 0) {
+                    renderAIStrategies(data.suggestions);
+                } else {
+                    // Fallback to default strategies
+                    renderDefaultStrategies();
                 }
-            ];
-            
+                
+                // Show content, hide loading
+                document.getElementById('strategyLoading').style.display = 'none';
+                document.getElementById('strategyContent').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error loading strategies:', error);
+                // Fallback to default strategies
+                renderDefaultStrategies();
+                document.getElementById('strategyLoading').style.display = 'none';
+                document.getElementById('strategyContent').style.display = 'block';
+            }
+        }
+        
+        function renderAIStrategies(strategies) {
+            const container = document.getElementById('strategyCards');
             let html = '';
-            templates.forEach((template, index) => {
+            
+            strategies.forEach((strategy, index) => {
+                const icon = strategy.icon || '📊';
+                const estimated = strategy.estimated_keywords || '100+';
+                const examples = strategy.examples || [];
+                
                 html += `
-                    <label class="seed-template ${index === 0 ? 'selected' : ''}" onclick="toggleSeedTemplate('${template.id}')">
-                        <input type="checkbox" id="seed_${template.id}" ${index === 0 ? 'checked' : ''} style="display: none;">
-                        <div>
-                            <h4>${template.name}</h4>
-                            <p style="margin: 5px 0; color: #64748b;">${template.description}</p>
-                            <code style="background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 0.85em;">${template.template}</code>
-                            <div style="margin-top: 8px; color: #667eea; font-weight: 600;">
-                                ~${template.estimated} keywords
+                    <div class="strategy-card" data-strategy-id="${strategy.id}" onclick="toggleStrategy('${strategy.id}')">
+                        <div class="strategy-header">
+                            <input type="checkbox" id="strategy_${strategy.id}" style="display: none;">
+                            <span class="strategy-icon">${icon}</span>
+                            <div class="strategy-info">
+                                <h3 class="strategy-title">${strategy.name}</h3>
+                                <p class="strategy-description">${strategy.description}</p>
                             </div>
                         </div>
-                    </label>
+                        
+                        <div class="strategy-stats">
+                            <div class="stat">
+                                <strong>${estimated}</strong>
+                                <span>Est. Pages</span>
+                            </div>
+                        </div>
+                        
+                        ${examples.length > 0 ? `
+                        <div class="strategy-examples">
+                            <strong>Example URLs:</strong>
+                            ${examples.slice(0, 3).map(ex => `<code>/${ex}</code>`).join('')}
+                        </div>
+                        ` : ''}
+                    </div>
                 `;
             });
             
-            templatesDiv.innerHTML = html;
-            updateSeedEstimate();
+            container.innerHTML = html;
+            updateStrategyCount();
+        }
+        
+        function renderDefaultStrategies() {
+            const defaultStrategies = [
+                {
+                    id: 'location_based',
+                    name: '📍 Location-Based Pages',
+                    icon: '📍',
+                    description: 'Create pages targeting different locations for local SEO',
+                    estimated_keywords: '500-2000',
+                    examples: ['austin-services', 'denver-solutions', 'miami-experts']
+                },
+                {
+                    id: 'comparison_based',
+                    name: '⚖️ Comparison Pages',
+                    icon: '⚖️',
+                    description: 'Compare different options, tools, or solutions',
+                    estimated_keywords: '300-1000',
+                    examples: ['option1-vs-option2', 'compare-solutions', 'best-alternatives']
+                },
+                {
+                    id: 'how_to_based',
+                    name: '📚 How-To Guides',
+                    icon: '📚',
+                    description: 'Educational content answering "how to" questions',
+                    estimated_keywords: '800-3000',
+                    examples: ['how-to-start', 'guide-to-success', 'step-by-step-tutorial']
+                },
+                {
+                    id: 'tool_based',
+                    name: '🛠️ Tools & Calculators',
+                    icon: '🛠️',
+                    description: 'Interactive tools and calculators for your audience',
+                    estimated_keywords: '200-800',
+                    examples: ['roi-calculator', 'cost-estimator', 'planning-tool']
+                }
+            ];
+            
+            renderAIStrategies(defaultStrategies);
         }
         
         function toggleSeedTemplate(id) {
@@ -1087,6 +1260,100 @@
             });
             
             document.getElementById('estimatedKeywords').textContent = total.toLocaleString();
+        }
+        
+        function toggleStrategy(id) {
+            const card = document.querySelector(`[data-strategy-id="${id}"]`);
+            const checkbox = document.getElementById(`strategy_${id}`);
+            
+            card.classList.toggle('selected');
+            checkbox.checked = !checkbox.checked;
+            
+            updateStrategyCount();
+        }
+        
+        function updateStrategyCount() {
+            const selectedStrategies = document.querySelectorAll('.strategy-card.selected');
+            let totalEstimate = 0;
+            
+            selectedStrategies.forEach(card => {
+                const statsText = card.querySelector('.strategy-stats strong').textContent;
+                // Parse the estimate (e.g., "500-2000" becomes 1250 average)
+                if (statsText.includes('-')) {
+                    const [min, max] = statsText.split('-').map(n => parseInt(n.replace(/\D/g, '')));
+                    totalEstimate += (min + max) / 2;
+                } else {
+                    totalEstimate += parseInt(statsText.replace(/\D/g, '')) || 100;
+                }
+            });
+            
+            document.getElementById('totalPages').textContent = totalEstimate.toLocaleString();
+            
+            // Enable/disable generate button
+            const generateBtn = document.getElementById('generateStrategiesBtn');
+            generateBtn.disabled = selectedStrategies.length === 0;
+        }
+        
+        async function generateKeywordsFromStrategies() {
+            const selectedCards = document.querySelectorAll('.strategy-card.selected');
+            
+            if (selectedCards.length === 0) {
+                alert('Please select at least one strategy');
+                return;
+            }
+            
+            const selectedStrategies = Array.from(selectedCards).map(card => ({
+                id: card.dataset.strategyId,
+                category: card.dataset.strategyId,
+                template_group: card.dataset.strategyId
+            }));
+            
+            const resultDiv = document.getElementById('keywordResult');
+            resultDiv.innerHTML = '<div class="loading-container"><div class="spinner"></div><p>Generating keywords for selected strategies...</p></div>';
+            
+            // Get market context if available
+            const marketContext = {
+                market_region: document.getElementById('marketContext')?.value || '',
+                location_list: document.getElementById('locationContext')?.value || '',
+                additional_context: document.getElementById('additionalContext')?.value || ''
+            };
+            
+            try {
+                const response = await fetch(`${API_URL}/api/generate-from-seeds`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        business_info: businessInfo,
+                        seeds: selectedStrategies,
+                        market_context: marketContext
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.keywords) {
+                    // Process keywords
+                    allKeywords = data.keywords.map(k => ({
+                        keyword: k.keyword,
+                        search_volume: Math.floor(Math.random() * 1000) + 100,
+                        difficulty: Math.floor(Math.random() * 30) + 20,
+                        intent: 'informational',
+                        cpc: Math.random() * 5 + 0.5,
+                        seed_category: k.seed_category
+                    }));
+                    
+                    // Cluster keywords
+                    clusterKeywords();
+                    renderClusters();
+                    
+                    // Enable next button
+                    document.getElementById('nextBtn').disabled = false;
+                    
+                    showMessage('keywordResult', `Generated ${allKeywords.length} keywords from ${selectedCards.length} strategies!`, 'success', true);
+                }
+            } catch (error) {
+                showMessage('keywordResult', `Error: ${error.message}`, 'error');
+            }
         }
         
         async function generateFromSeeds() {

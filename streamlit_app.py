@@ -31,6 +31,12 @@ if 'generated_content' not in st.session_state:
 st.title("🚀 Programmatic SEO Tool")
 st.markdown("Generate thousands of SEO-optimized pages automatically")
 
+# Add wizard mode toggle
+col1, col2 = st.columns([3, 1])
+with col2:
+    if st.button("🧙 Switch to Wizard Mode", type="secondary"):
+        st.switch_page("streamlit_wizard.py")
+
 # Sidebar for navigation
 st.sidebar.title("Navigation")
 page = st.sidebar.radio("Go to", ["Business Analysis", "Keyword Selection", "Content Generation", "Export"])
@@ -144,49 +150,171 @@ if page == "Business Analysis":
 elif page == "Keyword Selection":
     st.header("🔍 Keyword Selection")
     
-    if not st.session_state.opportunities:
+    if not st.session_state.business_info:
         st.warning("Please complete business analysis first")
     else:
-        st.subheader("Select Keywords to Target")
+        # Add toggle for strategy mode vs traditional mode
+        mode = st.radio("Selection Mode", ["Strategy-Based (Recommended)", "Traditional"], horizontal=True)
         
-        # Filter options
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            content_types = ["All"] + list(set(opp["content_type"] for opp in st.session_state.opportunities))
-            selected_type = st.selectbox("Content Type", content_types)
+        if mode == "Strategy-Based (Recommended)":
+            st.subheader("📊 Generate Keyword Strategies")
+            st.markdown("AI will analyze your business and suggest specific SEO strategies")
+            
+            # Initialize strategies in session state
+            if 'strategies' not in st.session_state:
+                st.session_state.strategies = []
+            if 'selected_strategies' not in st.session_state:
+                st.session_state.selected_strategies = []
+            if 'strategy_keywords' not in st.session_state:
+                st.session_state.strategy_keywords = {}
+            
+            # Generate strategies button
+            if st.button("🧠 Generate SEO Strategies", type="primary"):
+                with st.spinner("Generating intelligent SEO strategies..."):
+                    try:
+                        response = requests.post(
+                            f"{API_URL}/api/generate-strategies",
+                            json=st.session_state.business_info
+                        )
+                        if response.status_code == 200:
+                            data = response.json()
+                            st.session_state.strategies = data["strategies"]
+                            st.success(f"✅ Generated {len(data['strategies'])} strategies!")
+                        else:
+                            st.error(f"Error: {response.text}")
+                    except Exception as e:
+                        st.error(f"Error: {str(e)}")
+            
+            # Display strategies
+            if st.session_state.strategies:
+                st.markdown("### Select Strategies to Pursue")
+                
+                # Strategy cards in columns
+                for i in range(0, len(st.session_state.strategies), 2):
+                    cols = st.columns(2)
+                    
+                    for j, col in enumerate(cols):
+                        if i + j < len(st.session_state.strategies):
+                            strategy = st.session_state.strategies[i + j]
+                            
+                            with col:
+                                with st.container():
+                                    # Strategy header
+                                    is_selected = strategy['name'] in st.session_state.selected_strategies
+                                    
+                                    if st.checkbox(f"{strategy['icon']} **{strategy['name']}**", 
+                                                 key=f"strat_{i+j}", value=is_selected):
+                                        if strategy['name'] not in st.session_state.selected_strategies:
+                                            st.session_state.selected_strategies.append(strategy['name'])
+                                    else:
+                                        if strategy['name'] in st.session_state.selected_strategies:
+                                            st.session_state.selected_strategies.remove(strategy['name'])
+                                    
+                                    st.write(strategy['description'])
+                                    st.metric("Potential Pages", f"{strategy['estimated_pages']:,}")
+                                    
+                                    # Show examples
+                                    with st.expander("Examples"):
+                                        for ex in strategy['examples'][:3]:
+                                            st.code(ex, language="text")
+                
+                # Generate keywords for selected strategies
+                if st.session_state.selected_strategies:
+                    if st.button(f"Generate Keywords for {len(st.session_state.selected_strategies)} Strategies", 
+                               type="primary"):
+                        progress_bar = st.progress(0)
+                        
+                        for idx, strategy in enumerate(st.session_state.strategies):
+                            if strategy['name'] in st.session_state.selected_strategies:
+                                progress_bar.progress((idx + 1) / len(st.session_state.selected_strategies))
+                                
+                                try:
+                                    response = requests.post(
+                                        f"{API_URL}/api/generate-keywords-for-strategy",
+                                        json={
+                                            "strategy": strategy,
+                                            "business_info": st.session_state.business_info,
+                                            "limit": 20
+                                        }
+                                    )
+                                    if response.status_code == 200:
+                                        data = response.json()
+                                        st.session_state.strategy_keywords[strategy['name']] = data['keywords']
+                                except Exception as e:
+                                    st.error(f"Error for {strategy['name']}: {str(e)}")
+                        
+                        st.success("✅ Keywords generated successfully!")
+                
+                # Display generated keywords
+                if st.session_state.strategy_keywords:
+                    st.markdown("### Generated Keywords")
+                    
+                    selected_keywords = []
+                    for strategy_name, keywords in st.session_state.strategy_keywords.items():
+                        with st.expander(f"{strategy_name} ({len(keywords)} keywords)"):
+                            select_all = st.checkbox(f"Select all", key=f"all_{strategy_name}")
+                            
+                            for idx, kw in enumerate(keywords):
+                                col1, col2, col3 = st.columns([1, 5, 2])
+                                with col1:
+                                    if st.checkbox("", key=f"kw_{strategy_name}_{idx}", 
+                                                 value=select_all):
+                                        if kw not in selected_keywords:
+                                            selected_keywords.append(kw)
+                                with col2:
+                                    st.write(kw['keyword'])
+                                with col3:
+                                    if 'search_volume_estimate' in kw:
+                                        st.write(f"Volume: {kw['search_volume_estimate']}")
+                    
+                    if st.button("Save Selected Keywords", type="primary"):
+                        st.session_state.selected_keywords = selected_keywords
+                        st.success(f"✅ {len(selected_keywords)} keywords selected")
         
-        with col2:
-            min_priority = st.slider("Minimum Priority", 1, 10, 5)
-        
-        with col3:
-            max_keywords = st.number_input("Max Keywords", min_value=1, max_value=100, value=20)
-        
-        # Filter opportunities
-        filtered_opps = st.session_state.opportunities
-        if selected_type != "All":
-            filtered_opps = [opp for opp in filtered_opps if opp["content_type"] == selected_type]
-        filtered_opps = [opp for opp in filtered_opps if opp["priority"] >= min_priority]
-        filtered_opps = filtered_opps[:max_keywords]
-        
-        # Display selectable keywords
-        st.write(f"Showing {len(filtered_opps)} keywords")
-        
-        selected = []
-        for idx, opp in enumerate(filtered_opps):
-            col1, col2, col3, col4 = st.columns([1, 3, 2, 2])
-            with col1:
-                if st.checkbox("", key=f"kw_{idx}"):
-                    selected.append(opp)
-            with col2:
-                st.write(opp["keyword"])
-            with col3:
-                st.write(opp["content_type"])
-            with col4:
-                st.write(f"Priority: {opp['priority']}")
-        
-        if st.button("Save Selected Keywords", type="primary"):
-            st.session_state.selected_keywords = selected
-            st.success(f"✅ {len(selected)} keywords selected")
+        else:  # Traditional mode
+            st.subheader("Select Keywords to Target")
+            
+            if not st.session_state.opportunities:
+                st.warning("No opportunities found. Try analyzing your business again.")
+            else:
+                # Filter options
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    content_types = ["All"] + list(set(opp["content_type"] for opp in st.session_state.opportunities))
+                    selected_type = st.selectbox("Content Type", content_types)
+                
+                with col2:
+                    min_priority = st.slider("Minimum Priority", 1, 10, 5)
+                
+                with col3:
+                    max_keywords = st.number_input("Max Keywords", min_value=1, max_value=100, value=20)
+                
+                # Filter opportunities
+                filtered_opps = st.session_state.opportunities
+                if selected_type != "All":
+                    filtered_opps = [opp for opp in filtered_opps if opp["content_type"] == selected_type]
+                filtered_opps = [opp for opp in filtered_opps if opp["priority"] >= min_priority]
+                filtered_opps = filtered_opps[:max_keywords]
+                
+                # Display selectable keywords
+                st.write(f"Showing {len(filtered_opps)} keywords")
+                
+                selected = []
+                for idx, opp in enumerate(filtered_opps):
+                    col1, col2, col3, col4 = st.columns([1, 3, 2, 2])
+                    with col1:
+                        if st.checkbox("", key=f"kw_{idx}"):
+                            selected.append(opp)
+                    with col2:
+                        st.write(opp["keyword"])
+                    with col3:
+                        st.write(opp["content_type"])
+                    with col4:
+                        st.write(f"Priority: {opp['priority']}")
+                
+                if st.button("Save Selected Keywords", type="primary"):
+                    st.session_state.selected_keywords = selected
+                    st.success(f"✅ {len(selected)} keywords selected")
 
 # Content Generation Page
 elif page == "Content Generation":

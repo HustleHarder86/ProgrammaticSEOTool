@@ -190,6 +190,10 @@ class handler(BaseHTTPRequestHandler):
             response = self._generate_content(data)
         elif path == '/api/projects':
             response = self._create_project(data)
+        elif path == '/api/generate-seed-suggestions':
+            response = self._generate_seed_suggestions(data)
+        elif path == '/api/generate-from-seeds':
+            response = self._generate_from_seeds(data)
         elif path == '/api/set-model':
             # Change the model being used
             if usage_tracker:
@@ -511,3 +515,57 @@ class handler(BaseHTTPRequestHandler):
             'success': True,
             'project': project
         }
+    
+    def _generate_seed_suggestions(self, data):
+        """Generate AI-powered seed suggestions for a business"""
+        business_info = data.get('business_info', {})
+        use_ai = data.get('use_ai', True)
+        
+        try:
+            from .seed_generator import SeedKeywordGenerator
+            seed_gen = SeedKeywordGenerator()
+            
+            suggestions = seed_gen.get_seed_suggestions(business_info, use_ai=use_ai)
+            
+            # Track API usage if AI was used
+            if use_ai and ai_handler and ai_handler.has_ai_provider() and usage_tracker:
+                usage_tracker.track_usage('generate_seed_suggestions')
+            
+            return {
+                'success': True,
+                'suggestions': suggestions,
+                'ai_generated': use_ai and bool(suggestions)
+            }
+        except Exception as e:
+            print(f"Error generating seed suggestions: {e}")
+            return {
+                'success': False,
+                'error': str(e),
+                'suggestions': []
+            }
+    
+    def _generate_from_seeds(self, data):
+        """Generate keywords from selected seed templates"""
+        business_info = data.get('business_info', {})
+        seeds = data.get('seeds', [])
+        market_context = data.get('market_context', {})
+        
+        try:
+            from .seed_generator import SeedKeywordGenerator
+            seed_gen = SeedKeywordGenerator()
+            
+            results = seed_gen.generate_from_seeds(seeds, business_info, market_context)
+            
+            return {
+                'success': True,
+                'keywords': results.get('keywords', []),
+                'summary': results.get('summary', {}),
+                'seed_details': results.get('seed_details', [])
+            }
+        except Exception as e:
+            print(f"Error generating from seeds: {e}")
+            return {
+                'success': False,
+                'error': str(e),
+                'keywords': []
+            }

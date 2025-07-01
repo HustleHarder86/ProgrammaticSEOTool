@@ -125,7 +125,67 @@ async def analyze_business(request: BusinessInput):
         logger.error(f"Error in business analysis: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# Generate keywords endpoint
+# Generate keyword strategies endpoint
+@app.post("/api/generate-strategies")
+async def generate_strategies(business_info: dict):
+    """Generate keyword strategies based on business analysis."""
+    if not settings.has_ai_provider:
+        raise HTTPException(
+            status_code=503,
+            detail="No AI provider configured. Please set OPENAI_API_KEY or ANTHROPIC_API_KEY in .env"
+        )
+    
+    try:
+        from app.researchers.strategy_generator import StrategyGenerator
+        from app.scanners.base import BusinessInfo
+        
+        # Convert dict to BusinessInfo object
+        info = BusinessInfo(**business_info)
+        
+        generator = StrategyGenerator()
+        strategies = await generator.generate_strategies(info)
+        
+        return {
+            "strategies": [s.to_dict() for s in strategies],
+            "total": len(strategies)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error generating strategies: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Generate keywords for strategy endpoint
+@app.post("/api/generate-keywords-for-strategy")
+async def generate_keywords_for_strategy(strategy: dict, business_info: dict, limit: int = 50):
+    """Generate keywords for a specific strategy."""
+    if not settings.has_ai_provider:
+        raise HTTPException(
+            status_code=503,
+            detail="No AI provider configured. Please set OPENAI_API_KEY or ANTHROPIC_API_KEY in .env"
+        )
+    
+    try:
+        from app.researchers.strategy_generator import StrategyGenerator, KeywordStrategy
+        from app.scanners.base import BusinessInfo
+        
+        # Convert dicts to objects
+        info = BusinessInfo(**business_info)
+        strat = KeywordStrategy(**strategy)
+        
+        generator = StrategyGenerator()
+        keywords = await generator.generate_keywords_for_strategy(strat, info, limit)
+        
+        return {
+            "keywords": keywords,
+            "total": len(keywords),
+            "strategy": strategy["name"]
+        }
+        
+    except Exception as e:
+        logger.error(f"Error generating keywords for strategy: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Generate keywords endpoint (legacy - kept for compatibility)
 @app.post("/api/generate-keywords")
 async def generate_keywords(request: KeywordGenerationRequest):
     """Generate keyword opportunities from business analysis."""
