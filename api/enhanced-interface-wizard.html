@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programmatic SEO Tool - Wizard</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: #f8fafc;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* Wizard Container */
+        .wizard-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Progress Bar */
+        .progress-bar {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            padding: 30px 0;
+        }
+        
+        .progress-steps {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        .progress-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+            flex: 1;
+        }
+        
+        .step-number {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+            border: 3px solid #e2e8f0;
+        }
+        
+        .step-number.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            transform: scale(1.1);
+        }
+        
+        .step-number.completed {
+            background: #10b981;
+            color: white;
+            border-color: #10b981;
+        }
+        
+        .step-label {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #64748b;
+            font-weight: 500;
+            text-align: center;
+        }
+        
+        .step-label.active {
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        .step-label.completed {
+            color: #10b981;
+        }
+        
+        /* Progress Line */
+        .progress-line {
+            position: absolute;
+            top: 25px;
+            left: 25%;
+            right: 25%;
+            height: 3px;
+            background: #e2e8f0;
+            z-index: 1;
+        }
+        
+        .progress-line-fill {
+            height: 100%;
+            background: #10b981;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        /* Content Area */
+        .wizard-content {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .wizard-step {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.5s ease;
+            overflow-y: auto;
+        }
+        
+        .wizard-step.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .wizard-step.prev {
+            transform: translateX(-100%);
+        }
+        
+        .step-content {
+            max-width: 1000px;
+            width: 100%;
+            margin: 0 auto;
+            flex: 1;
+        }
+        
+        /* Step Headers */
+        .step-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .step-header h1 {
+            font-size: 2.5em;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+        
+        .step-header p {
+            font-size: 1.1em;
+            color: #64748b;
+        }
+        
+        /* Navigation */
+        .wizard-nav {
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-info {
+            color: #64748b;
+            font-size: 0.9em;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+        }
+        
+        /* Common Styles */
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #475569;
+        }
+        
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+        
+        .btn-primary:disabled, .btn-secondary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        /* Step 1 Specific */
+        .business-form {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .analysis-result {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        /* Step 2 Specific */
+        .keyword-mode-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .mode-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .mode-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+        
+        .mode-card.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .mode-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        
+        .seed-templates {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .seed-template {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .seed-template:hover {
+            border-color: #667eea;
+        }
+        
+        .seed-template.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        /* Clusters */
+        .clusters-container {
+            display: grid;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .cluster {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .cluster-header {
+            background: #f8fafc;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        
+        .cluster-header:hover {
+            background: #f1f5f9;
+        }
+        
+        .cluster-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+        
+        .cluster-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9em;
+            color: #64748b;
+        }
+        
+        .cluster-content {
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .cluster.collapsed .cluster-content {
+            display: none;
+        }
+        
+        .keywords-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .keyword-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .keyword-card:hover {
+            border-color: #667eea;
+            transform: translateY(-1px);
+        }
+        
+        .keyword-card.selected {
+            background: #f0f4ff;
+            border-color: #667eea;
+        }
+        
+        .keyword-metrics {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            font-size: 0.85em;
+            color: #64748b;
+        }
+        
+        /* Step 3 Specific */
+        .content-settings {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 30px;
+        }
+        
+        .content-item {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+        
+        .quality-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        
+        .quality-high {
+            background: #d4f8e8;
+            color: #065f46;
+        }
+        
+        .quality-medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        /* Loading States */
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+            text-align: center;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Success/Error Messages */
+        .message {
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .message-success {
+            background: #f0fdf4;
+            color: #166534;
+            border: 1px solid #86efac;
+        }
+        
+        .message-error {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        
+        /* Stats Display */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #64748b;
+            font-size: 0.9em;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .keyword-mode-selector {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .wizard-nav {
+                padding: 15px 20px;
+            }
+            
+            .nav-info {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wizard-container">
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress-steps">
+                <div class="progress-line">
+                    <div class="progress-line-fill" id="progressFill"></div>
+                </div>
+                
+                <div class="progress-step">
+                    <div class="step-number active" id="step1-number">1</div>
+                    <div class="step-label active">Analyze Business</div>
+                </div>
+                
+                <div class="progress-step">
+                    <div class="step-number" id="step2-number">2</div>
+                    <div class="step-label">Generate Keywords</div>
+                </div>
+                
+                <div class="progress-step">
+                    <div class="step-number" id="step3-number">3</div>
+                    <div class="step-label">Generate Content</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Content Area -->
+        <div class="wizard-content">
+            <!-- Step 1: Analyze Business -->
+            <div class="wizard-step active" id="step1">
+                <div class="step-content">
+                    <div class="step-header">
+                        <h1>🚀 Let's Analyze Your Business</h1>
+                        <p>Tell us about your business to generate targeted SEO content</p>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="business-form">
+                            <div class="form-group">
+                                <label for="businessUrl">Business Website (Optional)</label>
+                                <input type="url" id="businessUrl" placeholder="https://yourbusiness.com">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="businessDesc">Business Description</label>
+                                <textarea id="businessDesc" rows="4" placeholder="Describe your business, products, services, and target audience..."></textarea>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="targetAudience">Target Audience</label>
+                                    <select id="targetAudience">
+                                        <option value="auto">Auto-detect</option>
+                                        <option value="b2b">B2B - Businesses</option>
+                                        <option value="b2c">B2C - Consumers</option>
+                                        <option value="both">Both B2B & B2C</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="contentType">Content Focus</label>
+                                    <select id="contentType">
+                                        <option value="all">All Content Types</option>
+                                        <option value="blog">Blog Posts</option>
+                                        <option value="landing">Landing Pages</option>
+                                        <option value="comparison">Comparisons</option>
+                                        <option value="guide">How-to Guides</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <button class="btn-primary" onclick="analyzeBusiness()" style="width: 200px;">
+                                <span>🔍</span> Analyze Business
+                            </button>
+                        </div>
+                        
+                        <div id="analyzeResult"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 2: Generate Keywords -->
+            <div class="wizard-step" id="step2">
+                <div class="step-content">
+                    <div class="step-header">
+                        <h1>🎯 Generate Keywords</h1>
+                        <p>Choose your keyword generation strategy</p>
+                    </div>
+                    
+                    <div class="keyword-mode-selector">
+                        <div class="mode-card selected" onclick="selectKeywordMode('seed')" id="seedModeCard">
+                            <div class="mode-icon">🌱</div>
+                            <h3>Programmatic Mode</h3>
+                            <p>Generate 100s-1000s of keywords using templates</p>
+                            <small style="color: #10b981;">Recommended for scale</small>
+                        </div>
+                        
+                        <div class="mode-card" onclick="selectKeywordMode('basic')" id="basicModeCard">
+                            <div class="mode-icon">📝</div>
+                            <h3>Basic Mode</h3>
+                            <p>Generate 10s-100s of targeted keywords</p>
+                            <small style="color: #64748b;">Good for testing</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Seed Mode Content -->
+                    <div id="seedModeContent">
+                        <div class="card">
+                            <h3>Select Seed Templates</h3>
+                            <p style="color: #64748b; margin-bottom: 20px;">Choose templates to generate keyword variations at scale</p>
+                            
+                            <div id="seedTemplates" class="seed-templates">
+                                <!-- Templates will be loaded here -->
+                            </div>
+                            
+                            <div style="background: #e6f7ff; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                                <strong>Estimated Keywords: </strong>
+                                <span id="estimatedKeywords" style="font-size: 1.2em; color: #1890ff;">0</span>
+                            </div>
+                            
+                            <button class="btn-primary" onclick="generateFromSeeds()" style="width: 100%;">
+                                Generate All Variations
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Basic Mode Content -->
+                    <div id="basicModeContent" style="display: none;">
+                        <div class="card">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="numKeywords">Number of Keywords</label>
+                                    <input type="number" id="numKeywords" value="20" min="5" max="100">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="keywordIntent">Keyword Intent</label>
+                                    <select id="keywordIntent">
+                                        <option value="all">All Intents</option>
+                                        <option value="informational">Informational</option>
+                                        <option value="commercial">Commercial</option>
+                                        <option value="transactional">Transactional</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <button class="btn-primary" onclick="generateKeywords()" style="width: 100%;">
+                                Generate Keywords
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Keywords Display Area -->
+                    <div id="keywordResult" style="margin-top: 30px;"></div>
+                </div>
+            </div>
+            
+            <!-- Step 3: Generate Content -->
+            <div class="wizard-step" id="step3">
+                <div class="step-content">
+                    <div class="step-header">
+                        <h1>📝 Generate Content</h1>
+                        <p>Create SEO-optimized content for your keywords</p>
+                    </div>
+                    
+                    <!-- Stats -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="statKeywords">0</div>
+                            <div class="stat-label">Total Keywords</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="statSelected">0</div>
+                            <div class="stat-label">Selected Keywords</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="statGenerated">0</div>
+                            <div class="stat-label">Articles Generated</div>
+                        </div>
+                    </div>
+                    
+                    <div class="content-settings">
+                        <h3>Content Generation Settings</h3>
+                        
+                        <div class="form-row" style="margin-top: 20px;">
+                            <div class="form-group">
+                                <label for="articlesToGenerate">Articles to Generate</label>
+                                <input type="number" id="articlesToGenerate" value="5" min="1" max="50">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="minWordCount">Minimum Word Count</label>
+                                <input type="number" id="minWordCount" value="1500" min="800" max="3000">
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 20px;">
+                            <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <input type="checkbox" id="ensureUniqueness" checked>
+                                <span>Ensure content uniqueness</span>
+                            </label>
+                            
+                            <label style="display: flex; align-items: center; gap: 10px;">
+                                <input type="checkbox" id="addUniqueElements" checked>
+                                <span>Add unique elements (data, examples, visuals)</span>
+                            </label>
+                        </div>
+                        
+                        <button class="btn-primary" onclick="generateContent()" style="width: 100%; margin-top: 20px;">
+                            Generate Content
+                        </button>
+                    </div>
+                    
+                    <div id="contentResult"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Navigation -->
+        <div class="wizard-nav">
+            <div class="nav-info">
+                <span id="navInfo">Step 1 of 3</span>
+            </div>
+            
+            <div class="nav-buttons">
+                <button class="btn-secondary" id="prevBtn" onclick="previousStep()" disabled>
+                    ← Previous
+                </button>
+                
+                <button class="btn-primary" id="nextBtn" onclick="nextStep()" disabled>
+                    Next →
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // API Configuration
+        const API_URL = window.location.origin;
+        
+        // State Management
+        let currentStep = 1;
+        let businessInfo = null;
+        let allKeywords = [];
+        let selectedKeywords = [];
+        let generatedContent = [];
+        let keywordClusters = {};
+        let keywordMode = 'seed';
+        
+        // Initialize
+        window.onload = () => {
+            updateProgress();
+        };
+        
+        // Navigation Functions
+        function nextStep() {
+            if (currentStep < 3) {
+                // Validate current step
+                if (currentStep === 1 && !businessInfo) {
+                    alert('Please analyze your business first');
+                    return;
+                }
+                
+                if (currentStep === 2 && allKeywords.length === 0) {
+                    alert('Please generate keywords first');
+                    return;
+                }
+                
+                // Move to next step
+                document.getElementById(`step${currentStep}`).classList.remove('active');
+                document.getElementById(`step${currentStep}`).classList.add('prev');
+                
+                currentStep++;
+                
+                document.getElementById(`step${currentStep}`).classList.add('active');
+                updateProgress();
+                
+                // Auto-load content for step 3
+                if (currentStep === 3) {
+                    updateContentStats();
+                }
+            }
+        }
+        
+        function previousStep() {
+            if (currentStep > 1) {
+                document.getElementById(`step${currentStep}`).classList.remove('active');
+                
+                currentStep--;
+                
+                document.getElementById(`step${currentStep}`).classList.remove('prev');
+                document.getElementById(`step${currentStep}`).classList.add('active');
+                updateProgress();
+            }
+        }
+        
+        function updateProgress() {
+            // Update progress bar
+            const progressPercent = ((currentStep - 1) / 2) * 100;
+            document.getElementById('progressFill').style.width = `${progressPercent}%`;
+            
+            // Update step indicators
+            for (let i = 1; i <= 3; i++) {
+                const stepNumber = document.getElementById(`step${i}-number`);
+                const stepLabel = stepNumber.nextElementSibling;
+                
+                if (i < currentStep) {
+                    stepNumber.classList.add('completed');
+                    stepNumber.classList.remove('active');
+                    stepLabel.classList.add('completed');
+                    stepLabel.classList.remove('active');
+                    stepNumber.innerHTML = '✓';
+                } else if (i === currentStep) {
+                    stepNumber.classList.add('active');
+                    stepNumber.classList.remove('completed');
+                    stepLabel.classList.add('active');
+                    stepLabel.classList.remove('completed');
+                    stepNumber.innerHTML = i;
+                } else {
+                    stepNumber.classList.remove('active', 'completed');
+                    stepLabel.classList.remove('active', 'completed');
+                    stepNumber.innerHTML = i;
+                }
+            }
+            
+            // Update navigation
+            document.getElementById('prevBtn').disabled = currentStep === 1;
+            document.getElementById('nextBtn').disabled = currentStep === 3;
+            document.getElementById('navInfo').textContent = `Step ${currentStep} of 3`;
+            
+            // Update next button text
+            if (currentStep === 3) {
+                document.getElementById('nextBtn').textContent = 'Complete';
+            } else {
+                document.getElementById('nextBtn').textContent = 'Next →';
+            }
+        }
+        
+        // Step 1: Business Analysis
+        async function analyzeBusiness() {
+            const url = document.getElementById('businessUrl').value;
+            const desc = document.getElementById('businessDesc').value;
+            const targetAudience = document.getElementById('targetAudience').value;
+            const contentType = document.getElementById('contentType').value;
+            
+            if (!url && !desc) {
+                showMessage('analyzeResult', 'Please enter a URL or description', 'error');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('analyzeResult');
+            resultDiv.innerHTML = '<div class="loading-container"><div class="spinner"></div><p>Analyzing your business with AI...</p></div>';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/analyze-business`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        business_url: url,
+                        business_description: desc || "Business website",
+                        target_audience: targetAudience,
+                        content_type: contentType
+                    })
+                });
+                
+                const data = await response.json();
+                businessInfo = data.business_info;
+                
+                resultDiv.innerHTML = `
+                    <div class="message message-success">
+                        <span>✓</span>
+                        <div>
+                            <strong>Business analyzed successfully!</strong>
+                            <p style="margin: 5px 0 0 0;">Industry: ${businessInfo.industry} | Target: ${businessInfo.target_audience}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="analysis-result">
+                        <h3>${businessInfo.name}</h3>
+                        <p>${businessInfo.description}</p>
+                        <div style="margin-top: 15px;">
+                            <strong>Content Types:</strong> ${businessInfo.content_types?.join(', ') || 'Various'}
+                        </div>
+                    </div>
+                `;
+                
+                // Enable next button
+                document.getElementById('nextBtn').disabled = false;
+                
+                // Load seed templates for next step
+                await loadSeedTemplates();
+                
+            } catch (error) {
+                showMessage('analyzeResult', `Error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Step 2: Keyword Generation
+        function selectKeywordMode(mode) {
+            keywordMode = mode;
+            
+            // Update UI
+            document.getElementById('seedModeCard').classList.toggle('selected', mode === 'seed');
+            document.getElementById('basicModeCard').classList.toggle('selected', mode === 'basic');
+            
+            document.getElementById('seedModeContent').style.display = mode === 'seed' ? 'block' : 'none';
+            document.getElementById('basicModeContent').style.display = mode === 'basic' ? 'block' : 'none';
+        }
+        
+        async function loadSeedTemplates() {
+            const templatesDiv = document.getElementById('seedTemplates');
+            
+            // Default templates
+            const templates = [
+                {
+                    id: 'location',
+                    name: '📍 Location-Based Keywords',
+                    description: 'Generate location-specific keywords',
+                    template: '{location} {service}',
+                    estimated: 500
+                },
+                {
+                    id: 'comparison',
+                    name: '⚖️ Comparison Keywords',
+                    description: 'Compare products, services, or solutions',
+                    template: '{item1} vs {item2}',
+                    estimated: 300
+                },
+                {
+                    id: 'howto',
+                    name: '📖 How-To Keywords',
+                    description: 'Educational and guide keywords',
+                    template: 'how to {action} {target}',
+                    estimated: 800
+                },
+                {
+                    id: 'tools',
+                    name: '🛠️ Tools & Calculators',
+                    description: 'Tool and calculator keywords',
+                    template: '{tool} for {use_case}',
+                    estimated: 400
+                }
+            ];
+            
+            let html = '';
+            templates.forEach((template, index) => {
+                html += `
+                    <label class="seed-template ${index === 0 ? 'selected' : ''}" onclick="toggleSeedTemplate('${template.id}')">
+                        <input type="checkbox" id="seed_${template.id}" ${index === 0 ? 'checked' : ''} style="display: none;">
+                        <div>
+                            <h4>${template.name}</h4>
+                            <p style="margin: 5px 0; color: #64748b;">${template.description}</p>
+                            <code style="background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 0.85em;">${template.template}</code>
+                            <div style="margin-top: 8px; color: #667eea; font-weight: 600;">
+                                ~${template.estimated} keywords
+                            </div>
+                        </div>
+                    </label>
+                `;
+            });
+            
+            templatesDiv.innerHTML = html;
+            updateSeedEstimate();
+        }
+        
+        function toggleSeedTemplate(id) {
+            const template = document.querySelector(`#seed_${id}`).parentElement;
+            const checkbox = document.querySelector(`#seed_${id}`);
+            
+            template.classList.toggle('selected');
+            checkbox.checked = !checkbox.checked;
+            
+            updateSeedEstimate();
+        }
+        
+        function updateSeedEstimate() {
+            let total = 0;
+            const checkboxes = document.querySelectorAll('input[id^="seed_"]:checked');
+            
+            checkboxes.forEach(checkbox => {
+                const template = checkbox.parentElement;
+                const estimateText = template.querySelector('div > div').textContent;
+                const estimate = parseInt(estimateText.match(/~(\d+)/)[1]) || 0;
+                total += estimate;
+            });
+            
+            document.getElementById('estimatedKeywords').textContent = total.toLocaleString();
+        }
+        
+        async function generateFromSeeds() {
+            const selectedSeeds = [];
+            document.querySelectorAll('input[id^="seed_"]:checked').forEach(checkbox => {
+                selectedSeeds.push(checkbox.id.replace('seed_', ''));
+            });
+            
+            if (selectedSeeds.length === 0) {
+                alert('Please select at least one seed template');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('keywordResult');
+            resultDiv.innerHTML = '<div class="loading-container"><div class="spinner"></div><p>Generating keyword variations...</p></div>';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/generate-keywords`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        business_info: businessInfo,
+                        seed_mode: true,
+                        selected_seeds: selectedSeeds
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.seed_results) {
+                    // Process seed results
+                    allKeywords = data.seed_results.keywords.map(k => ({
+                        keyword: k.keyword,
+                        search_volume: Math.floor(Math.random() * 1000) + 100,
+                        difficulty: Math.floor(Math.random() * 30) + 20,
+                        intent: 'informational',
+                        cpc: Math.random() * 5 + 0.5,
+                        seed_category: k.seed_category
+                    }));
+                    
+                    // Cluster keywords
+                    clusterKeywords();
+                    renderClusters();
+                    
+                    // Enable next button
+                    document.getElementById('nextBtn').disabled = false;
+                    
+                    showMessage('keywordResult', `Generated ${allKeywords.length} keywords successfully!`, 'success', true);
+                }
+            } catch (error) {
+                showMessage('keywordResult', `Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function generateKeywords() {
+            const num = document.getElementById('numKeywords').value;
+            const intent = document.getElementById('keywordIntent').value;
+            const resultDiv = document.getElementById('keywordResult');
+            
+            resultDiv.innerHTML = '<div class="loading-container"><div class="spinner"></div><p>Generating keywords with AI...</p></div>';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/generate-keywords`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        business_info: businessInfo,
+                        num_keywords: parseInt(num)
+                    })
+                });
+                
+                const data = await response.json();
+                allKeywords = data.keywords;
+                
+                if (intent !== 'all') {
+                    allKeywords = allKeywords.filter(k => k.intent === intent);
+                }
+                
+                // Cluster and display
+                clusterKeywords();
+                renderClusters();
+                
+                // Enable next button
+                document.getElementById('nextBtn').disabled = false;
+                
+                showMessage('keywordResult', `Generated ${allKeywords.length} keywords successfully!`, 'success', true);
+                
+            } catch (error) {
+                showMessage('keywordResult', `Error: ${error.message}`, 'error');
+            }
+        }
+        
+        function clusterKeywords() {
+            keywordClusters = {};
+            
+            // Simple clustering by first significant word
+            allKeywords.forEach(kw => {
+                const words = kw.keyword.toLowerCase().split(' ');
+                const significantWords = words.filter(w => 
+                    w.length > 3 && !['best', 'how', 'what', 'where', 'when', 'why', 'top'].includes(w)
+                );
+                
+                const clusterName = significantWords[0] || words[0];
+                const clusterKey = clusterName.charAt(0).toUpperCase() + clusterName.slice(1);
+                
+                if (!keywordClusters[clusterKey]) {
+                    keywordClusters[clusterKey] = {
+                        name: clusterKey,
+                        keywords: [],
+                        icon: getClusterIcon(clusterKey)
+                    };
+                }
+                
+                keywordClusters[clusterKey].keywords.push(kw);
+            });
+        }
+        
+        function getClusterIcon(name) {
+            const icons = {
+                'location': '📍', 'property': '🏠', 'investment': '💰',
+                'market': '📊', 'guide': '📖', 'comparison': '⚖️',
+                'tool': '🛠️', 'calculator': '🧮'
+            };
+            
+            const lower = name.toLowerCase();
+            for (const [key, icon] of Object.entries(icons)) {
+                if (lower.includes(key)) return icon;
+            }
+            return '📁';
+        }
+        
+        function renderClusters() {
+            let html = '<div class="clusters-container">';
+            
+            Object.entries(keywordClusters).forEach(([clusterName, cluster]) => {
+                const totalVolume = cluster.keywords.reduce((sum, k) => sum + k.search_volume, 0);
+                const isExpanded = Object.keys(keywordClusters).length <= 3; // Auto-expand if few clusters
+                
+                html += `
+                    <div class="cluster ${!isExpanded ? 'collapsed' : ''}" id="cluster-${clusterName}">
+                        <div class="cluster-header" onclick="toggleCluster('${clusterName}')">
+                            <div class="cluster-title">
+                                <span>${cluster.icon}</span>
+                                <span>${cluster.name}</span>
+                                <span style="font-weight: normal; color: #64748b;">(${cluster.keywords.length})</span>
+                            </div>
+                            <div class="cluster-stats">
+                                <span>📊 ${totalVolume.toLocaleString()} vol</span>
+                            </div>
+                        </div>
+                        <div class="cluster-content">
+                            <div style="margin-bottom: 15px;">
+                                <button class="btn-secondary" onclick="selectCluster('${clusterName}')">
+                                    Select All
+                                </button>
+                            </div>
+                            <div class="keywords-grid">
+                `;
+                
+                cluster.keywords.forEach((kw, index) => {
+                    const globalIndex = allKeywords.indexOf(kw);
+                    const isSelected = selectedKeywords.includes(kw.keyword);
+                    
+                    html += `
+                        <div class="keyword-card ${isSelected ? 'selected' : ''}" 
+                             onclick="toggleKeyword(${globalIndex})" 
+                             id="keyword-${globalIndex}">
+                            <h4 style="margin: 0 0 10px 0; font-size: 0.95em;">${kw.keyword}</h4>
+                            <div class="keyword-metrics">
+                                <span>📊 ${kw.search_volume}</span>
+                                <span>💪 ${kw.difficulty}%</span>
+                                <span>💰 $${kw.cpc}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            
+            // Add to existing result div content
+            const resultDiv = document.getElementById('keywordResult');
+            const existingMessage = resultDiv.querySelector('.message');
+            resultDiv.innerHTML = '';
+            
+            if (existingMessage) {
+                resultDiv.appendChild(existingMessage);
+            }
+            
+            resultDiv.innerHTML += html;
+        }
+        
+        function toggleCluster(clusterName) {
+            const cluster = document.getElementById(`cluster-${clusterName}`);
+            cluster.classList.toggle('collapsed');
+        }
+        
+        function selectCluster(clusterName) {
+            const cluster = keywordClusters[clusterName];
+            
+            cluster.keywords.forEach(kw => {
+                const index = allKeywords.indexOf(kw);
+                const card = document.getElementById(`keyword-${index}`);
+                
+                if (!selectedKeywords.includes(kw.keyword)) {
+                    selectedKeywords.push(kw.keyword);
+                    card.classList.add('selected');
+                }
+            });
+            
+            updateContentStats();
+        }
+        
+        function toggleKeyword(index) {
+            const card = document.getElementById(`keyword-${index}`);
+            const keyword = allKeywords[index];
+            
+            if (card.classList.contains('selected')) {
+                card.classList.remove('selected');
+                selectedKeywords = selectedKeywords.filter(k => k !== keyword.keyword);
+            } else {
+                card.classList.add('selected');
+                selectedKeywords.push(keyword.keyword);
+            }
+            
+            updateContentStats();
+        }
+        
+        // Step 3: Content Generation
+        function updateContentStats() {
+            document.getElementById('statKeywords').textContent = allKeywords.length;
+            document.getElementById('statSelected').textContent = selectedKeywords.length;
+            document.getElementById('statGenerated').textContent = generatedContent.length;
+        }
+        
+        async function generateContent() {
+            if (selectedKeywords.length === 0) {
+                alert('Please select keywords first');
+                return;
+            }
+            
+            const articlesToGen = parseInt(document.getElementById('articlesToGenerate').value);
+            const keywordsToGenerate = selectedKeywords.slice(0, articlesToGen);
+            
+            const resultDiv = document.getElementById('contentResult');
+            resultDiv.innerHTML = `<div class="loading-container"><div class="spinner"></div><p>Generating ${keywordsToGenerate.length} articles...</p></div>`;
+            
+            try {
+                const response = await fetch(`${API_URL}/api/generate-content`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        keywords: keywordsToGenerate,
+                        business_info: businessInfo,
+                        all_keywords: allKeywords.map(k => k.keyword)
+                    })
+                });
+                
+                const data = await response.json();
+                generatedContent = generatedContent.concat(data.contents);
+                
+                renderContent(data.contents);
+                updateContentStats();
+                
+            } catch (error) {
+                showMessage('contentResult', `Error: ${error.message}`, 'error');
+            }
+        }
+        
+        function renderContent(contents) {
+            let html = `
+                <div class="message message-success">
+                    <span>✓</span>
+                    <span>Generated ${contents.length} articles successfully!</span>
+                </div>
+            `;
+            
+            contents.forEach(content => {
+                const wordCount = content.content ? content.content.split(' ').length : 0;
+                const quality = wordCount >= 1500 ? 'high' : 'medium';
+                
+                html += `
+                    <div class="content-item">
+                        <div class="content-header">
+                            <h3>${content.title}</h3>
+                            <span class="quality-badge quality-${quality}">
+                                ${quality === 'high' ? '⭐' : '📝'} ${quality.toUpperCase()}
+                            </span>
+                        </div>
+                        <p style="color: #64748b; margin-bottom: 15px;">${content.meta_description}</p>
+                        <div style="font-size: 0.9em; color: #64748b;">
+                            📝 ${wordCount} words | 🎯 Keyword: ${content.keyword}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                <div style="margin-top: 30px; text-align: center;">
+                    <button class="btn-primary" onclick="exportContent()">
+                        💾 Export All Content
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('contentResult').innerHTML = html;
+        }
+        
+        function exportContent() {
+            if (generatedContent.length === 0) {
+                alert('No content to export');
+                return;
+            }
+            
+            // Create CSV content
+            const csv = [
+                ['Keyword', 'Title', 'Meta Description', 'Content'],
+                ...generatedContent.map(c => [
+                    c.keyword,
+                    c.title,
+                    c.meta_description,
+                    c.content?.replace(/\n/g, ' ') || ''
+                ])
+            ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+            
+            // Download file
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'seo-content.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        // Utility Functions
+        function showMessage(containerId, message, type, prepend = false) {
+            const container = document.getElementById(containerId);
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message message-${type}`;
+            messageDiv.innerHTML = `
+                <span>${type === 'success' ? '✓' : '⚠️'}</span>
+                <span>${message}</span>
+            `;
+            
+            if (prepend && container.firstChild) {
+                container.insertBefore(messageDiv, container.firstChild);
+            } else {
+                container.innerHTML = '';
+                container.appendChild(messageDiv);
+            }
+        }
+    </script>
+</body>
+</html>

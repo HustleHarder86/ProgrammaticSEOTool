@@ -73,10 +73,25 @@ class handler(BaseHTTPRequestHandler):
                     self.wfile.write(b'<h1>Programmatic SEO Tool</h1><p>API is running.</p>')
             return
         
-        # Redirect root to pro version
+        # Serve wizard interface at /wizard
+        if path == '/wizard':
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            
+            # Read and serve the wizard HTML file
+            html_path = os.path.join(os.path.dirname(__file__), 'enhanced-interface-wizard.html')
+            try:
+                with open(html_path, 'r') as f:
+                    self.wfile.write(f.read().encode())
+            except:
+                self.wfile.write(b'<h1>Wizard interface not found</h1>')
+            return
+        
+        # Redirect root to wizard version (new default)
         if path == '/' or path == '':
             self.send_response(302)
-            self.send_header('Location', '/pro')
+            self.send_header('Location', '/wizard')
             self.send_header('Cache-Control', 'no-cache')
             self.end_headers()
             return

@@ -9,6 +9,10 @@
       "destination": "/api/main"
     },
     {
+      "source": "/wizard",
+      "destination": "/api/main"
+    },
+    {
       "source": "/dashboard",
       "destination": "/api/main"
     },
