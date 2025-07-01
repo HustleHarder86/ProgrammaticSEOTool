@@ -639,6 +639,41 @@
                         </div>
                         
                         <div id="analyzeResult"></div>
+                        
+                        <!-- Market Context Section (hidden until business is analyzed) -->
+                        <div id="marketContextSection" style="display: none; margin-top: 20px;">
+                            <div class="card" style="background: #f0f9ff; border: 1px solid #bae6fd;">
+                                <h3 style="margin: 0 0 15px 0; color: #0284c7;">🎯 Customize Target Market</h3>
+                                <p style="margin: 0 0 20px 0; color: #0c4a6e; font-size: 0.95rem;">
+                                    Add specific constraints or focus areas for more targeted keyword generation:
+                                </p>
+                                
+                                <div class="form-group">
+                                    <label>Market/Region:</label>
+                                    <input type="text" id="marketContext" placeholder="e.g., Canadian market, UK only, Texas cities" 
+                                           style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Specific Locations (comma-separated):</label>
+                                    <input type="text" id="locationContext" placeholder="e.g., Toronto, Vancouver, Montreal"
+                                           style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Additional Context:</label>
+                                    <textarea id="additionalContext" rows="2" 
+                                        placeholder="e.g., Focus on luxury properties, First-time buyers only, Commercial properties excluded"
+                                        style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;"></textarea>
+                                </div>
+                                
+                                <button onclick="updateBusinessContext()" class="btn-primary" style="background: #10b981; width: 180px;">
+                                    <span>✓</span> Update Context
+                                </button>
+                                
+                                <div id="contextUpdateResult" style="margin-top: 10px;"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -950,6 +985,9 @@
                 
                 // Enable next button
                 document.getElementById('nextBtn').disabled = false;
+                
+                // Show market context section
+                document.getElementById('marketContextSection').style.display = 'block';
                 
                 // Load seed templates for next step
                 await loadSeedTemplates();
@@ -1406,6 +1444,46 @@
                 container.innerHTML = '';
                 container.appendChild(messageDiv);
             }
+        }
+        
+        function updateBusinessContext() {
+            const marketContext = document.getElementById('marketContext').value;
+            const locationContext = document.getElementById('locationContext').value;
+            const additionalContext = document.getElementById('additionalContext').value;
+            
+            // Update business info with context
+            if (marketContext) {
+                businessInfo.market_context = marketContext;
+            }
+            
+            if (locationContext) {
+                // Parse locations and store as array
+                businessInfo.target_locations = locationContext.split(',').map(loc => loc.trim()).filter(loc => loc);
+                // Use first location as primary
+                if (businessInfo.target_locations.length > 0) {
+                    businessInfo.location = businessInfo.target_locations[0];
+                }
+            }
+            
+            if (additionalContext) {
+                businessInfo.additional_context = additionalContext;
+            }
+            
+            // Show success message
+            const resultDiv = document.getElementById('contextUpdateResult');
+            resultDiv.innerHTML = `
+                <div class="message message-success">
+                    <strong>✓ Context Updated:</strong><br>
+                    ${marketContext ? `Market: ${marketContext}<br>` : ''}
+                    ${locationContext ? `Locations: ${businessInfo.target_locations?.join(', ') || locationContext}<br>` : ''}
+                    ${additionalContext ? `Context: ${additionalContext}` : ''}
+                </div>
+            `;
+            
+            // Hide message after 3 seconds
+            setTimeout(() => {
+                resultDiv.innerHTML = '';
+            }, 3000);
         }
     </script>
 </body>
