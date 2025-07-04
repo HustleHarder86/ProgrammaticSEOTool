@@ -233,11 +233,33 @@ class handler(BaseHTTPRequestHandler):
                 })
                 with urlopen(req, timeout=5) as response:
                     html = response.read().decode('utf-8')
+                    
+                    # Extract title
                     if '<title>' in html:
                         start = html.find('<title>') + 7
                         end = html.find('</title>')
                         title = html[start:end] if end > start else "Business Website"
                         business_info['name'] = title
+                    
+                    # Extract meta description
+                    if 'name="description"' in html:
+                        desc_start = html.find('name="description"')
+                        if desc_start > 0:
+                            content_start = html.find('content="', desc_start) + 9
+                            content_end = html.find('"', content_start)
+                            if content_end > content_start:
+                                meta_desc = html[content_start:content_end]
+                                business_info['description'] = business_info.get('description', '') + ' ' + meta_desc
+                    
+                    # Extract key text from body (first 500 chars of visible text)
+                    import re
+                    # Remove script and style elements
+                    clean_html = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL)
+                    clean_html = re.sub(r'<style[^>]*>.*?</style>', '', clean_html, flags=re.DOTALL)
+                    # Extract text
+                    text = re.sub(r'<[^>]+>', ' ', clean_html)
+                    text = ' '.join(text.split())[:500]
+                    business_info['page_content'] = text
             except Exception as e:
                 # If URL fetch fails, extract domain as name
                 from urllib.parse import urlparse

@@ -99,7 +99,7 @@ class AIHandler:
         }
         
         data = {
-            'model': 'llama-3.1-sonar-small-128k-online',  # Good for SEO research
+            'model': 'sonar-small-chat',  # Updated model name
             'messages': [{'role': 'user', 'content': prompt}],
             'max_tokens': max_tokens,
             'temperature': 0.7
@@ -114,6 +114,12 @@ class AIHandler:
             with urlopen(req, timeout=30) as response:
                 result = json.loads(response.read().decode())
                 return result['choices'][0]['message']['content']
+        except URLError as e:
+            if hasattr(e, 'read'):
+                error_body = e.read().decode()
+                print(f"Perplexity API error response: {error_body}")
+            print(f"Perplexity URL error: {e}")
+            return None
         except Exception as e:
             print(f"Perplexity error: {e}")
             return None
@@ -143,20 +149,22 @@ class AIHandler:
         if not self.has_ai_provider():
             return None
             
-        prompt = f"""Analyze this business and suggest SEO content opportunities:
+        prompt = f"""Analyze this business by examining its URL and description. Determine what type of business it is and suggest programmatic SEO content opportunities.
+
 Business: {business_info.get('name', 'Unknown')}
 Description: {business_info.get('description', 'No description')}
 URL: {business_info.get('url', 'No URL')}
+Page Content: {business_info.get('page_content', 'No content available')[:300]}
 Target Audience Type: {business_info.get('target_audience_type', 'Not specified')}
 
 Provide a JSON response with:
-1. industry (string - be specific about the business type)
-2. target_audience (string - detailed description)
-3. content_types (array of 5 content type suggestions like guides, comparisons, calculators)
-4. main_keywords (array of 5 primary terms)
-5. services (array of 3-5 main services/products)
-6. customer_actions (array of common actions like buy, book, learn)
-7. competitors (array of 2-3 competitor examples)
+1. industry (string - be specific about the business type based on your analysis)
+2. target_audience (string - who actually uses this product/service)
+3. content_types (array of 5 programmatic SEO page types that would attract their target customers)
+4. main_keywords (array of 5 primary terms related to what the business does)
+5. services (array of 3-5 main features/products you identified)
+6. customer_actions (array of common actions users take)
+7. competitors (array of 2-3 similar businesses)
 """
         
         response = self.generate(prompt, 300)
