@@ -989,9 +989,8 @@ class SeedKeywordGenerator:
     def _generate_single_template_with_ai(self, category: str, business_info: Dict, ai_handler, market_context: Dict = None) -> Dict:
         """Generate a specific template for a missing category using AI"""
         
-        # Extract market context
-        additional_context = market_context.get('additional_context', '') if market_context else ''
-        location_list = market_context.get('location_list', '') if market_context else ''
+        # Extract intelligent market context using AI
+        market_intelligence = self._extract_market_intelligence(business_info, market_context, ai_handler)
         
         prompt = f"""
         Generate a programmatic SEO keyword template specifically for the category '{category}'.
@@ -1001,31 +1000,24 @@ class SeedKeywordGenerator:
         - Industry: {business_info.get('industry', 'Unknown')}
         - Description: {business_info.get('description', 'No description')}
         
-        Market Context:
-        - Additional Context: {additional_context}
-        - Target Locations: {location_list}
+        Market Intelligence (AI-extracted):
+        {market_intelligence}
         
-        Create keyword templates that incorporate the market context, especially location-based keywords.
-        For '{category}', focus on creating templates that would generate keywords like:
-        - "investment properties in {{city}}"
-        - "{{property_type}} investment opportunities {{location}}"
-        - "best {{investment_strategy}} in {{canadian_city}}"
+        Create keyword templates that incorporate this market intelligence.
+        Use the extracted locations, market segments, and industry terms to create relevant variables.
         
         Create a template configuration with:
-        1. templates: List of 3-5 keyword patterns using variables in curly braces (MUST include location variables)
-        2. variables: Dictionary where each variable has 10-20 possible values
+        1. templates: List of 3-5 keyword patterns using variables in curly braces
+        2. variables: Dictionary with 10-20 relevant values per variable based on the market intelligence
         
-        IMPORTANT: Include location variables with Canadian cities if market context mentions Canada.
+        Focus on the '{category}' concept and make templates relevant to the extracted market context.
         
         Return as JSON with this exact structure:
         {{
-            "templates": ["investment properties in {{city}}", "{{property_type}} investment {{location}}", "best {{strategy}} {{city}} {{year}}"],
+            "templates": ["template using {{variable1}} and {{variable2}}", "another {{variable1}} template"],
             "variables": {{
-                "city": ["Toronto", "Vancouver", "Calgary", "Ottawa", "Montreal"],
-                "property_type": ["condo", "house", "apartment", "commercial"],
-                "location": ["Ontario", "British Columbia", "Alberta"],
-                "strategy": ["cash flow", "appreciation", "REIT"],
-                "year": ["2024", "2025"]
+                "variable1": ["value1", "value2", "value3"],
+                "variable2": ["valueA", "valueB", "valueC"]
             }}
         }}
         """
@@ -1053,3 +1045,69 @@ class SeedKeywordGenerator:
             print(f"Error generating single template for '{category}': {e}")
             
         return None
+    
+    def _extract_market_intelligence(self, business_info: Dict, market_context: Dict, ai_handler) -> str:
+        """Extract market intelligence from business info and market context using AI"""
+        
+        # Collect all available context
+        additional_context = market_context.get('additional_context', '') if market_context else ''
+        location_list = market_context.get('location_list', '') if market_context else ''
+        market_region = market_context.get('market_region', '') if market_context else ''
+        
+        business_name = business_info.get('name', 'Unknown')
+        industry = business_info.get('industry', 'Unknown')
+        description = business_info.get('description', '')
+        
+        prompt = f"""
+        Analyze the following business and market context to extract market intelligence for keyword generation:
+        
+        Business Information:
+        - Name: {business_name}
+        - Industry: {industry}
+        - Description: {description}
+        
+        Market Context:
+        - Additional Context: {additional_context}
+        - Location List: {location_list}
+        - Market Region: {market_region}
+        
+        Extract and provide the following market intelligence:
+        
+        1. GEOGRAPHIC SCOPE:
+           - Primary markets/countries mentioned or implied
+           - Key cities/regions that would be relevant
+           - Geographic modifiers (Canadian, European, US-based, etc.)
+        
+        2. MARKET SEGMENTS:
+           - Target customer types (enterprise, consumer, luxury, budget, etc.)
+           - Market maturity (emerging, established, niche, mainstream)
+           - Business model focus (B2B, B2C, marketplace, etc.)
+        
+        3. INDUSTRY-SPECIFIC TERMS:
+           - Key products/services this business offers
+           - Industry jargon and terminology customers would search for
+           - Competitive landscape terms
+        
+        4. TEMPORAL CONTEXT:
+           - Relevant years, seasons, or time periods
+           - Market trends or timing considerations
+        
+        Based on the context "{additional_context}", be especially detailed about geographic and market segment implications.
+        
+        Provide a structured analysis that will help generate relevant keyword variables.
+        """
+        
+        try:
+            print(f"Extracting market intelligence for: {business_name} with context: {additional_context}")
+            response = ai_handler.generate(prompt, max_tokens=500)
+            
+            if response:
+                print(f"Market intelligence extracted: {len(response)} characters")
+                return response
+            else:
+                print("No market intelligence response from AI")
+                return f"Market Context: {additional_context}, Industry: {industry}, Business: {business_name}"
+                
+        except Exception as e:
+            print(f"Error extracting market intelligence: {e}")
+            return f"Market Context: {additional_context}, Industry: {industry}, Business: {business_name}"
