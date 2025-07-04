@@ -546,11 +546,15 @@ class handler(BaseHTTPRequestHandler):
         business_info = data.get('business_info', {})
         use_ai = data.get('use_ai', True)
         
+        print(f"DEBUG: _generate_seed_suggestions called with business_info: {business_info}")
+        print(f"DEBUG: use_ai = {use_ai}")
+        
         try:
             from .seed_generator import SeedKeywordGenerator
             seed_gen = SeedKeywordGenerator()
             
             suggestions = seed_gen.get_seed_suggestions(business_info, use_ai=use_ai)
+            print(f"DEBUG: seed_gen.get_seed_suggestions returned {len(suggestions)} suggestions")
             
             # Track API usage if AI was used
             if use_ai and ai_handler and ai_handler.has_ai_provider() and usage_tracker:
