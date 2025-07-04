@@ -436,7 +436,7 @@ class SeedKeywordGenerator:
         
         return keywords
 
-    def get_seed_suggestions(self, business_info: Dict = None, use_ai: bool = True) -> List[Dict]:
+    def get_seed_suggestions(self, business_info: Dict = None, use_ai: bool = True, market_context: Dict = None) -> List[Dict]:
         """Get intelligent seed suggestions based on business type"""
         
         if not business_info:
@@ -448,8 +448,8 @@ class SeedKeywordGenerator:
                 from .ai_handler import AIHandler
                 ai = AIHandler()
                 if ai.has_ai_provider():
-                    print(f"Attempting AI seed generation for business: {business_info.get('name', 'Unknown')}")
-                    ai_suggestions = self._get_ai_seed_suggestions(business_info, ai)
+                    print(f"Attempting comprehensive AI seed generation for business: {business_info.get('name', 'Unknown')}")
+                    ai_suggestions = self._get_ai_seed_suggestions(business_info, ai, market_context)
                     if ai_suggestions:
                         print(f"AI generated {len(ai_suggestions)} suggestions successfully")
                         return ai_suggestions
@@ -901,31 +901,48 @@ class SeedKeywordGenerator:
         }
         return generic_vars.get(var_name, [var_name])
     
-    def _get_ai_seed_suggestions(self, business_info: Dict, ai_handler) -> List[Dict]:
-        """Generate custom seed templates using AI based on the specific business"""
+    def _get_ai_seed_suggestions(self, business_info: Dict, ai_handler, market_context: Dict = None) -> List[Dict]:
+        """Generate custom seed templates using comprehensive business analysis"""
         
+        # First, get comprehensive business analysis like a human would
+        print("Performing comprehensive business analysis...")
+        comprehensive_analysis = ai_handler.analyze_business_comprehensive(business_info, market_context)
+        
+        if not comprehensive_analysis:
+            print("Comprehensive analysis failed, falling back to basic approach")
+            return self._get_basic_ai_seed_suggestions(business_info, ai_handler)
+        
+        # Use the comprehensive analysis to generate strategic seed templates
         prompt = f"""
-        You are an expert in programmatic SEO. Analyze this business and create custom seed keyword templates.
+        You are an expert programmatic SEO strategist. Based on this comprehensive business analysis, create strategic seed templates that follow human SEO expert thinking.
 
-        Business Information:
-        - Name: {business_info.get('name', 'Unknown')}
-        - Industry: {business_info.get('industry', 'Unknown')}
-        - Description: {business_info.get('description', 'No description')}
-        - Target Audience: {business_info.get('target_audience', 'General')}
+        COMPREHENSIVE BUSINESS ANALYSIS:
+        
+        Business Intelligence:
+        {comprehensive_analysis.get('business_intelligence', '')}
+        
+        Customer Search Behavior:
+        {comprehensive_analysis.get('customer_analysis', '')}
+        
+        Content Opportunities:
+        {comprehensive_analysis.get('content_opportunities', '')}
 
-        Create 4-6 highly relevant programmatic SEO seed templates for this specific business.
-        Each template should generate hundreds or thousands of keyword variations.
+        Based on this analysis, create 4-6 strategic programmatic SEO seed templates that:
+        1. Address actual customer search behavior identified in the analysis
+        2. Target the content opportunities with highest traffic/conversion potential  
+        3. Scale across multiple variations while remaining valuable
+        4. Match the specific customer journey stages identified
 
         For each template provide:
-        1. name: Descriptive name with emoji
-        2. category: Unique category ID (e.g., "location_analysis", "tool_calculators")
-        3. templates: List of 3-5 template patterns using variables in curly braces
-        4. variables: Dictionary of variable names and their possible values (5-20 values each)
-        5. description: Brief description of what keywords this generates
-        6. estimated_keywords: Realistic estimate of total variations
-        7. example: 2-3 example keywords this would generate
+        1. name: Strategic name with emoji (based on content opportunity)
+        2. category: Unique category ID that reflects search intent
+        3. templates: 3-5 keyword patterns using variables (based on customer search behavior)
+        4. variables: Variables with values relevant to this specific business and market
+        5. description: Why this template targets identified customer needs
+        6. estimated_keywords: Realistic estimate based on variable combinations
+        7. example: 2-3 example keywords showing customer search intent match
 
-        Focus on templates that match their specific business type and would drive real search traffic.
+        Focus on templates that directly address the customer problems and search patterns identified in the analysis.
         
         Return as JSON array.
         """
@@ -1111,3 +1128,80 @@ class SeedKeywordGenerator:
         except Exception as e:
             print(f"Error extracting market intelligence: {e}")
             return f"Market Context: {additional_context}, Industry: {industry}, Business: {business_name}"
+    
+    def _get_basic_ai_seed_suggestions(self, business_info: Dict, ai_handler) -> List[Dict]:
+        """Fallback to basic AI seed generation if comprehensive analysis fails"""
+        
+        prompt = f"""
+        You are an expert in programmatic SEO. Analyze this business and create custom seed keyword templates.
+
+        Business Information:
+        - Name: {business_info.get('name', 'Unknown')}
+        - Industry: {business_info.get('industry', 'Unknown')}
+        - Description: {business_info.get('description', 'No description')}
+        - Target Audience: {business_info.get('target_audience', 'General')}
+
+        Create 4-6 highly relevant programmatic SEO seed templates for this specific business.
+        Each template should generate hundreds or thousands of keyword variations.
+
+        For each template provide:
+        1. name: Descriptive name with emoji
+        2. category: Unique category ID (e.g., "location_analysis", "tool_calculators")
+        3. templates: List of 3-5 template patterns using variables in curly braces
+        4. variables: Dictionary of variable names and their possible values (5-20 values each)
+        5. description: Brief description of what keywords this generates
+        6. estimated_keywords: Realistic estimate of total variations
+        7. example: 2-3 example keywords this would generate
+
+        Focus on templates that match their specific business type and would drive real search traffic.
+        
+        Return as JSON array.
+        """
+        
+        try:
+            response_text = ai_handler.generate(prompt, max_tokens=2000)
+            
+            if not response_text:
+                return []
+            
+            # Extract JSON from response
+            import json
+            import re
+            
+            content = response_text
+            
+            # Find JSON array in response
+            json_match = re.search(r'\[[\s\S]*\]', content)
+            if json_match:
+                templates_data = json.loads(json_match.group())
+                
+                # Format for our system
+                suggestions = []
+                for template in templates_data:
+                    suggestion = {
+                        "name": template.get('name', 'Custom Template'),
+                        "category": template.get('category', 'custom'),
+                        "template_group": template.get('category', 'custom'),
+                        "id": template.get('category', 'custom'),
+                        "description": template.get('description', ''),
+                        "estimated_keywords": template.get('estimated_keywords', '100+'),
+                        "example": template.get('example', ''),
+                        "relevance": "high",
+                        "templates": template.get('templates', []),
+                        "variables": template.get('variables', {})
+                    }
+                    
+                    # Add to generic templates for generation
+                    self.generic_templates[suggestion['category']] = {
+                        'templates': suggestion['templates'],
+                        'variables': suggestion['variables']
+                    }
+                    
+                    suggestions.append(suggestion)
+                
+                return suggestions
+                
+        except Exception as e:
+            print(f"Error in basic AI seed generation: {e}")
+            
+        return []

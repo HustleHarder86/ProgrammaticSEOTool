@@ -177,6 +177,178 @@ Provide a JSON response with:
             except:
                 pass
         return None
+    
+    def analyze_business_comprehensive(self, business_info, market_context=None):
+        """Comprehensive business analysis following human SEO expert approach"""
+        if not self.has_ai_provider():
+            return None
+        
+        # Phase 1: Deep Business Understanding
+        business_intelligence = self._extract_business_intelligence(business_info)
+        
+        # Phase 2: Customer Search Behavior Analysis  
+        customer_analysis = self._analyze_customer_search_behavior(business_intelligence, market_context)
+        
+        # Phase 3: Content Opportunity Discovery
+        content_opportunities = self._discover_content_opportunities(business_intelligence, customer_analysis, market_context)
+        
+        return {
+            'business_intelligence': business_intelligence,
+            'customer_analysis': customer_analysis,
+            'content_opportunities': content_opportunities,
+            'comprehensive_analysis': True
+        }
+    
+    def _extract_business_intelligence(self, business_info):
+        """Phase 1: Deep business understanding like a human SEO expert"""
+        
+        prompt = f"""
+        Act as an expert business analyst. Analyze this business deeply to understand what they do, who they serve, and how they create value.
+
+        Business Information:
+        - Name: {business_info.get('name', 'Unknown')}
+        - Industry: {business_info.get('industry', 'Unknown')}
+        - Description: {business_info.get('description', 'No description')}
+        - URL: {business_info.get('url', 'No URL')}
+        - Page Content: {business_info.get('page_content', 'No content available')[:500]}
+
+        Provide a comprehensive business intelligence analysis:
+
+        1. CORE BUSINESS MODEL:
+           - What exactly does this business do?
+           - How do they make money?
+           - What's their unique value proposition?
+
+        2. TARGET CUSTOMERS:
+           - Who are their primary customers? (be specific - titles, industries, demographics)
+           - What customer segments do they serve?
+           - What problems do customers have before finding this business?
+
+        3. CUSTOMER JOURNEY:
+           - How do customers discover they need this solution?
+           - What's the typical buyer journey?
+           - What information do they need at each stage?
+
+        4. COMPETITIVE LANDSCAPE:
+           - Who are their main competitors?
+           - What makes this business different?
+           - What competitive advantages do they have?
+
+        5. KEY FEATURES & SOLUTIONS:
+           - What are their main products/services?
+           - What tools or features do they offer?
+           - What outcomes do customers achieve?
+
+        Be thorough and analytical. Think like a business consultant who needs to understand every aspect of this company.
+        """
+        
+        try:
+            response = self.generate(prompt, 800)
+            return response if response else "Business analysis unavailable"
+        except Exception as e:
+            print(f"Error in business intelligence extraction: {e}")
+            return "Business analysis unavailable"
+    
+    def _analyze_customer_search_behavior(self, business_intelligence, market_context):
+        """Phase 2: Understand what customers would actually search for"""
+        
+        additional_context = market_context.get('additional_context', '') if market_context else ''
+        
+        prompt = f"""
+        Based on this business intelligence, analyze what their potential customers would actually search for online.
+
+        Business Intelligence:
+        {business_intelligence}
+
+        Market Context: {additional_context}
+
+        Analyze customer search behavior:
+
+        1. SEARCH INTENT MAPPING:
+           - What would customers search for when they don't know this business exists?
+           - What problems would they type into Google?
+           - What information are they seeking at different stages?
+
+        2. SEARCH JOURNEY STAGES:
+           - Problem Awareness: What searches indicate they have a problem?
+           - Solution Research: What do they search when looking for solutions?
+           - Vendor Evaluation: What searches help them compare options?
+           - Implementation: What do they search when ready to use a solution?
+
+        3. GEOGRAPHICAL CONSIDERATIONS:
+           - How does location affect their search behavior?
+           - What location-specific terms would they use?
+           - How does market context influence search patterns?
+
+        4. INDUSTRY-SPECIFIC SEARCH PATTERNS:
+           - What jargon or technical terms do they use?
+           - What questions are common in their industry?
+           - What tools or resources do they typically search for?
+
+        Think like a customer who has never heard of this business. What would you search for?
+        """
+        
+        try:
+            response = self.generate(prompt, 800)
+            return response if response else "Customer analysis unavailable"
+        except Exception as e:
+            print(f"Error in customer search analysis: {e}")
+            return "Customer analysis unavailable"
+    
+    def _discover_content_opportunities(self, business_intelligence, customer_analysis, market_context):
+        """Phase 3: Identify specific content types that would rank and convert"""
+        
+        additional_context = market_context.get('additional_context', '') if market_context else ''
+        
+        prompt = f"""
+        Based on the business intelligence and customer search behavior, identify specific content opportunities for programmatic SEO.
+
+        Business Intelligence:
+        {business_intelligence}
+
+        Customer Search Behavior:
+        {customer_analysis}
+
+        Market Context: {additional_context}
+
+        Identify content opportunities:
+
+        1. HIGH-IMPACT CONTENT TYPES:
+           - What types of content would rank well and drive qualified traffic?
+           - What content gaps exist in the market?
+           - What content types would best serve customer search intent?
+
+        2. SCALABLE CONTENT PATTERNS:
+           - What content can be templated across multiple variations?
+           - What location-based content opportunities exist?
+           - What comparison or tool-based content would work?
+
+        3. SEARCH TRAFFIC POTENTIAL:
+           - What content types have high search volume potential?
+           - What topics have commercial intent but low competition?
+           - What long-tail opportunities exist?
+
+        4. CONVERSION OPTIMIZATION:
+           - What content would naturally lead to conversions?
+           - How can content demonstrate business value?
+           - What calls-to-action would be most effective?
+
+        5. PROGRAMMATIC SEO TEMPLATES:
+           For each content opportunity, suggest:
+           - Template structure
+           - Variable components (locations, features, comparisons)
+           - SEO optimization approach
+           - Target search intent
+
+        Focus on content that can scale to hundreds of pages while remaining valuable and unique.
+        """
+        
+        try:
+            response = self.generate(prompt, 1000)
+            return response if response else "Content opportunity analysis unavailable"
+        except Exception as e:
+            print(f"Error in content opportunity discovery: {e}")
+            return "Content opportunity analysis unavailable"
 
     def generate_keywords_with_ai(self, business_info, num_keywords=10):
         """Use AI to generate keyword suggestions"""
