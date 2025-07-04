@@ -330,8 +330,27 @@ class SeedKeywordGenerator:
             config = self.generic_templates.get(category, {}).copy()
             
             if not config:
-                print(f"Warning: No template found for category '{category}'")
-                continue
+                print(f"Warning: No template found for category '{category}' - trying AI regeneration")
+                # Try to regenerate this specific template with AI
+                try:
+                    from .ai_handler import AIHandler
+                    ai = AIHandler()
+                    if ai.has_ai_provider():
+                        # Generate template specifically for this category
+                        ai_template = self._generate_single_template_with_ai(category, business_info, ai)
+                        if ai_template:
+                            config = ai_template
+                            # Store for future use in this session
+                            self.generic_templates[category] = config
+                        else:
+                            print(f"AI failed to generate template for '{category}' - skipping")
+                            continue
+                    else:
+                        print(f"No AI available to regenerate template for '{category}' - skipping")
+                        continue
+                except Exception as e:
+                    print(f"Error regenerating template for '{category}': {e} - skipping")
+                    continue
                 
             # Populate variables with business-specific data
             for var_name in config["variables"]:
@@ -953,3 +972,54 @@ class SeedKeywordGenerator:
             
         # Return empty if AI generation fails
         return []
+    
+    def _generate_single_template_with_ai(self, category: str, business_info: Dict, ai_handler) -> Dict:
+        """Generate a specific template for a missing category using AI"""
+        
+        prompt = f"""
+        Generate a programmatic SEO keyword template specifically for the category '{category}'.
+        
+        Business Context:
+        - Name: {business_info.get('name', 'Unknown')}
+        - Industry: {business_info.get('industry', 'Unknown')}
+        - Description: {business_info.get('description', 'No description')}
+        
+        Create a template configuration with:
+        1. templates: List of 3-5 keyword patterns using variables in curly braces
+        2. variables: Dictionary where each variable has 5-15 possible values
+        
+        Focus on the '{category}' concept and make it relevant to this business.
+        
+        Return as JSON with this exact structure:
+        {{
+            "templates": ["template1 with {{variable1}} and {{variable2}}", "template2..."],
+            "variables": {{
+                "variable1": ["value1", "value2", "value3"],
+                "variable2": ["valueA", "valueB", "valueC"]
+            }}
+        }}
+        """
+        
+        try:
+            response_text = ai_handler.generate(prompt, max_tokens=800)
+            
+            if not response_text:
+                return None
+            
+            # Extract JSON from response
+            import json
+            import re
+            
+            # Find JSON object in response
+            json_match = re.search(r'\{[\s\S]*\}', response_text)
+            if json_match:
+                template_data = json.loads(json_match.group())
+                
+                # Validate structure
+                if 'templates' in template_data and 'variables' in template_data:
+                    return template_data
+                    
+        except Exception as e:
+            print(f"Error generating single template for '{category}': {e}")
+            
+        return None
