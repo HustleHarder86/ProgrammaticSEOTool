@@ -448,9 +448,19 @@ class SeedKeywordGenerator:
                 from .ai_handler import AIHandler
                 ai = AIHandler()
                 if ai.has_ai_provider():
-                    return self._get_ai_seed_suggestions(business_info, ai)
+                    print(f"Attempting AI seed generation for business: {business_info.get('name', 'Unknown')}")
+                    ai_suggestions = self._get_ai_seed_suggestions(business_info, ai)
+                    if ai_suggestions:
+                        print(f"AI generated {len(ai_suggestions)} suggestions successfully")
+                        return ai_suggestions
+                    else:
+                        print("AI returned empty suggestions - falling back to generic")
+                else:
+                    print("No AI provider available - falling back to generic")
             except Exception as e:
                 print(f"AI seed generation failed: {e}")
+                import traceback
+                traceback.print_exc()
         
         # Extract business context (fallback to generic)
         business_name = business_info.get('name', 'business')
@@ -921,12 +931,15 @@ class SeedKeywordGenerator:
         """
         
         try:
+            print(f"Sending AI prompt for business: {business_info.get('name', 'Unknown')}")
             # Use the AI handler's generate method
             response_text = ai_handler.generate(prompt, max_tokens=2000)
             
             if not response_text:
                 print("No response from AI")
                 return []
+            
+            print(f"AI response received: {len(response_text)} characters")
             
             # Extract JSON from response
             import json
