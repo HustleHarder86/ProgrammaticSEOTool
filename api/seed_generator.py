@@ -336,8 +336,8 @@ class SeedKeywordGenerator:
                     from .ai_handler import AIHandler
                     ai = AIHandler()
                     if ai.has_ai_provider():
-                        # Generate template specifically for this category
-                        ai_template = self._generate_single_template_with_ai(category, business_info, ai)
+                        # Generate template specifically for this category with market context
+                        ai_template = self._generate_single_template_with_ai(category, business_info, ai, market_context)
                         if ai_template:
                             config = ai_template
                             # Store for future use in this session
@@ -986,8 +986,12 @@ class SeedKeywordGenerator:
         # Return empty if AI generation fails
         return []
     
-    def _generate_single_template_with_ai(self, category: str, business_info: Dict, ai_handler) -> Dict:
+    def _generate_single_template_with_ai(self, category: str, business_info: Dict, ai_handler, market_context: Dict = None) -> Dict:
         """Generate a specific template for a missing category using AI"""
+        
+        # Extract market context
+        additional_context = market_context.get('additional_context', '') if market_context else ''
+        location_list = market_context.get('location_list', '') if market_context else ''
         
         prompt = f"""
         Generate a programmatic SEO keyword template specifically for the category '{category}'.
@@ -997,18 +1001,31 @@ class SeedKeywordGenerator:
         - Industry: {business_info.get('industry', 'Unknown')}
         - Description: {business_info.get('description', 'No description')}
         
-        Create a template configuration with:
-        1. templates: List of 3-5 keyword patterns using variables in curly braces
-        2. variables: Dictionary where each variable has 5-15 possible values
+        Market Context:
+        - Additional Context: {additional_context}
+        - Target Locations: {location_list}
         
-        Focus on the '{category}' concept and make it relevant to this business.
+        Create keyword templates that incorporate the market context, especially location-based keywords.
+        For '{category}', focus on creating templates that would generate keywords like:
+        - "investment properties in {{city}}"
+        - "{{property_type}} investment opportunities {{location}}"
+        - "best {{investment_strategy}} in {{canadian_city}}"
+        
+        Create a template configuration with:
+        1. templates: List of 3-5 keyword patterns using variables in curly braces (MUST include location variables)
+        2. variables: Dictionary where each variable has 10-20 possible values
+        
+        IMPORTANT: Include location variables with Canadian cities if market context mentions Canada.
         
         Return as JSON with this exact structure:
         {{
-            "templates": ["template1 with {{variable1}} and {{variable2}}", "template2..."],
+            "templates": ["investment properties in {{city}}", "{{property_type}} investment {{location}}", "best {{strategy}} {{city}} {{year}}"],
             "variables": {{
-                "variable1": ["value1", "value2", "value3"],
-                "variable2": ["valueA", "valueB", "valueC"]
+                "city": ["Toronto", "Vancouver", "Calgary", "Ottawa", "Montreal"],
+                "property_type": ["condo", "house", "apartment", "commercial"],
+                "location": ["Ontario", "British Columbia", "Alberta"],
+                "strategy": ["cash flow", "appreciation", "REIT"],
+                "year": ["2024", "2025"]
             }}
         }}
         """
