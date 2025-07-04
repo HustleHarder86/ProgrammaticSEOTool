@@ -296,12 +296,12 @@ Provide a JSON response with:
             return "Customer analysis unavailable"
     
     def _discover_content_opportunities(self, business_intelligence, customer_analysis, market_context):
-        """Phase 3: Identify specific content types that would rank and convert"""
+        """Phase 3: Identify specific content types that would rank and convert - ChatGPT style"""
         
         additional_context = market_context.get('additional_context', '') if market_context else ''
         
         prompt = f"""
-        Based on the business intelligence and customer search behavior, identify specific content opportunities for programmatic SEO.
+        Create a comprehensive programmatic SEO strategy like ChatGPT's real estate example. Follow this exact structure:
 
         Business Intelligence:
         {business_intelligence}
@@ -311,36 +311,43 @@ Provide a JSON response with:
 
         Market Context: {additional_context}
 
-        Identify content opportunities:
+        Create a complete programmatic SEO strategy following this format:
 
-        1. HIGH-IMPACT CONTENT TYPES:
-           - What types of content would rank well and drive qualified traffic?
-           - What content gaps exist in the market?
-           - What content types would best serve customer search intent?
+        ## 🔑 CORE KEYWORD FORMULAS
+        Identify 3-5 keyword formulas that can scale. Format like:
+        [Variable1] [Variable2] [Core Topic]
+        [Location] [Product/Service] [Intent Modifier]
 
-        2. SCALABLE CONTENT PATTERNS:
-           - What content can be templated across multiple variations?
-           - What location-based content opportunities exist?
-           - What comparison or tool-based content would work?
-
-        3. SEARCH TRAFFIC POTENTIAL:
-           - What content types have high search volume potential?
-           - What topics have commercial intent but low competition?
-           - What long-tail opportunities exist?
-
-        4. CONVERSION OPTIMIZATION:
-           - What content would naturally lead to conversions?
-           - How can content demonstrate business value?
-           - What calls-to-action would be most effective?
-
-        5. PROGRAMMATIC SEO TEMPLATES:
-           For each content opportunity, suggest:
-           - Template structure
-           - Variable components (locations, features, comparisons)
-           - SEO optimization approach
-           - Target search intent
-
-        Focus on content that can scale to hundreds of pages while remaining valuable and unique.
+        ## 🔁 KEYWORD COMPONENTS TO MIX & MATCH
+        
+        ### 🏙️ Location Modifiers:
+        - List 15-25 relevant locations (cities, regions, countries based on market context)
+        
+        ### 🏢 Business-Specific Categories:
+        - List 8-12 product/service types this business offers
+        - Be specific to their industry and offerings
+        
+        ### 📊 Intent/Topic Modifiers:
+        - List 10-15 customer intent variations
+        - Include tools, comparisons, guides, calculators
+        - Focus on high-commercial intent terms
+        
+        ## 🧱 PROGRAMMATIC PAGE EXAMPLES
+        Create 6-8 specific page examples with:
+        - Page Title
+        - URL Slug  
+        - Target Keyword
+        - Brief description of page purpose
+        
+        ## 🛠️ TECHNICAL PROGRAMMATIC SETUP
+        Calculate potential pages:
+        - X locations × Y categories × Z intent modifiers = Total pages
+        - Suggest optimal combinations for maximum coverage
+        
+        ## 📚 PILLAR PAGES (Non-programmatic but high-value)
+        Suggest 4-5 pillar pages that build topical authority
+        
+        Make this specific to the analyzed business and market context. Think like ChatGPT's real estate example but adapted to this business type.
         """
         
         try:

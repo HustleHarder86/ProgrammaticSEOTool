@@ -912,37 +912,33 @@ class SeedKeywordGenerator:
             print("Comprehensive analysis failed, falling back to basic approach")
             return self._get_basic_ai_seed_suggestions(business_info, ai_handler)
         
-        # Use the comprehensive analysis to generate strategic seed templates
+        # Extract components from ChatGPT-style analysis
+        content_opportunities = comprehensive_analysis.get('content_opportunities', '')
+        seed_templates = self._extract_seed_templates_from_strategy(content_opportunities, business_info)
+        
+        if seed_templates:
+            print(f"Extracted {len(seed_templates)} seed templates from comprehensive strategy")
+            return seed_templates
+        
+        # Fallback: Use AI to generate templates directly from the comprehensive analysis
         prompt = f"""
-        You are an expert programmatic SEO strategist. Based on this comprehensive business analysis, create strategic seed templates that follow human SEO expert thinking.
+        Based on this comprehensive programmatic SEO strategy, convert the keyword formulas and components into actionable seed templates.
 
-        COMPREHENSIVE BUSINESS ANALYSIS:
-        
-        Business Intelligence:
-        {comprehensive_analysis.get('business_intelligence', '')}
-        
-        Customer Search Behavior:
-        {comprehensive_analysis.get('customer_analysis', '')}
-        
-        Content Opportunities:
-        {comprehensive_analysis.get('content_opportunities', '')}
+        COMPREHENSIVE SEO STRATEGY:
+        {content_opportunities}
 
-        Based on this analysis, create 4-6 strategic programmatic SEO seed templates that:
-        1. Address actual customer search behavior identified in the analysis
-        2. Target the content opportunities with highest traffic/conversion potential  
-        3. Scale across multiple variations while remaining valuable
-        4. Match the specific customer journey stages identified
+        Convert the identified keyword formulas and components into 4-6 seed templates for our tool.
 
         For each template provide:
-        1. name: Strategic name with emoji (based on content opportunity)
-        2. category: Unique category ID that reflects search intent
-        3. templates: 3-5 keyword patterns using variables (based on customer search behavior)
-        4. variables: Variables with values relevant to this specific business and market
-        5. description: Why this template targets identified customer needs
-        6. estimated_keywords: Realistic estimate based on variable combinations
-        7. example: 2-3 example keywords showing customer search intent match
+        1. name: Strategic name with emoji (from the strategy)
+        2. category: Unique category ID based on keyword formulas
+        3. templates: Keyword patterns using variables (based on formulas like [Location] [Product] [Intent])
+        4. variables: Use the location modifiers, business categories, and intent modifiers from the strategy
+        5. description: Brief explanation based on the strategy
+        6. estimated_keywords: Calculate based on variable combinations
+        7. example: Show example keywords from the programmatic page examples
 
-        Focus on templates that directly address the customer problems and search patterns identified in the analysis.
+        Extract directly from the provided strategy - don't create new content.
         
         Return as JSON array.
         """
@@ -1205,3 +1201,121 @@ class SeedKeywordGenerator:
             print(f"Error in basic AI seed generation: {e}")
             
         return []
+    
+    def _extract_seed_templates_from_strategy(self, strategy_content: str, business_info: Dict) -> List[Dict]:
+        """Extract seed templates directly from ChatGPT-style strategy analysis"""
+        
+        # Try to parse the strategy content to extract components
+        templates = []
+        
+        try:
+            # Look for location modifiers
+            locations = self._extract_list_from_section(strategy_content, "Location Modifiers", "🏙️")
+            
+            # Look for business categories
+            categories = self._extract_list_from_section(strategy_content, "Business-Specific Categories", "🏢")
+            
+            # Look for intent modifiers  
+            intents = self._extract_list_from_section(strategy_content, "Intent/Topic Modifiers", "📊")
+            
+            # Look for keyword formulas
+            formulas = self._extract_keyword_formulas(strategy_content)
+            
+            if locations and categories and intents and formulas:
+                print(f"Extracted components: {len(locations)} locations, {len(categories)} categories, {len(intents)} intents")
+                
+                # Create seed templates based on extracted components
+                for i, formula in enumerate(formulas[:3]):  # Max 3 formulas
+                    template = {
+                        "name": f"📍 {formula['name']}",
+                        "category": f"extracted_formula_{i+1}",
+                        "template_group": f"extracted_formula_{i+1}",
+                        "id": f"extracted_formula_{i+1}",
+                        "description": f"Based on formula: {formula['pattern']}",
+                        "estimated_keywords": str(len(locations) * len(categories) * len(intents)),
+                        "example": f"Example: {formula.get('example', 'Generated keyword example')}",
+                        "relevance": "high",
+                        "templates": formula['templates'],
+                        "variables": {
+                            "location": locations[:15],  # Limit to 15 locations
+                            "category": categories[:10],  # Limit to 10 categories  
+                            "intent": intents[:8]  # Limit to 8 intents
+                        }
+                    }
+                    
+                    # Add to generic templates for generation
+                    self.generic_templates[template['category']] = {
+                        'templates': template['templates'],
+                        'variables': template['variables']
+                    }
+                    
+                    templates.append(template)
+                
+                return templates
+            else:
+                print("Could not extract all required components from strategy")
+                return []
+                
+        except Exception as e:
+            print(f"Error extracting templates from strategy: {e}")
+            return []
+    
+    def _extract_list_from_section(self, content: str, section_name: str, emoji: str) -> List[str]:
+        """Extract list items from a markdown section"""
+        import re
+        
+        # Find section with emoji or text
+        pattern = f"{emoji}.*?{section_name}:?(.*?)(?=###|##|$)"
+        match = re.search(pattern, content, re.DOTALL | re.IGNORECASE)
+        
+        if not match:
+            # Try without emoji
+            pattern = f"{section_name}:?(.*?)(?=###|##|$)"
+            match = re.search(pattern, content, re.DOTALL | re.IGNORECASE)
+        
+        if match:
+            section_content = match.group(1)
+            # Extract list items (lines starting with - or bullet points)
+            items = re.findall(r'[-•*]\s*([^\n]+)', section_content)
+            # Clean up items
+            cleaned_items = [item.strip().lower() for item in items if len(item.strip()) > 2]
+            return cleaned_items[:20]  # Limit to 20 items
+        
+        return []
+    
+    def _extract_keyword_formulas(self, content: str) -> List[Dict]:
+        """Extract keyword formulas from strategy content"""
+        import re
+        
+        formulas = []
+        
+        # Look for formula patterns like [Variable1] [Variable2] [Topic]
+        formula_patterns = re.findall(r'\[([^\]]+)\]\s*\[([^\]]+)\]\s*\[([^\]]+)\]', content)
+        
+        for i, (var1, var2, var3) in enumerate(formula_patterns[:3]):
+            formula = {
+                "name": f"{var1} {var2} {var3}",
+                "pattern": f"[{var1}] [{var2}] [{var3}]",
+                "templates": [
+                    f"{{{var1.lower().replace(' ', '_')}}} {{{var2.lower().replace(' ', '_')}}} {{{var3.lower().replace(' ', '_')}}}",
+                    f"best {{{var1.lower().replace(' ', '_')}}} {{{var2.lower().replace(' ', '_')}}} {{{var3.lower().replace(' ', '_')}}}",
+                    f"{{{var2.lower().replace(' ', '_')}}} {{{var3.lower().replace(' ', '_')}}} in {{{var1.lower().replace(' ', '_')}}}",
+                ]
+            }
+            formulas.append(formula)
+        
+        # If no bracket formulas found, create generic ones
+        if not formulas:
+            formulas = [
+                {
+                    "name": "Location Category Analysis",
+                    "pattern": "[Location] [Category] [Intent]", 
+                    "templates": [
+                        "{location} {category} {intent}",
+                        "best {category} {intent} {location}",
+                        "{category} {intent} in {location}"
+                    ]
+                }
+            ]
+        
+        return formulas
