@@ -335,19 +335,22 @@ class handler(BaseHTTPRequestHandler):
                 # Map selected seeds to seed configurations
                 seed_configs = []
                 for seed_id in selected_seeds:
-                    # Use the generic template categories
+                    # For AI-generated seeds, preserve the original structure
                     seed_configs.append({
                         "category": seed_id,
-                        "template_group": seed_id
+                        "template_group": seed_id,
+                        "id": seed_id
                     })
                 
                 print(f"Seed configs: {seed_configs}")
                 
-                # Get market context from request
+                # Get market context from request - check both direct fields and nested market_context
+                market_ctx = data.get('market_context', {})
                 market_context = {
                     'location': data.get('location', 'online'),
-                    'location_list': data.get('location_list', ''),
-                    'market_region': data.get('market_context', '')
+                    'location_list': data.get('location_list', '') or market_ctx.get('location_list', ''),
+                    'market_region': data.get('market_region', '') or market_ctx.get('market_region', ''),
+                    'additional_context': data.get('additional_context', '') or market_ctx.get('additional_context', '')
                 }
                 
                 print(f"Market context: {market_context}")
