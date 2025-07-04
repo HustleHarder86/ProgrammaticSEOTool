@@ -5,6 +5,7 @@ import json
 from typing import Dict, List, Optional
 from app.templates.content_templates import get_template
 from app.utils.ai_client import AIClient
+from app.agents.content_variation_agent import ContentVariationAgent
 from config import settings
 import markdown
 
@@ -16,6 +17,7 @@ class ContentGenerator:
     def __init__(self):
         self.ai_client = AIClient()
         self.md = markdown.Markdown(extensions=['extra', 'codehilite', 'tables'])
+        self.variation_agent = ContentVariationAgent()
     
     async def generate_content(
         self, 
@@ -38,21 +40,39 @@ class ContentGenerator:
         # Generate meta information
         meta_info = await self._generate_meta_info(keyword, content_markdown, business_info)
         
+        # Ensure title uniqueness
+        unique_title = self.variation_agent.ensure_title_uniqueness(meta_info["title"], keyword)
+        
+        # Add unique elements to content
+        unique_elements = self.variation_agent.add_unique_elements(
+            content_markdown, keyword, template_type
+        )
+        
+        # Apply variations to ensure uniqueness
+        enhanced_markdown = self.variation_agent.apply_content_variations(
+            content_markdown, unique_elements
+        )
+        
+        # Check content uniqueness
+        is_unique, uniqueness_score = self.variation_agent.is_content_unique(enhanced_markdown)
+        
         # Convert to HTML
-        content_html = self.md.convert(content_markdown)
+        content_html = self.md.convert(enhanced_markdown)
         
         # Calculate word count
-        word_count = len(content_markdown.split())
+        word_count = len(enhanced_markdown.split())
         
         return {
-            "title": meta_info["title"],
+            "title": unique_title,
             "meta_description": meta_info["meta_description"],
-            "slug": self._generate_slug(meta_info["title"]),
-            "content_markdown": content_markdown,
+            "slug": self._generate_slug(unique_title),
+            "content_markdown": enhanced_markdown,
             "content_html": content_html,
             "word_count": word_count,
             "template_used": template_type,
-            "variation_number": variation
+            "variation_number": variation,
+            "unique_elements": unique_elements.get('unique_elements', []),
+            "uniqueness_score": uniqueness_score
         }
     
     async def _generate_template_variables(
