@@ -92,12 +92,16 @@ class UsageTracker:
             }
     
     def save_usage_data(self):
-        """Save usage data to file"""
+        """Save usage data to file (disabled in serverless environments)"""
+        # Skip saving in serverless environments (Vercel has read-only filesystem)
+        if os.environ.get('VERCEL'):
+            return
         try:
             with open(self.usage_file, 'w') as f:
                 json.dump(self.usage_data, f, indent=2)
         except Exception as e:
-            print(f"Error saving usage data: {e}")
+            # Silently ignore filesystem errors in production
+            pass
     
     def track_usage(self, endpoint: str, input_tokens: int = None, output_tokens: int = None, 
                    count: int = 1, model: str = None):

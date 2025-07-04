@@ -99,7 +99,7 @@ class AIHandler:
         }
         
         data = {
-            'model': 'sonar-small-chat',  # Updated model name
+            'model': 'llama-3.1-sonar-small-128k-online',  # Correct Perplexity model
             'messages': [{'role': 'user', 'content': prompt}],
             'max_tokens': max_tokens,
             'temperature': 0.7
