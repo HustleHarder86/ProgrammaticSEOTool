@@ -3,6 +3,7 @@ import logging
 from typing import List, Dict, Optional
 from app.scanners.base import BusinessInfo, ContentOpportunity
 from app.agents.seo_data_agent import SEODataAgent
+from app.utils.ai_client import AIClient
 from config import settings
 
 logger = logging.getLogger(__name__)
@@ -11,19 +12,8 @@ class KeywordResearcher:
     """Handles keyword research and expansion."""
     
     def __init__(self):
-        self.ai_client = self._setup_ai_client()
+        self.ai_client = AIClient()
         self.seo_agent = SEODataAgent()
-    
-    def _setup_ai_client(self):
-        """Set up the AI client based on available API keys."""
-        if settings.has_openai:
-            from openai import OpenAI
-            return OpenAI(api_key=settings.openai_api_key)
-        elif settings.has_anthropic:
-            from anthropic import Anthropic
-            return Anthropic(api_key=settings.anthropic_api_key)
-        else:
-            raise ValueError("No AI provider configured")
     
     async def expand_keywords(self, opportunities: List[ContentOpportunity], business_info: BusinessInfo) -> List[Dict]:
         """Expand content opportunities into detailed keyword sets."""
@@ -78,21 +68,8 @@ Generate 3-5 keyword variations that:
 Format as JSON array with: keyword, search_intent, difficulty (1-10), title_template"""
 
         try:
-            if settings.has_openai:
-                response = self.ai_client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.7
-                )
-                content = response.choices[0].message.content
-            else:  # Anthropic
-                response = self.ai_client.messages.create(
-                    model="claude-3-haiku-20240307",
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.7,
-                    max_tokens=500
-                )
-                content = response.content[0].text
+            # Use unified AI client
+            content = await self.ai_client.generate(prompt, temperature=0.7)
             
             # Parse response
             import json

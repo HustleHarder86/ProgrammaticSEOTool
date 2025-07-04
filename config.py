@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     # API Keys
     openai_api_key: Optional[str] = None
     anthropic_api_key: Optional[str] = None
+    perplexity_api_key: Optional[str] = None
     ubersuggest_api_key: Optional[str] = None
     serpapi_key: Optional[str] = None
     
@@ -67,9 +68,14 @@ class Settings(BaseSettings):
         return bool(self.anthropic_api_key)
     
     @property
+    def has_perplexity(self) -> bool:
+        """Check if Perplexity API key is configured."""
+        return bool(self.perplexity_api_key)
+    
+    @property
     def has_ai_provider(self) -> bool:
         """Check if at least one AI provider is configured."""
-        return self.has_openai or self.has_anthropic
+        return self.has_openai or self.has_anthropic or self.has_perplexity
 
 # Create global settings instance
 settings = Settings()

@@ -32,6 +32,7 @@ pip install -r requirements.txt
 ```bash
 cp .env.example .env
 # Edit .env with your API keys
+# Supports: Perplexity, OpenAI, or Anthropic (only need one)
 ```
 
 5. Run the application:

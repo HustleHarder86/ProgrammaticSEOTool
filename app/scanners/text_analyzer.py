@@ -3,6 +3,7 @@ import json
 import logging
 from typing import List, Dict, Optional
 from app.scanners.base import BusinessAnalyzer, BusinessInfo, ContentOpportunity
+from app.utils.ai_client import AIClient
 from config import settings
 
 logger = logging.getLogger(__name__)
@@ -11,18 +12,7 @@ class TextBusinessAnalyzer(BusinessAnalyzer):
     """Analyzes business descriptions using AI."""
     
     def __init__(self):
-        self.ai_client = self._setup_ai_client()
-    
-    def _setup_ai_client(self):
-        """Set up the AI client based on available API keys."""
-        if settings.has_openai:
-            from openai import OpenAI
-            return OpenAI(api_key=settings.openai_api_key)
-        elif settings.has_anthropic:
-            from anthropic import Anthropic
-            return Anthropic(api_key=settings.anthropic_api_key)
-        else:
-            raise ValueError("No AI provider configured")
+        self.ai_client = AIClient()
     
     async def analyze(self, business_description: str) -> BusinessInfo:
         """Extract structured business information from text description."""
@@ -44,21 +34,11 @@ Extract the following information in JSON format:
 Respond with valid JSON only."""
 
         try:
-            if settings.has_openai:
-                response = self.ai_client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.3
-                )
-                content = response.choices[0].message.content
-            else:  # Anthropic
-                response = self.ai_client.messages.create(
-                    model="claude-3-haiku-20240307",
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.3,
-                    max_tokens=1000
-                )
-                content = response.content[0].text
+            content = await self.ai_client.generate(
+                prompt=prompt,
+                temperature=0.3,
+                max_tokens=1000
+            )
             
             # Parse JSON response
             data = json.loads(content)

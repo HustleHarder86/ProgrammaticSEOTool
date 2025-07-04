@@ -2,6 +2,7 @@
 import logging
 from typing import List, Dict, Optional
 from app.scanners.base import BusinessInfo
+from app.utils.ai_client import AIClient
 from config import settings
 import json
 
@@ -37,18 +38,7 @@ class StrategyGenerator:
     """Generates intelligent keyword strategies based on business analysis."""
     
     def __init__(self):
-        self.ai_client = self._setup_ai_client()
-    
-    def _setup_ai_client(self):
-        """Set up the AI client based on available API keys."""
-        if settings.has_openai:
-            from openai import OpenAI
-            return OpenAI(api_key=settings.openai_api_key)
-        elif settings.has_anthropic:
-            from anthropic import Anthropic
-            return Anthropic(api_key=settings.anthropic_api_key)
-        else:
-            raise ValueError("No AI provider configured")
+        self.ai_client = AIClient()
     
     async def generate_strategies(self, business_info: BusinessInfo) -> List[KeywordStrategy]:
         """Generate keyword strategies specific to the business."""
@@ -82,21 +72,11 @@ Focus on strategies that:
 Return as a JSON array."""
 
         try:
-            if settings.has_openai:
-                response = self.ai_client.chat.completions.create(
-                    model="gpt-4-turbo-preview",
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.7
-                )
-                content = response.choices[0].message.content
-            else:  # Anthropic
-                response = self.ai_client.messages.create(
-                    model="claude-3-sonnet-20240229",
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.7,
-                    max_tokens=2000
-                )
-                content = response.content[0].text
+            content = await self.ai_client.generate(
+                prompt=prompt,
+                temperature=0.7,
+                max_tokens=2000
+            )
             
             # Parse response
             strategies_data = json.loads(content)
@@ -208,21 +188,11 @@ For each keyword provide:
 Return as JSON array."""
 
         try:
-            if settings.has_openai:
-                response = self.ai_client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.8
-                )
-                content = response.choices[0].message.content
-            else:  # Anthropic
-                response = self.ai_client.messages.create(
-                    model="claude-3-haiku-20240307",
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.8,
-                    max_tokens=2000
-                )
-                content = response.content[0].text
+            content = await self.ai_client.generate(
+                prompt=prompt,
+                temperature=0.8,
+                max_tokens=2000
+            )
             
             keywords_data = json.loads(content)
             

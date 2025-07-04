@@ -11,7 +11,9 @@ The tool works perfectly with just an AI API key (OpenAI or Anthropic). No SEO A
 Create a `.env` file with your AI API key:
 
 ```bash
-# Choose one of these:
+# Choose ONE of these:
+PERPLEXITY_API_KEY=your-perplexity-api-key-here
+# OR
 OPENAI_API_KEY=your-openai-api-key-here
 # OR
 ANTHROPIC_API_KEY=your-anthropic-api-key-here

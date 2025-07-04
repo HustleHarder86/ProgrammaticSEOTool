@@ -91,7 +91,9 @@ async def health_check():
     """Health check endpoint."""
     # Check AI provider configuration
     ai_provider = None
-    if settings.has_openai:
+    if settings.has_perplexity:
+        ai_provider = "perplexity"
+    elif settings.has_openai:
         ai_provider = "openai"
     elif settings.has_anthropic:
         ai_provider = "anthropic"
@@ -113,7 +115,7 @@ async def analyze_business(request: BusinessInput):
     if not settings.has_ai_provider:
         raise HTTPException(
             status_code=503,
-            detail="No AI provider configured. Please set OPENAI_API_KEY or ANTHROPIC_API_KEY in .env"
+            detail="No AI provider configured. Please set PERPLEXITY_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY in .env"
         )
     
     try:
@@ -149,7 +151,7 @@ async def generate_strategies(business_info: dict):
     if not settings.has_ai_provider:
         raise HTTPException(
             status_code=503,
-            detail="No AI provider configured. Please set OPENAI_API_KEY or ANTHROPIC_API_KEY in .env"
+            detail="No AI provider configured. Please set PERPLEXITY_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY in .env"
         )
     
     try:
@@ -178,7 +180,7 @@ async def generate_keywords_for_strategy(strategy: dict, business_info: dict, li
     if not settings.has_ai_provider:
         raise HTTPException(
             status_code=503,
-            detail="No AI provider configured. Please set OPENAI_API_KEY or ANTHROPIC_API_KEY in .env"
+            detail="No AI provider configured. Please set PERPLEXITY_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY in .env"
         )
     
     try:
@@ -209,7 +211,7 @@ async def generate_keywords(request: KeywordGenerationRequest):
     if not settings.has_ai_provider:
         raise HTTPException(
             status_code=503,
-            detail="No AI provider configured. Please set OPENAI_API_KEY or ANTHROPIC_API_KEY in .env"
+            detail="No AI provider configured. Please set PERPLEXITY_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY in .env"
         )
     
     try:
@@ -251,7 +253,7 @@ async def generate_content(request: ContentGenerationRequest):
     if not settings.has_ai_provider:
         raise HTTPException(
             status_code=503,
-            detail="No AI provider configured. Please set OPENAI_API_KEY or ANTHROPIC_API_KEY in .env"
+            detail="No AI provider configured. Please set PERPLEXITY_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY in .env"
         )
     
     try:
@@ -428,7 +430,7 @@ async def generate_project_content(
     if not settings.has_ai_provider:
         raise HTTPException(
             status_code=503,
-            detail="No AI provider configured. Please set OPENAI_API_KEY or ANTHROPIC_API_KEY in .env"
+            detail="No AI provider configured. Please set PERPLEXITY_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY in .env"
         )
     
     try:

@@ -4,6 +4,7 @@ import re
 import json
 from typing import Dict, List, Optional
 from app.templates.content_templates import get_template
+from app.utils.ai_client import AIClient
 from config import settings
 import markdown
 
@@ -13,19 +14,8 @@ class ContentGenerator:
     """Generates SEO-optimized content using AI."""
     
     def __init__(self):
-        self.ai_client = self._setup_ai_client()
+        self.ai_client = AIClient()
         self.md = markdown.Markdown(extensions=['extra', 'codehilite', 'tables'])
-    
-    def _setup_ai_client(self):
-        """Set up the AI client based on available API keys."""
-        if settings.has_openai:
-            from openai import OpenAI
-            return OpenAI(api_key=settings.openai_api_key)
-        elif settings.has_anthropic:
-            from anthropic import Anthropic
-            return Anthropic(api_key=settings.anthropic_api_key)
-        else:
-            raise ValueError("No AI provider configured")
     
     async def generate_content(
         self, 
@@ -96,22 +86,11 @@ Important guidelines:
 Respond with a JSON object containing all variables."""
 
         try:
-            if settings.has_openai:
-                response = self.ai_client.chat.completions.create(
-                    model="gpt-3.5-turbo-16k",
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.7 + (variation * 0.1),  # Increase randomness for variations
-                    max_tokens=4000
-                )
-                content = response.choices[0].message.content
-            else:  # Anthropic
-                response = self.ai_client.messages.create(
-                    model="claude-3-haiku-20240307",
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.7 + (variation * 0.1),
-                    max_tokens=4000
-                )
-                content = response.content[0].text
+            content = await self.ai_client.generate(
+                prompt=prompt,
+                temperature=0.7 + (variation * 0.1),  # Increase randomness for variations
+                max_tokens=4000
+            )
             
             # Parse JSON response
             variables = json.loads(content)
@@ -147,21 +126,11 @@ Generate:
 Respond with JSON containing 'title' and 'meta_description'."""
 
         try:
-            if settings.has_openai:
-                response = self.ai_client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.5
-                )
-                content = response.choices[0].message.content
-            else:  # Anthropic
-                response = self.ai_client.messages.create(
-                    model="claude-3-haiku-20240307",
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.5,
-                    max_tokens=200
-                )
-                content = response.content[0].text
+            content = await self.ai_client.generate(
+                prompt=prompt,
+                temperature=0.5,
+                max_tokens=200
+            )
             
             meta_info = json.loads(content)
             return meta_info
