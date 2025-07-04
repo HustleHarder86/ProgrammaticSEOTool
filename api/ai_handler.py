@@ -149,8 +149,7 @@ class AIHandler:
         if not self.has_ai_provider():
             return None
             
-        prompt = f"""Analyze this business by examining its URL and description. Determine what type of business it is and suggest programmatic SEO content opportunities.
-
+        prompt = f"""Analyze this business and suggest SEO content opportunities:
 Business: {business_info.get('name', 'Unknown')}
 Description: {business_info.get('description', 'No description')}
 URL: {business_info.get('url', 'No URL')}
@@ -158,13 +157,13 @@ Page Content: {business_info.get('page_content', 'No content available')[:300]}
 Target Audience Type: {business_info.get('target_audience_type', 'Not specified')}
 
 Provide a JSON response with:
-1. industry (string - be specific about the business type based on your analysis)
-2. target_audience (string - who actually uses this product/service)
-3. content_types (array of 5 programmatic SEO page types that would attract their target customers)
-4. main_keywords (array of 5 primary terms related to what the business does)
-5. services (array of 3-5 main features/products you identified)
-6. customer_actions (array of common actions users take)
-7. competitors (array of 2-3 similar businesses)
+1. industry (string - be specific about the business type)
+2. target_audience (string - detailed description)
+3. content_types (array of 5 content type suggestions like guides, comparisons, calculators)
+4. main_keywords (array of 5 primary terms)
+5. services (array of 3-5 main services/products)
+6. customer_actions (array of common actions like buy, book, learn)
+7. competitors (array of 2-3 competitor examples)
 """
         
         response = self.generate(prompt, 300)
