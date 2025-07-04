@@ -61,6 +61,18 @@ When implementing features:
 4. Build modular components for easy scaling
 5. Add comprehensive logging for content generation pipeline
 
+## Workflow Rules
+
+When working on any development task, follow these steps:
+
+1. **First think through the problem** - Read the codebase for relevant files and write a plan to tasks/todo.md
+2. **Create checkable todo items** - The plan should have a list of todo items that you can check off as you complete them
+3. **Check in before starting** - Before beginning work, verify the plan with the user
+4. **Work systematically** - Begin working on the todo items, marking them as complete as you go
+5. **Provide high-level explanations** - Every step of the way, give a high-level explanation of what changes were made
+6. **Keep it simple** - Make every task and code change as simple as possible. Avoid massive or complex changes. Every change should impact as little code as possible. Everything is about simplicity.
+7. **Add review section** - Finally, add a review section to the todo.md file with a summary of the changes made and any other relevant information
+
 ## Development Commands
 
 ### Run Locally

@@ -8,7 +8,10 @@ from datetime import datetime
 import os
 
 from config import settings
-from app.models import init_db
+from app.models import init_db, get_db
+from app.agents.database_agent import DatabaseAgent
+from sqlalchemy.orm import Session
+from fastapi import Depends
 
 # Initialize database on startup
 init_db()
@@ -57,6 +60,20 @@ class ContentGenerationRequest(BaseModel):
     keywords: List[str]
     template: str = "comparison"  # comparison, how-to, best-x-for-y, etc.
     variations_per_keyword: int = 1
+
+class ProjectCreateRequest(BaseModel):
+    name: str
+    business_description: str
+    business_url: Optional[str] = None
+    industry: Optional[str] = None
+    location: Optional[str] = None
+
+class KeywordAddRequest(BaseModel):
+    keywords: List[Dict[str, any]]
+
+class KeywordDiscoveryRequest(BaseModel):
+    seed_keywords: List[str]
+    limit: int = 50
 
 # Root endpoint
 @app.get("/")
@@ -296,6 +313,206 @@ async def export_content(format: str = "csv", content: List[Dict] = None):
         
     except Exception as e:
         logger.error(f"Error exporting content: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Project Management Endpoints
+@app.post("/api/projects")
+async def create_project(request: ProjectCreateRequest, db: Session = Depends(get_db)):
+    """Create a new SEO project."""
+    try:
+        db_agent = DatabaseAgent(db)
+        project = db_agent.create_project(
+            name=request.name,
+            business_description=request.business_description,
+            business_url=request.business_url,
+            industry=request.industry,
+            location=request.location
+        )
+        return {
+            "project_id": project.id,
+            "name": project.name,
+            "created_at": project.created_at
+        }
+    except Exception as e:
+        logger.error(f"Error creating project: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/projects")
+async def list_projects(limit: int = 100, db: Session = Depends(get_db)):
+    """List all projects."""
+    try:
+        db_agent = DatabaseAgent(db)
+        projects = db_agent.list_projects(limit=limit)
+        return {
+            "projects": [
+                {
+                    "id": p.id,
+                    "name": p.name,
+                    "industry": p.industry,
+                    "created_at": p.created_at,
+                    "updated_at": p.updated_at
+                }
+                for p in projects
+            ],
+            "total": len(projects)
+        }
+    except Exception as e:
+        logger.error(f"Error listing projects: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/projects/{project_id}")
+async def get_project(project_id: int, db: Session = Depends(get_db)):
+    """Get project details and statistics."""
+    try:
+        db_agent = DatabaseAgent(db)
+        stats = db_agent.get_project_stats(project_id)
+        if not stats:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        return {
+            "project": {
+                "id": stats["project"].id,
+                "name": stats["project"].name,
+                "business_description": stats["project"].business_description,
+                "business_url": stats["project"].business_url,
+                "industry": stats["project"].industry,
+                "location": stats["project"].location,
+                "created_at": stats["project"].created_at,
+                "updated_at": stats["project"].updated_at
+            },
+            "statistics": {
+                "total_keywords": stats["total_keywords"],
+                "keywords_by_status": stats["keywords_by_status"],
+                "total_content": stats["total_content"],
+                "content_by_status": stats["content_by_status"]
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting project: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/projects/{project_id}/keywords")
+async def add_keywords(project_id: int, request: KeywordAddRequest, db: Session = Depends(get_db)):
+    """Add keywords to a project."""
+    try:
+        db_agent = DatabaseAgent(db)
+        keywords = db_agent.add_keywords(project_id, request.keywords)
+        return {
+            "added": len(keywords),
+            "keywords": [
+                {
+                    "id": k.id,
+                    "keyword": k.keyword,
+                    "search_volume": k.search_volume,
+                    "difficulty": k.difficulty,
+                    "content_type": k.content_type,
+                    "status": k.status
+                }
+                for k in keywords
+            ]
+        }
+    except Exception as e:
+        logger.error(f"Error adding keywords: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/projects/{project_id}/generate-content")
+async def generate_project_content(
+    project_id: int, 
+    keyword_ids: List[int],
+    template: str = "comparison",
+    db: Session = Depends(get_db)
+):
+    """Generate content for project keywords and save to database."""
+    if not settings.has_ai_provider:
+        raise HTTPException(
+            status_code=503,
+            detail="No AI provider configured. Please set OPENAI_API_KEY or ANTHROPIC_API_KEY in .env"
+        )
+    
+    try:
+        db_agent = DatabaseAgent(db)
+        project = db_agent.get_project(project_id)
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        from app.generators.content_generator import ContentGenerator
+        generator = ContentGenerator()
+        
+        generated = []
+        
+        # Get keywords by IDs
+        keywords = db_agent.get_project_keywords(project_id)
+        keywords_to_generate = [k for k in keywords if k.id in keyword_ids]
+        
+        for keyword in keywords_to_generate:
+            # Generate content
+            content = await generator.generate_content(
+                keyword=keyword.keyword,
+                template_type=template,
+                business_info={
+                    "name": project.name,
+                    "description": project.business_description,
+                    "industry": project.industry,
+                    "location": project.location
+                },
+                variation=1
+            )
+            
+            # Save to database
+            saved_content = db_agent.save_content(
+                project_id=project_id,
+                keyword_id=keyword.id,
+                title=content["title"],
+                content_html=content["content_html"],
+                content_markdown=content["content_markdown"],
+                meta_description=content["meta_description"],
+                slug=content["slug"],
+                template_used=template,
+                word_count=content["word_count"]
+            )
+            
+            generated.append({
+                "content_id": saved_content.id,
+                "keyword": keyword.keyword,
+                "title": saved_content.title,
+                "status": saved_content.status
+            })
+        
+        return {
+            "project_id": project_id,
+            "generated": len(generated),
+            "content": generated
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating project content: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/discover-keywords")
+async def discover_keywords(request: KeywordDiscoveryRequest):
+    """Discover new keyword opportunities using real SEO data."""
+    try:
+        from app.researchers.keyword_researcher import KeywordResearcher
+        researcher = KeywordResearcher()
+        
+        # Discover keywords using SEO data
+        discovered = await researcher.discover_new_keywords(
+            seed_keywords=request.seed_keywords,
+            limit=request.limit
+        )
+        
+        return {
+            "keywords": discovered,
+            "total": len(discovered),
+            "seed_keywords": request.seed_keywords
+        }
+        
+    except Exception as e:
+        logger.error(f"Error discovering keywords: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
