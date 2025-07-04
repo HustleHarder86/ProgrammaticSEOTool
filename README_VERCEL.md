@@ -31,7 +31,8 @@ FIREBASE_MESSAGING_SENDER_ID=your-sender-id
 FIREBASE_APP_ID=your-app-id
 FIREBASE_DATABASE_URL=your-database-url
 
-# Optional - AI providers
+# AI providers (need at least one)
+PerplexityAPI=your-perplexity-key
 OPENAI_API_KEY=your-openai-key
 ANTHROPIC_API_KEY=your-anthropic-key
 ```
