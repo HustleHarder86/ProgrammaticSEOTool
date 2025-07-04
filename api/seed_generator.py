@@ -902,8 +902,8 @@ class SeedKeywordGenerator:
         """
         
         try:
-            # Use the AI handler's method to ensure compatibility
-            response_text = ai_handler._call_ai_api(prompt, max_tokens=2000)
+            # Use the AI handler's generate method
+            response_text = ai_handler.generate(prompt, max_tokens=2000)
             
             if not response_text:
                 print("No response from AI")
