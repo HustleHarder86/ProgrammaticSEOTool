@@ -1,9 +1,8 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
+// Use relative paths since frontend and backend are in the same deployment
 export const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: '', // Empty base URL means relative to current domain
   headers: {
     'Content-Type': 'application/json',
   },

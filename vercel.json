@@ -1,46 +1,13 @@
 {
+  "functions": {
+    "api/main.py": {
+      "runtime": "python3.9"
+    }
+  },
   "rewrites": [
     {
-      "source": "/app",
+      "source": "/api/:path*",
       "destination": "/api/main"
-    },
-    {
-      "source": "/pro",
-      "destination": "/api/main"
-    },
-    {
-      "source": "/wizard",
-      "destination": "/api/main"
-    },
-    {
-      "source": "/dashboard",
-      "destination": "/api/main"
-    },
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/main"
-    },
-    {
-      "source": "/health",
-      "destination": "/api/main"
-    },
-    {
-      "source": "/debug",
-      "destination": "/api/main"
-    },
-    {
-      "source": "/",
-      "destination": "/api/main"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type" }
-      ]
     }
   ]
 }

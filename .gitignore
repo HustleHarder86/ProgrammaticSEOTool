@@ -47,7 +47,7 @@ dist/
 build/
 *.egg-info/
 
-# Node modules (for frontend)
+# Node modules
 node_modules/
-frontend/node_modules/
-frontend/.next/
+.next/
+.vercel/

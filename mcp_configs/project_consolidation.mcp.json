@@ -1,0 +1,113 @@
+{
+  "name": "Project Consolidation Agent",
+  "description": "Agent responsible for consolidating frontend and backend into a single Vercel deployment",
+  "version": "1.0.0",
+  "capabilities": {
+    "file_operations": ["create", "read", "write", "move", "delete"],
+    "directory_restructuring": true,
+    "configuration_updates": true
+  },
+  "tasks": [
+    {
+      "id": "consolidate_project",
+      "name": "Consolidate Frontend and Backend",
+      "priority": "critical",
+      "steps": [
+        {
+          "step": 1,
+          "action": "move_frontend_to_root",
+          "description": "Move Next.js frontend files to project root",
+          "operations": [
+            "Move frontend/app → app (merge with existing)",
+            "Move frontend/components → components",
+            "Move frontend/lib → lib (merge with existing)",
+            "Move frontend/public → public",
+            "Move frontend config files to root"
+          ]
+        },
+        {
+          "step": 2,
+          "action": "restructure_backend",
+          "description": "Move FastAPI backend to api directory",
+          "operations": [
+            "Keep api/main.py as is (already correct)",
+            "Ensure all backend imports work",
+            "Update any absolute imports"
+          ]
+        },
+        {
+          "step": 3,
+          "action": "update_configurations",
+          "description": "Update configuration files for unified deployment",
+          "files": {
+            "next.config.ts": {
+              "purpose": "Configure Next.js to proxy API routes",
+              "rewrites": "Add rewrites for /api/* to FastAPI"
+            },
+            "vercel.json": {
+              "purpose": "Configure Vercel for both Next.js and FastAPI",
+              "updates": "Ensure api/main.py handles /api routes"
+            },
+            "package.json": {
+              "purpose": "Merge dependencies",
+              "action": "Combine frontend package.json with root"
+            }
+          }
+        },
+        {
+          "step": 4,
+          "action": "update_environment_variables",
+          "description": "Simplify environment configuration",
+          "changes": [
+            "Remove NEXT_PUBLIC_API_URL (not needed anymore)",
+            "API calls will use relative paths (/api/*)",
+            "Keep AI provider keys as backend env vars"
+          ]
+        },
+        {
+          "step": 5,
+          "action": "cleanup",
+          "description": "Remove redundant files and directories",
+          "operations": [
+            "Delete frontend directory after moving files",
+            "Remove duplicate configuration files",
+            "Update .gitignore"
+          ]
+        }
+      ],
+      "validation": {
+        "checks": [
+          "Next.js pages load correctly",
+          "API routes respond at /api/*",
+          "No broken imports",
+          "Single deployment works on Vercel"
+        ]
+      }
+    }
+  ],
+  "benefits": {
+    "simplified_deployment": "One Vercel project instead of two",
+    "no_cors_needed": "Same domain for frontend and backend",
+    "easier_development": "No need to manage multiple URLs",
+    "cost_effective": "Single deployment uses less resources"
+  },
+  "file_structure_after": {
+    "/": "Next.js frontend files",
+    "/app": "Next.js app directory (pages)",
+    "/components": "React components",
+    "/lib": "Shared utilities",
+    "/public": "Static assets",
+    "/api": "FastAPI backend",
+    "/app/agents": "Backend agents",
+    "/app/models.py": "Database models",
+    "next.config.ts": "Next.js configuration",
+    "package.json": "Combined dependencies",
+    "vercel.json": "Unified Vercel config"
+  },
+  "workflow_rules": {
+    "backup": "Create backup branch before major changes",
+    "test_locally": "Test the unified structure works",
+    "gradual_migration": "Move files systematically",
+    "preserve_functionality": "Ensure nothing breaks"
+  }
+}
