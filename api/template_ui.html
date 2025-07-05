@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programmatic SEO Tool - Template + Data = Scale</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .tagline {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 40px;
+            font-size: 1.2em;
+        }
+        
+        .workflow {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .step {
+            flex: 1;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .step h2 {
+            color: #3498db;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .active {
+            border: 2px solid #3498db;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        button {
+            background: #3498db;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #2980b9;
+        }
+        
+        .template-suggestion {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .template-suggestion:hover {
+            background: #bdc3c7;
+        }
+        
+        .results {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        
+        .page-preview {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        
+        .success {
+            color: #27ae60;
+        }
+        
+        .error {
+            color: #e74c3c;
+        }
+        
+        .data-import {
+            border: 2px dashed #bdc3c7;
+            padding: 20px;
+            text-align: center;
+            margin: 10px 0;
+        }
+        
+        .example-data {
+            background: #f1f8ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Programmatic SEO Tool</h1>
+        <p class="tagline">Template + Data = Hundreds of Pages</p>
+        
+        <div class="workflow">
+            <div class="step active" id="step1">
+                <h2>1️⃣ Analyze Business</h2>
+                <div class="form-group">
+                    <label>Business URL or Description:</label>
+                    <input type="text" id="businessInput" placeholder="https://your-website.com or describe your business">
+                </div>
+                <button onclick="analyzeBusiness()">Analyze & Get Templates</button>
+                <div id="analysisResult"></div>
+            </div>
+            
+            <div class="step" id="step2">
+                <h2>2️⃣ Choose Template</h2>
+                <div id="templateSuggestions"></div>
+                <div class="form-group" style="margin-top: 20px;">
+                    <label>Or Create Custom Template:</label>
+                    <input type="text" id="customTemplate" placeholder="[Variable1] [Variable2] Pattern">
+                    <button onclick="createCustomTemplate()" style="margin-top: 10px;">Create Template</button>
+                </div>
+            </div>
+            
+            <div class="step" id="step3">
+                <h2>3️⃣ Add Data</h2>
+                <div class="data-import">
+                    <p>📁 Import CSV or Add Data Manually</p>
+                    <input type="file" id="csvFile" accept=".csv" onchange="handleCSV(event)">
+                </div>
+                <div id="dataFields"></div>
+                <button onclick="generatePages()">Generate Pages</button>
+            </div>
+        </div>
+        
+        <div class="results" id="results" style="display: none;">
+            <h2>📄 Generated Pages</h2>
+            <div id="pagesList"></div>
+            <button onclick="exportPages()">Export as CSV</button>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = '';
+        let currentTemplate = null;
+        let businessInfo = null;
+        let generatedPages = [];
+        
+        async function analyzeBusiness() {
+            const input = document.getElementById('businessInput').value;
+            if (!input) {
+                alert('Please enter a business URL or description');
+                return;
+            }
+            
+            const isURL = input.startsWith('http');
+            const data = isURL ? { business_url: input } : { business_description: input };
+            
+            try {
+                const response = await fetch(`${API_URL}/api/analyze-business`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    businessInfo = result.business_info;
+                    displayAnalysisResult(result);
+                    displayTemplateSuggestions(result.template_suggestions);
+                    activateStep(2);
+                } else {
+                    alert('Error analyzing business: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        function displayAnalysisResult(result) {
+            const div = document.getElementById('analysisResult');
+            div.innerHTML = `
+                <div class="success" style="margin-top: 10px;">
+                    ✅ Analyzed: ${result.business_info.name}<br>
+                    Industry: ${result.business_info.industry}
+                </div>
+            `;
+        }
+        
+        function displayTemplateSuggestions(suggestions) {
+            const div = document.getElementById('templateSuggestions');
+            div.innerHTML = '<h3>Suggested Templates:</h3>';
+            
+            suggestions.forEach(template => {
+                div.innerHTML += `
+                    <div class="template-suggestion" onclick="selectTemplate('${template.name}', '${template.pattern}', '${template.variables.join(',')}')">
+                        <strong>${template.name}</strong><br>
+                        Pattern: ${template.pattern}<br>
+                        Variables: ${template.variables.join(', ')}<br>
+                        Est. Pages: ${template.estimated_pages}<br>
+                        Example: <em>${template.example}</em>
+                    </div>
+                `;
+            });
+        }
+        
+        function selectTemplate(name, pattern, variables) {
+            currentTemplate = {
+                name: name,
+                pattern: pattern,
+                variables: variables.split(',')
+            };
+            
+            displayDataFields();
+            activateStep(3);
+        }
+        
+        function createCustomTemplate() {
+            const pattern = document.getElementById('customTemplate').value;
+            if (!pattern) {
+                alert('Please enter a template pattern');
+                return;
+            }
+            
+            // Extract variables from pattern
+            const variables = pattern.match(/\{(\w+)\}/g)?.map(v => v.slice(1, -1)) || [];
+            
+            currentTemplate = {
+                name: 'Custom Template',
+                pattern: pattern,
+                variables: variables
+            };
+            
+            displayDataFields();
+            activateStep(3);
+        }
+        
+        function displayDataFields() {
+            const div = document.getElementById('dataFields');
+            div.innerHTML = '<h3>Add Data for Variables:</h3>';
+            
+            // Show example for Real Estate
+            if (businessInfo && businessInfo.industry.toLowerCase().includes('real estate')) {
+                div.innerHTML += `
+                    <div class="example-data">
+                        <strong>Example for Real Estate:</strong><br>
+                        Cities: Toronto, Vancouver, Calgary, Montreal, Ottawa<br>
+                        Property Types: Condo, House, Duplex, Townhouse, Investment Property
+                    </div>
+                `;
+            }
+            
+            currentTemplate.variables.forEach(variable => {
+                div.innerHTML += `
+                    <div class="form-group">
+                        <label>${variable} (comma-separated):</label>
+                        <textarea id="data_${variable}" rows="3" 
+                            placeholder="Enter ${variable} values separated by commas"></textarea>
+                    </div>
+                `;
+            });
+        }
+        
+        function activateStep(step) {
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.getElementById(`step${step}`).classList.add('active');
+        }
+        
+        async function handleCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const csvContent = e.target.result;
+                
+                try {
+                    const response = await fetch(`${API_URL}/api/import-data`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            csv_content: csvContent,
+                            data_name: 'imported'
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        alert(`Imported ${Object.keys(result.data).length} columns successfully`);
+                        // Populate fields with imported data
+                        Object.entries(result.data).forEach(([key, values]) => {
+                            const field = document.getElementById(`data_${key}`);
+                            if (field) {
+                                field.value = values.join(', ');
+                            }
+                        });
+                    }
+                } catch (error) {
+                    alert('Error importing CSV: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        async function generatePages() {
+            if (!currentTemplate) {
+                alert('Please select a template first');
+                return;
+            }
+            
+            // Collect data for each variable
+            const data = {};
+            currentTemplate.variables.forEach(variable => {
+                const values = document.getElementById(`data_${variable}`)?.value
+                    .split(',')
+                    .map(v => v.trim())
+                    .filter(v => v);
+                data[variable] = values || [];
+            });
+            
+            // Check if data is provided
+            const hasData = Object.values(data).some(v => v.length > 0);
+            if (!hasData) {
+                alert('Please add data for at least one variable');
+                return;
+            }
+            
+            try {
+                // First create the template
+                const templateResponse = await fetch(`${API_URL}/api/create-template`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: currentTemplate.name,
+                        pattern: currentTemplate.pattern,
+                        page_structure: {}
+                    })
+                });
+                
+                // Then generate pages
+                const response = await fetch(`${API_URL}/api/generate-pages`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        template_name: currentTemplate.name,
+                        data: data
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    generatedPages = result.pages;
+                    displayGeneratedPages(result.pages);
+                } else {
+                    alert('Error generating pages: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        function displayGeneratedPages(pages) {
+            const resultsDiv = document.getElementById('results');
+            const pagesList = document.getElementById('pagesList');
+            
+            resultsDiv.style.display = 'block';
+            
+            pagesList.innerHTML = `<p class="success">✅ Generated ${pages.length} pages!</p>`;
+            
+            // Show first 10 pages as preview
+            pages.slice(0, 10).forEach(page => {
+                pagesList.innerHTML += `
+                    <div class="page-preview">
+                        <strong>${page.title}</strong><br>
+                        URL: ${page.url}<br>
+                        Meta: ${page.meta_description}
+                    </div>
+                `;
+            });
+            
+            if (pages.length > 10) {
+                pagesList.innerHTML += `<p>... and ${pages.length - 10} more pages</p>`;
+            }
+        }
+        
+        async function exportPages() {
+            if (!generatedPages.length) {
+                alert('No pages to export');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/api/export-pages`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        pages: generatedPages,
+                        format: 'csv'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Download CSV
+                    const blob = new Blob([result.content], { type: 'text/csv' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = result.filename;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                }
+            } catch (error) {
+                alert('Error exporting: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

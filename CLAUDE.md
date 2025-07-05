@@ -2,64 +2,118 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## What is Programmatic SEO?
+
+Programmatic SEO is an SEO strategy that leverages **automation and templates to generate and optimize a large volume of web pages** by using data to populate templates, creating numerous pages efficiently. It focuses on targeting long-tail keywords with lower competition.
+
+**Examples:**
+- Tripadvisor: "Things to do in [City]" - thousands of city pages from one template
+- Zillow: "[City] Real Estate" - location-based property pages
+- Yelp: "Best [Business Type] in [City]" - local business directory pages
+
+**Key Formula: Template + Data = Scale**
+
 ## Project Overview
 
-The Programmatic SEO Generator is a comprehensive automation tool that creates hundreds of SEO-optimized pages at scale. It analyzes businesses to identify content opportunities and generates unique, search-engine-friendly content automatically.
+The Programmatic SEO Tool is a versatile bulk page generator that works for ANY business type. It creates hundreds or thousands of SEO-optimized pages by combining templates with data.
 
 ### Core Features
 
-1. **Business Analysis & Content Discovery**
-   - Analyzes business URL/description to understand niche
-   - Identifies high-potential content types (comparisons, use-cases, integrations)
-   - Discovers ranking opportunities based on search metrics
+1. **Business Analysis & Template Discovery**
+   - Analyzes any business URL/description to understand offerings
+   - Identifies template opportunities based on search patterns
+   - Suggests relevant data types for page generation
 
-2. **Project Management System**
-   - Tracks content pipeline and generation status
-   - Manages multiple SEO projects simultaneously
-   - Monitors content performance metrics
+2. **Template Management System**
+   - Create reusable page templates with variable placeholders
+   - Support multiple template types (location, comparison, use-case, feature)
+   - Template library for common patterns
 
-3. **Keyword Research Engine**
-   - Continuously discovers new keyword opportunities
-   - Analyzes search volume and keyword difficulty
-   - Prioritizes keywords by ROI potential
+3. **Data-Driven Page Generation**
+   - Import data via CSV or manual entry
+   - Generate all possible combinations from template + data
+   - Ensure unique elements on each page
 
-4. **Intelligent Content Generation**
-   - Creates unique variations to avoid duplicate content penalties
-   - Generates multiple content types (guides, comparisons, tutorials)
-   - Ensures SEO optimization (meta tags, structure, keywords)
+4. **Bulk Page Creation**
+   - Generate hundreds/thousands of pages from single template
+   - SEO optimization built into every page
+   - Maintain consistent structure while ensuring uniqueness
 
-5. **Publishing & Distribution**
-   - Scheduled publishing at optimal times
-   - CSV export functionality
-   - Direct API integration with websites
-   - Bulk content deployment capabilities
+5. **Export & Publishing**
+   - Export as CSV with all page data
+   - WordPress XML format
+   - Direct CMS integration capabilities
 
-## Architecture Components (To Be Implemented)
+## Architecture Components
 
-### Backend Services
-- **Business Analyzer**: Processes URLs/descriptions to understand business context
-- **Keyword Research Service**: Interfaces with SEO APIs for keyword data
-- **Content Generator**: AI-powered content creation with variation engine
-- **Publishing Queue**: Manages scheduled posts and API integrations
+### Core Subagents
 
-### Data Storage
-- **Project Database**: Stores project configurations and content pipelines
-- **Content Repository**: Manages generated content and variations
-- **Analytics Store**: Tracks performance metrics and keyword rankings
+#### 1. Business Analyzer Agent
+- **Purpose**: Understand any business and identify template opportunities
+- **Key Functions**:
+  - Analyze business URL/description
+  - Identify core offerings and target audience
+  - Suggest relevant template types
+  - Recommend data categories
 
-### Frontend/Interface
-- **Project Dashboard**: Manages SEO projects and monitors progress
-- **Content Editor**: Reviews and customizes generated content
-- **Publishing Interface**: Configures deployment settings and schedules
+#### 2. Template Builder Agent
+- **Purpose**: Create and manage reusable page templates
+- **Key Functions**:
+  - Design templates with variable placeholders
+  - Validate template structure for SEO
+  - Extract required variables
+  - Maintain template library
+
+#### 3. Data Manager Agent
+- **Purpose**: Handle data import and combination generation
+- **Key Functions**:
+  - Import data from CSV or manual entry
+  - Validate and clean data
+  - Generate all possible combinations
+  - Calculate page generation potential
+
+#### 4. Page Generator Agent
+- **Purpose**: Create bulk pages from templates + data
+- **Key Functions**:
+  - Populate templates with data
+  - Ensure unique content elements
+  - Optimize each page for SEO
+  - Generate at scale (hundreds/thousands)
+
+#### 5. Export Manager Agent
+- **Purpose**: Export pages in various formats
+- **Key Functions**:
+  - Export as CSV
+  - Generate WordPress XML
+  - Create JSON for APIs
+  - Maintain URL structure
+
+## Universal Application Examples
+
+### Real Estate SaaS
+- **Template**: "[City] [Property Type] Investment Analysis"
+- **Data**: Cities (Toronto, Vancouver), Property Types (Condo, House)
+- **Result**: "Toronto Condo Investment Analysis", "Vancouver House Investment Analysis"
+
+### Project Management Software
+- **Template**: "[Industry] Project Management Best Practices"
+- **Data**: Industries (Construction, Healthcare, Marketing)
+- **Result**: "Construction Project Management Best Practices"
+
+### E-commerce Store
+- **Template**: "Best [Product Category] for [Use Case]"
+- **Data**: Categories (Running Shoes, Hiking Boots), Use Cases (Beginners, Trail Running)
+- **Result**: "Best Running Shoes for Beginners"
 
 ## Development Guidelines
 
 When implementing features:
-1. Ensure all generated content passes uniqueness checks
-2. Implement rate limiting for API calls to SEO data providers
-3. Include content variation algorithms to prevent Google penalties
-4. Build modular components for easy scaling
-5. Add comprehensive logging for content generation pipeline
+1. **Template First**: Always think in terms of templates and data, not individual pages
+2. **Universal Design**: Ensure features work for ANY business type
+3. **Data Validation**: Validate all imported data for quality
+4. **Uniqueness**: Each generated page must have unique elements beyond the template
+5. **SEO Built-in**: Every page must be SEO-optimized by default
+6. **Scale Testing**: Test with hundreds of combinations to ensure performance
 
 ## Workflow Rules
 
@@ -101,13 +155,28 @@ vercel
 ## API Endpoints
 
 - `GET /health` - Health check
-- `POST /api/analyze-business` - Analyze business from text or URL
-- `POST /api/generate-keywords` - Generate keyword opportunities
-- `POST /api/generate-content` - Generate content for keywords
-- `POST /api/export` - Export content (CSV, JSON, WordPress)
+- `POST /api/analyze-business` - Analyze business and suggest templates
+- `POST /api/create-template` - Create or save a page template
+- `POST /api/import-data` - Import data for template variables
+- `POST /api/generate-pages` - Generate all pages from template + data
+- `POST /api/export` - Export pages (CSV, JSON, WordPress)
 
 ## Environment Variables Required
 
-- `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` - At least one AI provider
-- Optional: `SERPAPI_KEY`, `UBERSUGGEST_API_KEY` for enhanced keyword research
+- `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` or `PerplexityAPI` - At least one AI provider
 - Optional: `WORDPRESS_URL`, `WORDPRESS_USERNAME`, `WORDPRESS_APP_PASSWORD` for direct publishing
+
+## Important Implementation Notes
+
+### What Works (Keep These)
+1. **Perplexity API Configuration**: Use model "sonar" - tested and working
+2. **URL Content Extraction**: Current implementation successfully extracts business info
+3. **Business Analysis**: `analyze_business_comprehensive()` provides good foundation
+4. **Content Variation Engine**: Uniqueness algorithms work well for bulk pages
+5. **Vercel Deployment**: Current setup works without filesystem errors
+
+### Common Pitfalls to Avoid
+1. **Don't focus on keyword discovery** - Users will provide their own data
+2. **Don't estimate traffic/metrics** - Focus on page generation only
+3. **Don't create complex wizards** - Simple template → data → pages flow
+4. **Don't generate individual content** - Think bulk generation from templates

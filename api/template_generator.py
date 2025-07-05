@@ -1,11 +1,15 @@
-"""Seed keyword and variation generator for true programmatic SEO"""
-from typing import List, Dict, Any
+"""Template and page generator for true programmatic SEO - creates pages at scale using templates + data"""
+from typing import List, Dict, Any, Optional
 import itertools
+import pandas as pd
+import json
+import csv
+from io import StringIO
 
-class SeedKeywordGenerator:
+class TemplateGenerator:
     def __init__(self):
-        # Generic seed templates adaptable to any business
-        self.generic_templates = {
+        # Template library for programmatic SEO - adaptable to any business
+        self.template_library = {
             "location_based": {
                 "templates": [
                     "{location} {service}",
@@ -236,6 +240,106 @@ class SeedKeywordGenerator:
                 "tool_type": ["booking system", "scheduler", "locator", "directory"]
             }
         }
+        
+        # Store imported data sources
+        self.data_sources = {}
+        # Store generated pages  
+        self.generated_pages = []
+
+    def import_data_from_csv(self, csv_content: str, data_name: str) -> Dict[str, List[str]]:
+        """Import data from CSV for template variables"""
+        try:
+            # Parse CSV
+            df = pd.read_csv(StringIO(csv_content))
+            
+            # Extract columns as data sources
+            data = {}
+            for column in df.columns:
+                # Clean and store unique values
+                values = df[column].dropna().unique().tolist()
+                data[column.lower().replace(' ', '_')] = [str(v).strip() for v in values]
+            
+            # Store for later use
+            self.data_sources[data_name] = data
+            return data
+            
+        except Exception as e:
+            print(f"Error importing CSV: {e}")
+            return {}
+    
+    def create_template(self, name: str, pattern: str, page_structure: Dict[str, str]) -> Dict:
+        """Create a custom template for page generation"""
+        # Extract variables from pattern
+        import re
+        variables = re.findall(r'\{(\w+)\}', pattern)
+        
+        template = {
+            "name": name,
+            "pattern": pattern,
+            "variables": variables,
+            "page_structure": page_structure,
+            "url_pattern": pattern.lower().replace(' ', '-').replace('{', '').replace('}', '')
+        }
+        
+        # Add to library
+        self.template_library[name] = template
+        return template
+    
+    def generate_pages_from_template(self, template_name: str, data: Dict[str, List[str]], 
+                                   limit: int = None) -> List[Dict]:
+        """Generate all page combinations from template + data"""
+        template = self.template_library.get(template_name)
+        if not template:
+            print(f"Template '{template_name}' not found")
+            return []
+        
+        # Get pattern and variables
+        pattern = template.get('pattern', template.get('templates', [''])[0])
+        variables = template.get('variables', [])
+        
+        # Ensure all variables have data
+        variable_data = []
+        for var in variables:
+            if var in data:
+                variable_data.append(data[var])
+            else:
+                print(f"Warning: No data provided for variable '{var}'")
+                variable_data.append([''])
+        
+        # Generate all combinations
+        pages = []
+        for combo in itertools.product(*variable_data):
+            # Create page from template
+            page_data = {}
+            variable_map = dict(zip(variables, combo))
+            
+            # Generate title
+            title = pattern
+            for var, val in variable_map.items():
+                title = title.replace(f'{{{var}}}', val)
+            
+            # Generate URL
+            url = title.lower().replace(' ', '-')
+            
+            # Generate meta description
+            meta_desc = f"Explore {title}. Find information, resources, and tools."
+            
+            # Store page data
+            page_data = {
+                'title': title,
+                'url': f"/{url}",
+                'meta_description': meta_desc,
+                'variables': variable_map,
+                'template': template_name
+            }
+            
+            pages.append(page_data)
+            
+            if limit and len(pages) >= limit:
+                break
+        
+        self.generated_pages = pages
+        return pages
 
     def generate_location_list(self, base_location: str = None, include_nearby: bool = True, 
                               market_context: str = None, location_list: str = None) -> List[str]:
@@ -327,7 +431,7 @@ class SeedKeywordGenerator:
             template_group = seed["template_group"]
             
             # Get the template configuration
-            config = self.generic_templates.get(category, {}).copy()
+            config = self.template_library.get(category, {}).copy()
             
             if not config:
                 print(f"Warning: No template found for category '{category}' - trying AI regeneration")
@@ -341,7 +445,7 @@ class SeedKeywordGenerator:
                         if ai_template:
                             config = ai_template
                             # Store for future use in this session
-                            self.generic_templates[category] = config
+                            self.template_library[category] = config
                         else:
                             print(f"AI failed to generate template for '{category}' - skipping")
                             continue
@@ -436,7 +540,7 @@ class SeedKeywordGenerator:
         
         return keywords
 
-    def get_seed_suggestions(self, business_info: Dict = None, use_ai: bool = True, market_context: Dict = None) -> List[Dict]:
+    def get_template_suggestions(self, business_info: Dict = None, use_ai: bool = True, market_context: Dict = None) -> List[Dict]:
         """Get intelligent seed suggestions based on business type"""
         
         if not business_info:
@@ -448,8 +552,8 @@ class SeedKeywordGenerator:
                 from .ai_handler import AIHandler
                 ai = AIHandler()
                 if ai.has_ai_provider():
-                    print(f"Attempting comprehensive AI seed generation for business: {business_info.get('name', 'Unknown')}")
-                    ai_suggestions = self._get_ai_seed_suggestions(business_info, ai, market_context)
+                    print(f"Attempting comprehensive AI template generation for business: {business_info.get('name', 'Unknown')}")
+                    ai_suggestions = self._get_ai_template_suggestions(business_info, ai, market_context)
                     if ai_suggestions:
                         print(f"AI generated {len(ai_suggestions)} suggestions successfully")
                         return ai_suggestions
@@ -458,7 +562,7 @@ class SeedKeywordGenerator:
                 else:
                     print("No AI provider available - falling back to generic")
             except Exception as e:
-                print(f"AI seed generation failed: {e}")
+                print(f"AI template generation failed: {e}")
                 import traceback
                 traceback.print_exc()
         
@@ -767,7 +871,7 @@ class SeedKeywordGenerator:
             return f"is {business_name} worth it, {business_name} reviews"
     
     def _extract_business_variables(self, business_info: Dict) -> Dict[str, List[str]]:
-        """Extract variables from business info for seed templates"""
+        """Extract variables from business info for page templates"""
         if not business_info:
             return {}
             
@@ -901,8 +1005,8 @@ class SeedKeywordGenerator:
         }
         return generic_vars.get(var_name, [var_name])
     
-    def _get_ai_seed_suggestions(self, business_info: Dict, ai_handler, market_context: Dict = None) -> List[Dict]:
-        """Generate custom seed templates using comprehensive business analysis"""
+    def _get_ai_template_suggestions(self, business_info: Dict, ai_handler, market_context: Dict = None) -> List[Dict]:
+        """Generate custom page templates using comprehensive business analysis"""
         
         # First, get comprehensive business analysis like a human would
         print("Performing comprehensive business analysis...")
@@ -910,24 +1014,24 @@ class SeedKeywordGenerator:
         
         if not comprehensive_analysis:
             print("Comprehensive analysis failed, falling back to basic approach")
-            return self._get_basic_ai_seed_suggestions(business_info, ai_handler)
+            return self._get_basic_ai_template_suggestions(business_info, ai_handler)
         
         # Extract components from ChatGPT-style analysis
         content_opportunities = comprehensive_analysis.get('content_opportunities', '')
         seed_templates = self._extract_seed_templates_from_strategy(content_opportunities, business_info)
         
         if seed_templates:
-            print(f"Extracted {len(seed_templates)} seed templates from comprehensive strategy")
+            print(f"Extracted {len(seed_templates)} page templates from comprehensive strategy")
             return seed_templates
         
         # Fallback: Use AI to generate templates directly from the comprehensive analysis
         prompt = f"""
-        Based on this comprehensive programmatic SEO strategy, convert the keyword formulas and components into actionable seed templates.
+        Based on this comprehensive programmatic SEO strategy, convert the keyword formulas and components into actionable page templates.
 
         COMPREHENSIVE SEO STRATEGY:
         {content_opportunities}
 
-        Convert the identified keyword formulas and components into 4-6 seed templates for our tool.
+        Convert the identified keyword formulas and components into 4-6 page templates for our tool.
 
         For each template provide:
         1. name: Strategic name with emoji (from the strategy)
@@ -983,14 +1087,14 @@ class SeedKeywordGenerator:
                     }
                     
                     # Add to generic templates for generation
-                    self.generic_templates[suggestion['category']] = {
+                    self.template_library[suggestion['category']] = {
                         'templates': suggestion['templates'],
                         'variables': suggestion['variables']
                     }
                     
                     suggestions.append(suggestion)
                 
-                print(f"AI generated {len(suggestions)} custom seed templates")
+                print(f"AI generated {len(suggestions)} custom page templates")
                 return suggestions
                 
         except Exception as e:
@@ -1125,8 +1229,8 @@ class SeedKeywordGenerator:
             print(f"Error extracting market intelligence: {e}")
             return f"Market Context: {additional_context}, Industry: {industry}, Business: {business_name}"
     
-    def _get_basic_ai_seed_suggestions(self, business_info: Dict, ai_handler) -> List[Dict]:
-        """Fallback to basic AI seed generation if comprehensive analysis fails"""
+    def _get_basic_ai_template_suggestions(self, business_info: Dict, ai_handler) -> List[Dict]:
+        """Fallback to basic AI template generation if comprehensive analysis fails"""
         
         prompt = f"""
         You are an expert in programmatic SEO. Analyze this business and create custom seed keyword templates.
@@ -1137,7 +1241,7 @@ class SeedKeywordGenerator:
         - Description: {business_info.get('description', 'No description')}
         - Target Audience: {business_info.get('target_audience', 'General')}
 
-        Create 4-6 highly relevant programmatic SEO seed templates for this specific business.
+        Create 4-6 highly relevant programmatic SEO page templates for this specific business.
         Each template should generate hundreds or thousands of keyword variations.
 
         For each template provide:
@@ -1188,7 +1292,7 @@ class SeedKeywordGenerator:
                     }
                     
                     # Add to generic templates for generation
-                    self.generic_templates[suggestion['category']] = {
+                    self.template_library[suggestion['category']] = {
                         'templates': suggestion['templates'],
                         'variables': suggestion['variables']
                     }
@@ -1198,12 +1302,12 @@ class SeedKeywordGenerator:
                 return suggestions
                 
         except Exception as e:
-            print(f"Error in basic AI seed generation: {e}")
+            print(f"Error in basic AI template generation: {e}")
             
         return []
     
     def _extract_seed_templates_from_strategy(self, strategy_content: str, business_info: Dict) -> List[Dict]:
-        """Extract seed templates directly from ChatGPT-style strategy analysis"""
+        """Extract page templates directly from ChatGPT-style strategy analysis"""
         
         # Try to parse the strategy content to extract components
         templates = []
@@ -1224,7 +1328,7 @@ class SeedKeywordGenerator:
             if locations and categories and intents and formulas:
                 print(f"Extracted components: {len(locations)} locations, {len(categories)} categories, {len(intents)} intents")
                 
-                # Create seed templates based on extracted components
+                # Create page templates based on extracted components
                 for i, formula in enumerate(formulas[:3]):  # Max 3 formulas
                     template = {
                         "name": f"📍 {formula['name']}",
@@ -1244,7 +1348,7 @@ class SeedKeywordGenerator:
                     }
                     
                     # Add to generic templates for generation
-                    self.generic_templates[template['category']] = {
+                    self.template_library[template['category']] = {
                         'templates': template['templates'],
                         'variables': template['variables']
                     }

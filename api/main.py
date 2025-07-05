@@ -88,12 +88,19 @@ class handler(BaseHTTPRequestHandler):
                 self.wfile.write(b'<h1>Wizard interface not found</h1>')
             return
         
-        # Redirect root to wizard version (new default)
+        # Serve template UI at root
         if path == '/' or path == '':
-            self.send_response(302)
-            self.send_header('Location', '/wizard')
-            self.send_header('Cache-Control', 'no-cache')
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
             self.end_headers()
+            
+            # Read and serve the template UI file
+            html_path = os.path.join(os.path.dirname(__file__), 'template_ui.html')
+            try:
+                with open(html_path, 'r') as f:
+                    self.wfile.write(f.read().encode())
+            except:
+                self.wfile.write(b'<h1>Programmatic SEO Tool</h1><p>Template UI not found.</p>')
             return
         
         # Serve dashboard at /dashboard
@@ -184,16 +191,18 @@ class handler(BaseHTTPRequestHandler):
         
         if path == '/api/analyze-business':
             response = self._analyze_business(data)
-        elif path == '/api/generate-keywords':
-            response = self._generate_keywords(data)
-        elif path == '/api/generate-content':
-            response = self._generate_content(data)
-        elif path == '/api/projects':
-            response = self._create_project(data)
-        elif path == '/api/generate-seed-suggestions':
-            response = self._generate_seed_suggestions(data)
-        elif path == '/api/generate-from-seeds':
-            response = self._generate_from_seeds(data)
+        elif path == '/api/create-template':
+            response = self._create_template(data)
+        elif path == '/api/import-data':
+            response = self._import_data(data)
+        elif path == '/api/generate-pages':
+            response = self._generate_pages(data)
+        elif path == '/api/export-pages':
+            response = self._export_pages(data)
+        elif path == '/api/get-templates':
+            response = self._get_templates(data)
+        elif path == '/api/preview-pages':
+            response = self._preview_pages(data)
         elif path == '/api/set-model':
             # Change the model being used
             if usage_tracker:
@@ -300,12 +309,240 @@ class handler(BaseHTTPRequestHandler):
                 'content_types': ['analysis tools', 'calculators', 'guides'] if is_real_estate else ['blog posts', 'tutorials', 'guides']
             })
         
+        # Get template suggestions based on business analysis
+        template_suggestions = []
+        if ai_handler and ai_handler.has_ai_provider():
+            # Analyze for template opportunities
+            if 'real estate' in business_info.get('industry', '').lower():
+                template_suggestions = [
+                    {
+                        'name': 'Location Property Analysis',
+                        'pattern': '{city} {property_type} Investment Analysis',
+                        'variables': ['city', 'property_type'],
+                        'estimated_pages': 250,
+                        'example': 'Toronto Condo Investment Analysis'
+                    },
+                    {
+                        'name': 'ROI Calculator Pages',
+                        'pattern': '{city} Real Estate ROI Calculator',
+                        'variables': ['city'],
+                        'estimated_pages': 50,
+                        'example': 'Vancouver Real Estate ROI Calculator'
+                    }
+                ]
+            else:
+                # Generic templates for any business
+                template_suggestions = [
+                    {
+                        'name': 'Location Based Service',
+                        'pattern': '{service} in {location}',
+                        'variables': ['service', 'location'],
+                        'estimated_pages': 100,
+                        'example': f"{business_info.get('name', 'Service')} in Toronto"
+                    },
+                    {
+                        'name': 'Comparison Pages',
+                        'pattern': '{option1} vs {option2} Comparison',
+                        'variables': ['option1', 'option2'],
+                        'estimated_pages': 50,
+                        'example': 'Product A vs Product B Comparison'
+                    }
+                ]
+        
         return {
             'success': True,
             'business_info': business_info,
+            'template_suggestions': template_suggestions,
             'ai_enabled': bool(ai_handler and ai_handler.has_ai_provider())
         }
 
+    def _create_template(self, data):
+        """Create a new page template"""
+        name = data.get('name', '')
+        pattern = data.get('pattern', '')
+        page_structure = data.get('page_structure', {})
+        
+        if not name or not pattern:
+            return {
+                'success': False,
+                'error': 'Template name and pattern are required'
+            }
+        
+        try:
+            from .template_generator import TemplateGenerator
+            tg = TemplateGenerator()
+            
+            template = tg.create_template(name, pattern, page_structure)
+            
+            return {
+                'success': True,
+                'template': template,
+                'message': f'Template "{name}" created successfully'
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def _import_data(self, data):
+        """Import data from CSV for template variables"""
+        csv_content = data.get('csv_content', '')
+        data_name = data.get('data_name', 'imported_data')
+        
+        if not csv_content:
+            return {
+                'success': False,
+                'error': 'CSV content is required'
+            }
+        
+        try:
+            from .template_generator import TemplateGenerator
+            tg = TemplateGenerator()
+            
+            imported_data = tg.import_data_from_csv(csv_content, data_name)
+            
+            return {
+                'success': True,
+                'data': imported_data,
+                'columns': list(imported_data.keys()),
+                'total_values': {k: len(v) for k, v in imported_data.items()}
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def _generate_pages(self, data):
+        """Generate pages from template + data"""
+        template_name = data.get('template_name', '')
+        data_mapping = data.get('data', {})
+        limit = data.get('limit', None)
+        
+        if not template_name:
+            return {
+                'success': False,
+                'error': 'Template name is required'
+            }
+        
+        try:
+            from .template_generator import TemplateGenerator
+            tg = TemplateGenerator()
+            
+            pages = tg.generate_pages_from_template(template_name, data_mapping, limit)
+            
+            return {
+                'success': True,
+                'pages': pages,
+                'total': len(pages),
+                'message': f'Generated {len(pages)} pages successfully'
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def _export_pages(self, data):
+        """Export generated pages in various formats"""
+        export_format = data.get('format', 'csv')
+        pages = data.get('pages', [])
+        
+        if not pages:
+            return {
+                'success': False,
+                'error': 'No pages to export'
+            }
+        
+        try:
+            if export_format == 'csv':
+                # Create CSV content
+                import csv
+                from io import StringIO
+                
+                output = StringIO()
+                if pages:
+                    writer = csv.DictWriter(output, fieldnames=pages[0].keys())
+                    writer.writeheader()
+                    writer.writerows(pages)
+                
+                return {
+                    'success': True,
+                    'content': output.getvalue(),
+                    'format': 'csv',
+                    'filename': 'programmatic_seo_pages.csv'
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': f'Export format "{export_format}" not supported yet'
+                }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def _get_templates(self, data):
+        """Get available templates"""
+        try:
+            from .template_generator import TemplateGenerator
+            tg = TemplateGenerator()
+            
+            # Get all templates from library
+            templates = []
+            for name, template in tg.template_library.items():
+                templates.append({
+                    'name': name,
+                    'pattern': template.get('pattern', template.get('templates', [''])[0]),
+                    'variables': template.get('variables', []),
+                    'description': template.get('description', '')
+                })
+            
+            return {
+                'success': True,
+                'templates': templates,
+                'total': len(templates)
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def _preview_pages(self, data):
+        """Preview a few pages before full generation"""
+        template_name = data.get('template_name', '')
+        data_mapping = data.get('data', {})
+        preview_count = min(data.get('preview_count', 5), 10)
+        
+        try:
+            from .template_generator import TemplateGenerator
+            tg = TemplateGenerator()
+            
+            pages = tg.generate_pages_from_template(template_name, data_mapping, limit=preview_count)
+            
+            return {
+                'success': True,
+                'preview': pages,
+                'total_preview': len(pages),
+                'estimated_total': self._calculate_total_pages(data_mapping)
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def _calculate_total_pages(self, data_mapping):
+        """Calculate total number of pages that would be generated"""
+        total = 1
+        for key, values in data_mapping.items():
+            if isinstance(values, list) and len(values) > 0:
+                total *= len(values)
+        return total
+    
     def _generate_keywords(self, data):
         """Generate keyword suggestions"""
         business_info = data.get('business_info', {})

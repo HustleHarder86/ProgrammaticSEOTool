@@ -1,13 +1,24 @@
 # Programmatic SEO Tool
 
-A personal tool for generating thousands of SEO-optimized pages automatically.
+Create hundreds or thousands of SEO-optimized pages using the power of templates + data. Works for ANY business type.
+
+## What is Programmatic SEO?
+
+Programmatic SEO uses templates and data to generate pages at scale. Think:
+- Tripadvisor's "Things to do in [City]" pages
+- Zillow's "[City] Real Estate" pages  
+- Yelp's "Best [Business] in [Location]" pages
+
+**Formula: One Template + Your Data = Hundreds of Pages**
 
 ## Features
 
-- **Dual Input Methods**: Analyze businesses via text description or URL scanning
-- **Keyword Research**: Discover high-potential keywords automatically
-- **Content Generation**: Create unique, SEO-optimized content at scale
-- **Export Options**: CSV, JSON, or direct WordPress integration
+- **Universal Business Analysis**: Works for any business type or industry
+- **Smart Template Creation**: Generate templates with variable placeholders
+- **Bulk Data Import**: CSV upload or manual data entry
+- **Instant Page Generation**: Create 100s of pages in seconds
+- **SEO Optimization**: Every page optimized for search engines
+- **Multiple Export Options**: CSV, WordPress XML, or API-ready JSON
 
 ## Setup
 
@@ -48,15 +59,52 @@ Visit http://localhost:8000/docs for interactive API documentation.
 
 ## Quick Start
 
-1. **Analyze a business**:
-   - Text input: Describe your business
-   - URL input: Provide your website URL
+### Example: Real Estate SaaS
 
-2. **Generate keywords**: Get 50-100 keyword opportunities
+1. **Analyze Your Business**:
+   ```
+   Input: "Real estate investment analysis tool"
+   Output: Template suggestions like "[City] [Property Type] Investment Analysis"
+   ```
 
-3. **Create content**: Generate unique pages for each keyword
+2. **Choose a Template**:
+   ```
+   Template: "[City] Real Estate Investment Calculator"
+   Variables: {city}, {property_type}
+   ```
 
-4. **Export**: Download as CSV or publish to WordPress
+3. **Add Your Data**:
+   ```
+   Cities: Toronto, Vancouver, Calgary, Montreal...
+   Property Types: Condo, House, Duplex...
+   ```
+
+4. **Generate Pages**:
+   ```
+   Result: 100+ pages like:
+   - "Toronto Condo Investment Calculator"
+   - "Vancouver House Investment Calculator"
+   - "Calgary Duplex Investment Calculator"
+   ```
+
+5. **Export & Publish**: Download all pages as CSV or WordPress-ready content
+
+### More Examples
+
+**E-commerce Store**:
+- Template: "Best [Product] for [Use Case]"
+- Data: Products × Use Cases
+- Result: "Best Running Shoes for Marathon Training"
+
+**SaaS Platform**:
+- Template: "[Industry] [Software Type] Guide"
+- Data: Industries × Features
+- Result: "Healthcare CRM Software Guide"
+
+**Local Service**:
+- Template: "[Service] in [Neighborhood] [City]"
+- Data: Services × Locations
+- Result: "Plumbing Services in Downtown Toronto"
 
 ## Development
 
