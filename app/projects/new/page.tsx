@@ -48,7 +48,7 @@ export default function NewProjectPage() {
             <div>
               <h2 className="text-2xl font-semibold mb-6">Tell us about your business</h2>
               <p className="text-gray-600 mb-8">
-                We'll analyze your business and suggest the best programmatic SEO templates.
+                We&apos;ll analyze your business and suggest the best programmatic SEO templates.
               </p>
               <div className="text-center py-12 text-gray-500">
                 Business analysis form will go here
