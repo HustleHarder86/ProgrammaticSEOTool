@@ -115,6 +115,41 @@ When implementing features:
 5. **SEO Built-in**: Every page must be SEO-optimized by default
 6. **Scale Testing**: Test with hundreds of combinations to ensure performance
 
+## Deployment Configuration (CRITICAL)
+
+**This project is deployed on Vercel as a unified Next.js + FastAPI application.**
+
+### Vercel Requirements
+1. **Single Project Structure**: Frontend (Next.js) at root, Backend (FastAPI) in `/api`
+2. **No Separate Frontend/Backend**: Everything deploys as one project
+3. **API Routes**: FastAPI handles `/api/*` routes via `/api/main.py`
+4. **Environment Variables**: Set in Vercel dashboard, not in code
+5. **Python Runtime**: Must specify exact version (e.g., `python3.9`, not `python3`)
+
+### All Subagents MUST Follow These Rules:
+1. **Never create separate frontend/backend projects**
+2. **Always use relative API paths** (e.g., `/api/analyze`, not `http://localhost:8000/api/analyze`)
+3. **Never hardcode URLs** - use relative paths
+4. **Keep vercel.json minimal** - only Python runtime and rewrites
+5. **Test deployment compatibility** before pushing
+
+### Current vercel.json Structure:
+```json
+{
+  "functions": {
+    "api/main.py": {
+      "runtime": "python3.9"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/main"
+    }
+  ]
+}
+```
+
 ## Workflow Rules
 
 When working on any development task, follow these steps:
