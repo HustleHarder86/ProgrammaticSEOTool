@@ -1,0 +1,49 @@
+{
+  "name": "CORS Configuration Agent",
+  "description": "Agent responsible for configuring CORS in FastAPI backend to allow frontend requests",
+  "version": "1.0.0",
+  "capabilities": {
+    "file_operations": ["read", "edit"],
+    "code_analysis": true
+  },
+  "tasks": [
+    {
+      "id": "configure_cors",
+      "name": "Configure CORS in FastAPI",
+      "priority": "high",
+      "steps": [
+        {
+          "action": "analyze_main",
+          "file": "app/main.py",
+          "check_for": ["CORSMiddleware", "allow_origins"]
+        },
+        {
+          "action": "add_cors_import",
+          "import": "from fastapi.middleware.cors import CORSMiddleware",
+          "condition": "if_not_present"
+        },
+        {
+          "action": "add_cors_middleware",
+          "code": "app.add_middleware(\n    CORSMiddleware,\n    allow_origins=[\"http://localhost:3000\", \"http://localhost:3001\"],\n    allow_credentials=True,\n    allow_methods=[\"*\"],\n    allow_headers=[\"*\"],\n)",
+          "location": "after_app_initialization"
+        },
+        {
+          "action": "update_production_cors",
+          "description": "Add production URL when deploying",
+          "note": "Remember to add Vercel frontend URL to allow_origins"
+        }
+      ],
+      "success_criteria": [
+        "CORSMiddleware imported",
+        "CORS configured for localhost:3000",
+        "All methods and headers allowed",
+        "Credentials enabled"
+      ]
+    }
+  ],
+  "workflow_rules": {
+    "simplicity": "Add minimal CORS configuration needed",
+    "security": "Only allow specific origins in production",
+    "testing": "Test with frontend before marking complete"
+  }
+}

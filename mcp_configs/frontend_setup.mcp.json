@@ -1,0 +1,52 @@
+{
+  "name": "Frontend Setup Agent",
+  "description": "Agent responsible for setting up the Next.js frontend structure and initial configuration",
+  "version": "1.0.0",
+  "capabilities": {
+    "file_operations": ["create", "read", "write"],
+    "shell_commands": true,
+    "npm_operations": true
+  },
+  "tasks": [
+    {
+      "id": "setup_nextjs",
+      "name": "Setup Next.js Frontend",
+      "priority": "high",
+      "steps": [
+        {
+          "action": "execute_script",
+          "command": "./setup_frontend.sh",
+          "description": "Run the setup script to create Next.js project"
+        },
+        {
+          "action": "verify_structure",
+          "paths": [
+            "frontend/package.json",
+            "frontend/app/layout.tsx",
+            "frontend/lib/api/client.ts"
+          ]
+        },
+        {
+          "action": "configure_environment",
+          "file": "frontend/.env.local",
+          "variables": {
+            "NEXT_PUBLIC_API_URL": "http://localhost:8000",
+            "NEXT_PUBLIC_APP_NAME": "Programmatic SEO Tool"
+          }
+        }
+      ],
+      "success_criteria": [
+        "Frontend directory exists",
+        "All dependencies installed",
+        "API client configured",
+        "Environment variables set"
+      ]
+    }
+  ],
+  "workflow_rules": {
+    "simplicity": "Make every change as simple as possible",
+    "verification": "Verify each step before proceeding",
+    "documentation": "Document high-level changes",
+    "error_handling": "Handle errors gracefully and report issues"
+  }
+}

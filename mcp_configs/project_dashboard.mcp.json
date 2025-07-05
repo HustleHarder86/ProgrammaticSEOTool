@@ -1,0 +1,82 @@
+{
+  "name": "Project Dashboard Agent",
+  "description": "Agent responsible for creating the project management dashboard",
+  "version": "1.0.0",
+  "capabilities": {
+    "file_operations": ["create", "write"],
+    "data_visualization": true,
+    "crud_operations": true
+  },
+  "tasks": [
+    {
+      "id": "create_dashboard",
+      "name": "Build Project Dashboard",
+      "priority": "medium",
+      "components": [
+        {
+          "name": "Projects List",
+          "file": "frontend/components/dashboard/ProjectsList.tsx",
+          "features": [
+            "Project cards with key metrics",
+            "Search and filter",
+            "Sort by date/name/pages",
+            "Quick actions menu",
+            "Pagination"
+          ],
+          "metrics_displayed": [
+            "Total pages generated",
+            "Templates used",
+            "Last updated",
+            "Export status"
+          ]
+        },
+        {
+          "name": "Dashboard Stats",
+          "file": "frontend/components/dashboard/DashboardStats.tsx",
+          "widgets": [
+            "Total pages generated",
+            "Active projects count",
+            "Templates created",
+            "Recent activity"
+          ]
+        },
+        {
+          "name": "Project Detail View",
+          "file": "frontend/app/projects/[id]/page.tsx",
+          "sections": [
+            "Project overview",
+            "Templates used",
+            "Data sources",
+            "Generated pages",
+            "Export history"
+          ]
+        },
+        {
+          "name": "Quick Actions",
+          "file": "frontend/components/dashboard/QuickActions.tsx",
+          "actions": [
+            "New project",
+            "Import template",
+            "View all exports",
+            "Account settings"
+          ]
+        }
+      ],
+      "navigation": {
+        "sidebar": [
+          "Dashboard",
+          "Projects",
+          "Templates",
+          "Data Sources",
+          "Exports",
+          "Settings"
+        ]
+      }
+    }
+  ],
+  "workflow_rules": {
+    "simplicity": "Clear visual hierarchy",
+    "performance": "Lazy load project data",
+    "responsiveness": "Mobile-friendly design"
+  }
+}

@@ -46,12 +46,26 @@ cp .env.example .env
 # Supports: Perplexity, OpenAI, or Anthropic (only need one)
 ```
 
-5. Run the application:
+5. Initialize the database:
+```bash
+python init_db.py
+```
+
+6. Run the backend:
 ```bash
 python -m uvicorn app.main:app --reload
 ```
 
 The API will be available at http://localhost:8000
+
+7. Run the frontend (in a new terminal):
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The UI will be available at http://localhost:3000
 
 ## API Documentation
 
@@ -108,9 +122,18 @@ Visit http://localhost:8000/docs for interactive API documentation.
 
 ## Development
 
-- FastAPI backend with async support
+### Backend
+- FastAPI with async support
 - SQLite database (no setup required)
-- Modular architecture for easy extension
+- Modular agent-based architecture
+- Support for multiple AI providers (Perplexity, OpenAI, Anthropic)
+
+### Frontend (Next.js)
+- Next.js 14 with App Router
+- TypeScript for type safety
+- Tailwind CSS + shadcn/ui for modern UI
+- Real-time updates with WebSockets
+- Responsive design for all devices
 
 ## License
 

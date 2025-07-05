@@ -1,0 +1,137 @@
+{
+  "name": "Data Import and Generation Agent",
+  "description": "Agent responsible for creating Step 3 of the workflow - data import and page generation",
+  "version": "1.0.0",
+  "capabilities": {
+    "file_operations": ["create", "write"],
+    "file_upload": true,
+    "data_processing": true,
+    "websocket": true,
+    "bulk_operations": true
+  },
+  "tasks": [
+    {
+      "id": "create_data_import",
+      "name": "Build Data Import Interface",
+      "priority": "high",
+      "components": [
+        {
+          "name": "Data Importer",
+          "file": "frontend/components/data/DataImporter.tsx",
+          "features": [
+            "CSV drag-and-drop zone",
+            "File validation feedback",
+            "Column mapping interface",
+            "Manual data entry option",
+            "Data preview table"
+          ],
+          "supported_formats": ["CSV", "TSV", "JSON"],
+          "validation": {
+            "file_size": "Max 10MB",
+            "row_limit": "Max 10,000 rows initially",
+            "required_columns": "Based on template variables"
+          }
+        },
+        {
+          "name": "Column Mapper",
+          "file": "frontend/components/data/ColumnMapper.tsx",
+          "features": [
+            "Auto-detect column matches",
+            "Drag-and-drop mapping",
+            "Data type validation",
+            "Preview mapped data",
+            "Save mapping for reuse"
+          ]
+        },
+        {
+          "name": "Data Grid",
+          "file": "frontend/components/data/DataGrid.tsx",
+          "features": [
+            "Virtualized table for performance",
+            "Inline editing",
+            "Sort and filter",
+            "Bulk operations toolbar",
+            "Export functionality"
+          ],
+          "libraries": ["@tanstack/react-table", "react-window"]
+        },
+        {
+          "name": "Generation Settings",
+          "file": "frontend/components/generation/GenerationSettings.tsx",
+          "options": [
+            "Content variation level (low/medium/high)",
+            "SEO optimization strength",
+            "Include AI enhancements",
+            "Output format selection",
+            "Batch size for processing"
+          ]
+        },
+        {
+          "name": "Generation Progress",
+          "file": "frontend/components/generation/GenerationProgress.tsx",
+          "features": [
+            "Real-time progress bar",
+            "Pages generated counter",
+            "Time remaining estimate",
+            "Pause/resume controls",
+            "Error log with retry"
+          ],
+          "websocket_events": [
+            "generation:started",
+            "generation:progress",
+            "generation:page_complete",
+            "generation:error",
+            "generation:complete"
+          ]
+        },
+        {
+          "name": "Results Viewer",
+          "file": "frontend/components/generation/ResultsViewer.tsx",
+          "features": [
+            "Generated pages grid",
+            "Preview modal",
+            "SEO score display",
+            "Edit individual pages",
+            "Bulk export options"
+          ]
+        }
+      ],
+      "api_integration": {
+        "endpoints": {
+          "upload": "POST /api/data/upload",
+          "validate": "POST /api/data/validate",
+          "generate": "POST /api/generate-pages",
+          "status": "GET /api/generation/{job_id}/status",
+          "export": "POST /api/export"
+        },
+        "websocket": {
+          "url": "ws://localhost:8000/ws/generation/{job_id}",
+          "events": "Real-time progress updates"
+        }
+      },
+      "state_management": {
+        "store": "frontend/lib/store/generationStore.ts",
+        "state": {
+          "importedData": "Uploaded data",
+          "mappings": "Column mappings",
+          "settings": "Generation settings",
+          "jobId": "Current generation job",
+          "progress": "Generation progress",
+          "results": "Generated pages"
+        }
+      }
+    }
+  ],
+  "performance_considerations": [
+    "Use virtual scrolling for large datasets",
+    "Chunk file uploads for better UX",
+    "Implement request cancellation",
+    "Cache generated previews"
+  ],
+  "workflow_rules": {
+    "validation": "Validate data before generation",
+    "feedback": "Show clear progress indicators",
+    "recovery": "Allow resume from interruptions",
+    "export": "Multiple export format options"
+  }
+}

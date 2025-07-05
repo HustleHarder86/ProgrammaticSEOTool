@@ -135,11 +135,12 @@ When working on any development task, follow these steps:
 python run_local.py
 
 # Option 2: Run servers separately
-# Terminal 1 - API
+# Terminal 1 - API (FastAPI)
 python -m uvicorn app.main:app --reload
 
-# Terminal 2 - UI
-streamlit run streamlit_app.py
+# Terminal 2 - Frontend (Next.js)
+cd frontend
+npm run dev
 ```
 
 ### Initialize Database
@@ -155,7 +156,8 @@ vercel
 ## API Endpoints
 
 - `GET /health` - Health check
-- `POST /api/analyze-business` - Analyze business and suggest templates
+- `POST /api/analyze-business` - Analyze business from text or URL
+- `POST /api/generate-templates` - Generate programmatic SEO template opportunities
 - `POST /api/create-template` - Create or save a page template
 - `POST /api/import-data` - Import data for template variables
 - `POST /api/generate-pages` - Generate all pages from template + data
@@ -180,3 +182,40 @@ vercel
 2. **Don't estimate traffic/metrics** - Focus on page generation only
 3. **Don't create complex wizards** - Simple template → data → pages flow
 4. **Don't generate individual content** - Think bulk generation from templates
+
+## Current Status (As of January 2025)
+
+### Completed
+- **Agent Architecture**: All 5 core agents (Business Analyzer, Template Builder, Data Manager, Page Generator, Export Manager) are fully implemented
+- **API Integration**: Complete REST API with all endpoints working
+- **AI Support**: Perplexity, OpenAI, and Anthropic providers integrated
+- **Database**: SQLite database with full project/content tracking
+- **Export Formats**: CSV, JSON, WordPress XML export working
+- **Workflow Automation**: Complete end-to-end workflow from business analysis to export
+
+### In Progress
+- **Next.js Frontend**: Building a modern React-based UI with Next.js 14 App Router
+- **Real SEO Data**: Currently using AI-generated mock data; need to integrate Ubersuggest/SerpAPI for real metrics
+
+### Next Steps
+1. Create the Next.js frontend with modern UI components and workflow
+2. Test the complete workflow end-to-end
+3. Integrate real SEO data providers
+4. Add production-ready error handling and logging
+
+## Frontend Architecture (Next.js)
+
+### Technology Stack
+- **Framework**: Next.js 14 with App Router
+- **UI Components**: shadcn/ui + Tailwind CSS
+- **State Management**: Zustand for global state
+- **Data Fetching**: TanStack Query (React Query)
+- **Forms**: React Hook Form + Zod validation
+- **Charts**: Recharts for data visualization
+
+### Key Frontend Features
+1. **Responsive Design**: Mobile-first approach
+2. **Real-time Updates**: WebSocket support for long-running tasks
+3. **File Uploads**: Drag-and-drop CSV import
+4. **Interactive Preview**: Live template preview with data
+5. **Export Queue**: Background export processing with progress

@@ -32,9 +32,16 @@ app = FastAPI(
 )
 
 # Add CORS middleware
+# Configure allowed origins based on environment
+allowed_origins = ["http://localhost:3000", "http://localhost:3001"]
+if os.getenv("VERCEL_URL"):
+    allowed_origins.append(f"https://{os.getenv('VERCEL_URL')}")
+if os.getenv("FRONTEND_URL"):
+    allowed_origins.append(os.getenv("FRONTEND_URL"))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins if not settings.debug else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -50,6 +57,10 @@ class HealthResponse(BaseModel):
 class BusinessInput(BaseModel):
     input_type: str  # "text" or "url"
     content: str  # Either business description or URL
+
+class TemplateGenerationRequest(BaseModel):
+    business_url_or_description: str
+    market_context: Optional[Dict[str, str]] = None  # Additional context like location, industry focus
     
 class KeywordGenerationRequest(BaseModel):
     business_input: BusinessInput
@@ -79,10 +90,28 @@ class KeywordDiscoveryRequest(BaseModel):
 @app.get("/")
 async def root():
     """Root endpoint."""
+    agents_loaded = False
+    try:
+        # Check if agents are available
+        from app.agents.business_analyzer import BusinessAnalyzerAgent
+        from app.agents.template_builder import TemplateBuilderAgent
+        from app.agents.data_manager import DataManagerAgent
+        from app.agents.page_generator import PageGeneratorAgent
+        from app.agents.export_manager import ExportManagerAgent
+        agents_loaded = True
+    except:
+        pass
+    
     return {
         "message": "Programmatic SEO Tool API",
+        "version": "2.0.0",
         "docs": "/docs",
-        "health": "/health"
+        "health": "/health",
+        "agents_loaded": agents_loaded,
+        "endpoints": {
+            "legacy": "/api/analyze-business, /api/generate-keywords, /api/generate-content",
+            "new": "/api/analyze-business-templates, /api/create-template, /api/generate-pages-bulk, /api/complete-workflow"
+        }
     }
 
 # Health check endpoint
@@ -142,6 +171,77 @@ async def analyze_business(request: BusinessInput):
         
     except Exception as e:
         logger.error(f"Error in business analysis: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Generate programmatic SEO templates endpoint
+@app.post("/api/generate-templates")
+async def generate_templates(request: TemplateGenerationRequest):
+    """Generate programmatic SEO template opportunities for a business."""
+    if not settings.has_ai_provider:
+        raise HTTPException(
+            status_code=503,
+            detail="No AI provider configured. Please set PERPLEXITY_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY in .env"
+        )
+    
+    try:
+        # Import AI handler with proper path
+        import sys
+        import os
+        sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+        from api.ai_handler import AIHandler
+        from app.agents.business_analyzer import BusinessAnalyzerAgent
+        
+        # Initialize agents
+        ai_handler = AIHandler()
+        analyzer = BusinessAnalyzerAgent(ai_handler)
+        
+        # Analyze business
+        business_analysis = analyzer.analyze_business(request.business_url_or_description)
+        
+        # Generate template suggestions
+        templates = analyzer.suggest_templates(business_analysis)
+        
+        # Get data requirements for each template
+        template_data = []
+        for template in templates:
+            data_reqs = analyzer.identify_data_requirements(template)
+            
+            template_data.append({
+                "name": template.name,
+                "pattern": template.pattern,
+                "description": template.description,
+                "estimated_pages": template.estimated_pages,
+                "priority": template.priority,
+                "search_intent": template.search_intent,
+                "examples": template.examples,
+                "data_requirements": [
+                    {
+                        "type": req.data_type,
+                        "description": req.description,
+                        "suggested_count": req.suggested_count,
+                        "source": req.data_source,
+                        "examples": req.examples
+                    }
+                    for req in data_reqs
+                ]
+            })
+        
+        return {
+            "business_analysis": {
+                "name": business_analysis.business_name,
+                "industry": business_analysis.industry,
+                "services": business_analysis.services,
+                "products": business_analysis.products,
+                "target_audience": business_analysis.target_audience,
+                "business_model": business_analysis.business_model,
+                "value_proposition": business_analysis.value_proposition
+            },
+            "templates": template_data,
+            "total_templates": len(template_data)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error generating templates: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Generate keyword strategies endpoint
@@ -516,6 +616,16 @@ async def discover_keywords(request: KeywordDiscoveryRequest):
     except Exception as e:
         logger.error(f"Error discovering keywords: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# Include the new API integration routes
+try:
+    from app.api_integration import router as integration_router
+    app.include_router(integration_router)
+    logger.info("API integration routes loaded successfully")
+except ImportError as e:
+    logger.warning(f"Could not load API integration routes: {e}")
+except Exception as e:
+    logger.error(f"Error loading API integration routes: {e}")
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,0 +1,106 @@
+{
+  "name": "Template Builder Agent",
+  "description": "Agent responsible for creating Step 2 of the workflow - template creation and management",
+  "version": "1.0.0",
+  "capabilities": {
+    "file_operations": ["create", "write"],
+    "rich_text_editing": true,
+    "variable_management": true,
+    "preview_generation": true
+  },
+  "tasks": [
+    {
+      "id": "create_template_builder",
+      "name": "Build Template Management Interface",
+      "priority": "high",
+      "components": [
+        {
+          "name": "Template Editor",
+          "file": "frontend/components/templates/TemplateEditor.tsx",
+          "features": [
+            "Rich text editor (using Tiptap or similar)",
+            "Variable insertion toolbar",
+            "Syntax highlighting for {variables}",
+            "SEO fields (title, meta description)",
+            "Save/load functionality"
+          ],
+          "variable_syntax": "{variable_name}",
+          "toolbar_items": [
+            "Bold, Italic, Underline",
+            "Headings (H1-H3)",
+            "Lists (ordered/unordered)",
+            "Links",
+            "Variable insertion button"
+          ]
+        },
+        {
+          "name": "Variable Manager",
+          "file": "frontend/components/templates/VariableManager.tsx",
+          "features": [
+            "Auto-extract variables from template",
+            "Variable type selector (text, number, date)",
+            "Required/optional toggle",
+            "Default value input",
+            "Validation rules setup"
+          ],
+          "variable_types": [
+            { "type": "text", "validation": "min/max length" },
+            { "type": "number", "validation": "min/max value" },
+            { "type": "date", "validation": "date range" },
+            { "type": "select", "validation": "allowed values" }
+          ]
+        },
+        {
+          "name": "Template Preview",
+          "file": "frontend/components/templates/TemplatePreview.tsx",
+          "features": [
+            "Live preview with sample data",
+            "Toggle between edit/preview modes",
+            "Mobile/desktop view toggle",
+            "SEO preview (Google SERP style)"
+          ]
+        },
+        {
+          "name": "Template Library",
+          "file": "frontend/components/templates/TemplateLibrary.tsx",
+          "features": [
+            "Pre-built templates by category",
+            "Search and filter",
+            "Template cards with preview",
+            "Use/Fork/Duplicate actions"
+          ],
+          "categories": [
+            "Location-based",
+            "Comparison",
+            "Use-case",
+            "Feature-focused",
+            "Industry-specific"
+          ]
+        }
+      ],
+      "api_integration": {
+        "endpoints": {
+          "save": "POST /api/templates",
+          "load": "GET /api/templates/{id}",
+          "list": "GET /api/templates",
+          "validate": "POST /api/templates/validate"
+        }
+      },
+      "state_management": {
+        "store": "frontend/lib/store/templateStore.ts",
+        "state": {
+          "currentTemplate": "Active template being edited",
+          "templates": "List of saved templates",
+          "variables": "Extracted variables",
+          "isDirty": "Unsaved changes flag"
+        }
+      }
+    }
+  ],
+  "workflow_rules": {
+    "auto_save": "Save draft every 30 seconds",
+    "validation": "Validate on blur and before save",
+    "preview": "Update preview in real-time",
+    "simplicity": "Hide advanced options by default"
+  }
+}

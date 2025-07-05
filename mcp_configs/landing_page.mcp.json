@@ -1,0 +1,97 @@
+{
+  "name": "Landing Page Builder Agent",
+  "description": "Agent responsible for creating the landing page with hero section and feature showcase",
+  "version": "1.0.0",
+  "capabilities": {
+    "file_operations": ["create", "write"],
+    "component_creation": true,
+    "styling": "tailwind"
+  },
+  "tasks": [
+    {
+      "id": "create_landing_page",
+      "name": "Build Landing Page",
+      "priority": "high",
+      "components": [
+        {
+          "name": "Hero Section",
+          "file": "frontend/components/landing/HeroSection.tsx",
+          "elements": [
+            "Compelling headline about programmatic SEO",
+            "Subheadline explaining the tool",
+            "CTA button to start new project",
+            "Visual element or animation"
+          ]
+        },
+        {
+          "name": "Features Grid",
+          "file": "frontend/components/landing/FeaturesGrid.tsx",
+          "features": [
+            {
+              "title": "Universal Business Analysis",
+              "description": "Works for any business type or industry",
+              "icon": "Briefcase"
+            },
+            {
+              "title": "Smart Template Creation",
+              "description": "Generate templates with variable placeholders",
+              "icon": "FileTemplate"
+            },
+            {
+              "title": "Bulk Data Import",
+              "description": "CSV upload or manual data entry",
+              "icon": "Upload"
+            },
+            {
+              "title": "Instant Page Generation",
+              "description": "Create 100s of pages in seconds",
+              "icon": "Zap"
+            }
+          ]
+        },
+        {
+          "name": "How It Works",
+          "file": "frontend/components/landing/HowItWorks.tsx",
+          "steps": [
+            "Analyze your business",
+            "Choose or create templates",
+            "Import your data",
+            "Generate pages at scale",
+            "Export and publish"
+          ]
+        },
+        {
+          "name": "Examples Carousel",
+          "file": "frontend/components/landing/ExamplesCarousel.tsx",
+          "examples": [
+            "Real Estate: [City] Property Investment Guide",
+            "E-commerce: Best [Product] for [Use Case]",
+            "SaaS: [Industry] Software Comparison",
+            "Local Services: [Service] in [Location]"
+          ]
+        }
+      ],
+      "page_structure": {
+        "file": "frontend/app/page.tsx",
+        "imports": [
+          "HeroSection",
+          "FeaturesGrid",
+          "HowItWorks",
+          "ExamplesCarousel"
+        ],
+        "layout": "vertical_sections"
+      }
+    }
+  ],
+  "styling_guidelines": {
+    "colors": "Use primary brand colors with good contrast",
+    "spacing": "Consistent padding and margins",
+    "responsive": "Mobile-first approach",
+    "animations": "Subtle, performance-optimized"
+  },
+  "workflow_rules": {
+    "simplicity": "Keep components focused and reusable",
+    "accessibility": "Ensure WCAG 2.1 AA compliance",
+    "performance": "Optimize images and animations"
+  }
+}

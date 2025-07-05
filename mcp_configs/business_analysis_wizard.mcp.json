@@ -1,0 +1,102 @@
+{
+  "name": "Business Analysis Wizard Agent",
+  "description": "Agent responsible for creating Step 1 of the workflow - business analysis and template suggestions",
+  "version": "1.0.0",
+  "capabilities": {
+    "file_operations": ["create", "write"],
+    "api_integration": true,
+    "form_handling": true,
+    "state_management": true
+  },
+  "tasks": [
+    {
+      "id": "create_business_analyzer",
+      "name": "Build Business Analysis Wizard",
+      "priority": "high",
+      "components": [
+        {
+          "name": "Business Input Form",
+          "file": "frontend/components/business/BusinessInputForm.tsx",
+          "features": [
+            "URL input with validation",
+            "Text description textarea",
+            "Industry selector (optional)",
+            "Submit button with loading state"
+          ],
+          "validation": {
+            "url": "Valid URL format",
+            "description": "Minimum 50 characters",
+            "either_or": "URL or description required"
+          }
+        },
+        {
+          "name": "Analysis Progress",
+          "file": "frontend/components/business/AnalysisProgress.tsx",
+          "states": [
+            "Analyzing business...",
+            "Extracting key information...",
+            "Identifying opportunities...",
+            "Generating template suggestions..."
+          ]
+        },
+        {
+          "name": "Template Suggestions",
+          "file": "frontend/components/business/TemplateSuggestions.tsx",
+          "features": [
+            "Grid of suggested templates",
+            "Template preview on hover",
+            "Variables highlighted",
+            "Select button for each",
+            "Custom template option"
+          ]
+        },
+        {
+          "name": "Market Insights",
+          "file": "frontend/components/business/MarketInsights.tsx",
+          "displays": [
+            "Target audience",
+            "Key opportunities",
+            "Competitive landscape",
+            "Recommended approach"
+          ]
+        }
+      ],
+      "api_integration": {
+        "endpoint": "/api/analyze-business",
+        "method": "POST",
+        "payload": {
+          "url": "string (optional)",
+          "description": "string (optional)",
+          "industry": "string (optional)"
+        },
+        "response_handling": {
+          "success": "Display templates and insights",
+          "error": "Show error message with retry",
+          "loading": "Show progress indicator"
+        }
+      },
+      "state_management": {
+        "store": "frontend/lib/store/businessStore.ts",
+        "state": {
+          "businessData": "Analysis results",
+          "selectedTemplates": "User selections",
+          "isAnalyzing": "Loading state",
+          "error": "Error messages"
+        }
+      }
+    }
+  ],
+  "user_flow": [
+    "User enters URL or description",
+    "Click analyze button",
+    "Show progress indicator",
+    "Display results in organized sections",
+    "User selects templates to proceed"
+  ],
+  "workflow_rules": {
+    "simplicity": "Clear, single-purpose components",
+    "feedback": "Immediate visual feedback for all actions",
+    "error_handling": "Graceful error states with retry options",
+    "persistence": "Save analysis results to store"
+  }
+}

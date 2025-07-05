@@ -46,3 +46,8 @@ htmlcov/
 dist/
 build/
 *.egg-info/
+
+# Node modules (for frontend)
+node_modules/
+frontend/node_modules/
+frontend/.next/
