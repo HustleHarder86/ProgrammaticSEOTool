@@ -580,7 +580,7 @@ class ExportManagerAgent:
                     category_dir = os.path.join(export_dir, category)
                     os.makedirs(category_dir, exist_ok=True)
                     
-                    filename = f"{item.get('slug', f'page-{item["id"]}')}.html"
+                    filename = f"{item.get('slug', f'page-{item[\"id\"]}')}.html"
                     filepath = os.path.join(category_dir, filename)
                     
                     html_content = self._generate_html_page(item, options)
@@ -588,7 +588,7 @@ class ExportManagerAgent:
                         f.write(html_content)
             else:
                 for item in content:
-                    filename = f"{item.get('slug', f'page-{item["id"]}')}.html"
+                    filename = f"{item.get('slug', f'page-{item[\"id\"]}')}.html"
                     filepath = os.path.join(export_dir, filename)
                     
                     html_content = self._generate_html_page(item, options)
