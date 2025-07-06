@@ -1,0 +1,246 @@
+{
+  "name": "Deployment Debugger Agent",
+  "description": "Agent responsible for debugging and fixing the Vercel deployment 404 error by properly separating frontend and backend code",
+  "version": "1.0.0",
+  "capabilities": {
+    "file_operations": ["create", "read", "write", "move", "delete"],
+    "directory_restructuring": true,
+    "deployment_testing": true,
+    "error_analysis": true
+  },
+  "problem_statement": {
+    "issue": "404 NOT_FOUND error on Vercel deployment",
+    "root_cause": "Python backend files mixed with Next.js frontend files in app directory",
+    "impact": "Next.js cannot properly route pages with Python files present"
+  },
+  "solution_strategy": {
+    "approach": "Complete separation of frontend and backend code",
+    "principle": "Next.js requires clean React/TypeScript-only directories",
+    "goal": "Working Vercel deployment with proper routing"
+  },
+  "tasks": [
+    {
+      "id": "analyze_structure",
+      "name": "Analyze Current Structure",
+      "priority": "critical",
+      "steps": [
+        {
+          "action": "identify_python_files",
+          "description": "List all Python files in app directory",
+          "files_to_check": [
+            "app/__init__.py",
+            "app/main.py",
+            "app/models.py",
+            "app/api_integration.py",
+            "app/agents/*",
+            "app/generators/*",
+            "app/researchers/*",
+            "app/exporters/*",
+            "app/templates/*",
+            "app/utils/*"
+          ]
+        },
+        {
+          "action": "identify_nextjs_files",
+          "description": "List all Next.js files that should remain",
+          "files_to_keep": [
+            "app/layout.tsx",
+            "app/page.tsx",
+            "app/globals.css",
+            "app/favicon.ico",
+            "app/providers.tsx",
+            "app/demo/page.tsx",
+            "app/projects/new/page.tsx"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "create_backend_directory",
+      "name": "Create Backend Directory Structure",
+      "priority": "critical",
+      "steps": [
+        {
+          "action": "create_directories",
+          "paths": [
+            "backend/",
+            "backend/agents/",
+            "backend/generators/",
+            "backend/researchers/",
+            "backend/exporters/",
+            "backend/templates/",
+            "backend/utils/"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "move_python_files",
+      "name": "Move Python Files to Backend",
+      "priority": "critical",
+      "operations": [
+        {
+          "move": "app/__init__.py -> backend/__init__.py"
+        },
+        {
+          "move": "app/main.py -> backend/main.py"
+        },
+        {
+          "move": "app/models.py -> backend/models.py"
+        },
+        {
+          "move": "app/api_integration.py -> backend/api_integration.py"
+        },
+        {
+          "move": "app/agents/* -> backend/agents/"
+        },
+        {
+          "move": "app/generators/* -> backend/generators/"
+        },
+        {
+          "move": "app/researchers/* -> backend/researchers/"
+        },
+        {
+          "move": "app/exporters/* -> backend/exporters/"
+        },
+        {
+          "move": "app/templates/* -> backend/templates/"
+        },
+        {
+          "move": "app/utils/* -> backend/utils/"
+        },
+        {
+          "move": "api/main.py -> backend/api_main.py"
+        }
+      ]
+    },
+    {
+      "id": "update_imports",
+      "name": "Update Python Import Paths",
+      "priority": "high",
+      "description": "Update all Python imports to reflect new backend/ structure",
+      "pattern_replacements": [
+        {
+          "from": "from app.",
+          "to": "from backend."
+        },
+        {
+          "from": "import app.",
+          "to": "import backend."
+        }
+      ]
+    },
+    {
+      "id": "clean_app_directory",
+      "name": "Clean App Directory",
+      "priority": "high",
+      "steps": [
+        {
+          "action": "remove_empty_directories",
+          "description": "Remove Python-related empty directories from app/",
+          "directories": ["api", "dashboard"]
+        },
+        {
+          "action": "remove_pycache",
+          "description": "Remove all __pycache__ directories"
+        }
+      ]
+    },
+    {
+      "id": "update_deployment_config",
+      "name": "Update Deployment Configuration",
+      "priority": "critical",
+      "files_to_update": [
+        {
+          "file": "vercel.json",
+          "changes": "Remove Python function references, keep only Next.js config"
+        },
+        {
+          "file": ".gitignore",
+          "changes": "Add backend/__pycache__ to ignore list"
+        },
+        {
+          "file": "pages/api/[...path].ts",
+          "changes": "Update to handle API routes differently or remove"
+        }
+      ]
+    },
+    {
+      "id": "create_api_proxy",
+      "name": "Create API Proxy Solution",
+      "priority": "medium",
+      "options": [
+        {
+          "option": "separate_deployment",
+          "description": "Deploy Python backend separately",
+          "implementation": "Use Railway, Render, or separate Vercel project for Python API"
+        },
+        {
+          "option": "serverless_functions",
+          "description": "Convert critical endpoints to Next.js API routes",
+          "implementation": "Rewrite key functionality in TypeScript"
+        }
+      ]
+    },
+    {
+      "id": "test_deployment",
+      "name": "Test Clean Deployment",
+      "priority": "critical",
+      "steps": [
+        {
+          "action": "verify_structure",
+          "checks": [
+            "No Python files in app directory",
+            "All Next.js files intact",
+            "Clean directory structure"
+          ]
+        },
+        {
+          "action": "local_test",
+          "command": "npm run dev",
+          "expected": "Next.js starts without errors"
+        },
+        {
+          "action": "build_test",
+          "command": "npm run build",
+          "expected": "Build completes successfully"
+        }
+      ]
+    }
+  ],
+  "validation_criteria": {
+    "structure": [
+      "app/ contains ONLY Next.js files",
+      "backend/ contains ALL Python files",
+      "No mixed file types in directories"
+    ],
+    "deployment": [
+      "Vercel deployment succeeds",
+      "No 404 errors on root URL",
+      "All routes accessible"
+    ],
+    "functionality": [
+      "Frontend pages load correctly",
+      "API integration plan clear",
+      "No broken imports"
+    ]
+  },
+  "rollback_plan": {
+    "if_issues": "Git commit before changes allows easy rollback",
+    "backup_branch": "Create backup branch before major restructuring"
+  },
+  "final_structure": {
+    "frontend": {
+      "/app": "Next.js App Router files only",
+      "/components": "React components",
+      "/lib": "Frontend utilities",
+      "/public": "Static assets"
+    },
+    "backend": {
+      "/backend": "All Python code",
+      "/backend/agents": "AI agents",
+      "/backend/api": "API endpoints",
+      "/backend/models": "Database models"
+    }
+  }
+}

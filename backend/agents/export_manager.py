@@ -17,10 +17,10 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Import dependencies
-from app.exporters.csv_exporter import CSVExporter
-from app.exporters.wordpress_exporter import WordPressExporter
-from app.agents.page_generator import PageGeneratorAgent
-from app.models import Content, Project, Keyword, get_db
+from backend.exporters.csv_exporter import CSVExporter
+from backend.exporters.wordpress_exporter import WordPressExporter
+from backend.agents.page_generator import PageGeneratorAgent
+from backend.models import Content, Project, Keyword, get_db
 from config import settings
 
 logger = logging.getLogger(__name__)

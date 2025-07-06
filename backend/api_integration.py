@@ -14,15 +14,15 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 # Import all agents
-from app.agents.business_analyzer import BusinessAnalyzerAgent, BusinessAnalysis, TemplateOpportunity
-from app.agents.template_builder import TemplateBuilderAgent
-from app.agents.data_manager import DataManagerAgent
-from app.agents.page_generator import PageGeneratorAgent
-from app.agents.export_manager import ExportManagerAgent
-from app.agents.database_agent import DatabaseAgent
+from backend.agents.business_analyzer import BusinessAnalyzerAgent, BusinessAnalysis, TemplateOpportunity
+from backend.agents.template_builder import TemplateBuilderAgent
+from backend.agents.data_manager import DataManagerAgent
+from backend.agents.page_generator import PageGeneratorAgent
+from backend.agents.export_manager import ExportManagerAgent
+from backend.agents.database_agent import DatabaseAgent
 
 # Import utilities
-from app.models import get_db
+from backend.models import get_db
 from api.ai_handler import AIHandler
 from config import settings
 
@@ -292,7 +292,7 @@ class APIIntegration:
         try:
             # Initialize page generator if needed
             if not self.page_generator:
-                from app.agents.page_generator import PageGeneratorAgent
+                from backend.agents.page_generator import PageGeneratorAgent
                 self.page_generator = PageGeneratorAgent()
             
             # Get data combinations
@@ -482,7 +482,7 @@ class APIIntegration:
             )
             
             # Create a mock session for export
-            from app.models import get_db
+            from backend.models import get_db
             db = next(get_db())
             
             export_result = await self.export_content(request.export_config, db)
