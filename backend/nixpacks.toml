@@ -13,6 +13,5 @@ cmds = ["pip install --no-cache-dir -r requirements.txt"]
 [start]
 cmd = "uvicorn main:app --host 0.0.0.0 --port $PORT"
 
-[providers]
-# Ensure we're using the Python provider
-python = true
+# Providers array - specifies which providers to use
+providers = ["python"]
