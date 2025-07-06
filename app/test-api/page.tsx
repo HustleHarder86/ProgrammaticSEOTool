@@ -10,10 +10,25 @@ interface APIResponse {
   timestamp?: string;
 }
 
+interface BusinessAnalysisResponse {
+  business_name: string;
+  business_description: string;
+  target_audience: string;
+  core_offerings: string[];
+  template_opportunities: Array<{
+    template_name: string;
+    template_pattern: string;
+    example_pages: string[];
+    estimated_pages: number;
+    difficulty: string;
+  }>;
+}
+
 export default function TestAPIPage() {
-  const [result, setResult] = useState<APIResponse | null>(null);
+  const [result, setResult] = useState<APIResponse | BusinessAnalysisResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [businessInput, setBusinessInput] = useState('');
 
   const testHealth = async () => {
     setLoading(true);
@@ -32,6 +47,26 @@ export default function TestAPIPage() {
     setError(null);
     try {
       const response = await apiClient.get<APIResponse>('/api/test');
+      setResult(response.data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    }
+    setLoading(false);
+  };
+
+  const testBusinessAnalysis = async () => {
+    if (!businessInput.trim()) {
+      setError('Please enter a business description');
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await apiClient.post<BusinessAnalysisResponse>('/api/analyze-business', {
+        business_input: businessInput,
+        input_type: 'text'
+      });
       setResult(response.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -60,6 +95,26 @@ export default function TestAPIPage() {
           >
             Test API Endpoint
           </button>
+        </div>
+
+        <div className="border-t pt-4">
+          <h2 className="text-xl font-semibold mb-2">Business Analysis Test</h2>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={businessInput}
+              onChange={(e) => setBusinessInput(e.target.value)}
+              placeholder="Enter business description (e.g., 'web design agency')"
+              className="flex-1 px-3 py-2 border rounded"
+            />
+            <button
+              onClick={testBusinessAnalysis}
+              disabled={loading}
+              className="bg-purple-500 text-white px-4 py-2 rounded disabled:opacity-50"
+            >
+              Analyze Business
+            </button>
+          </div>
         </div>
 
         {loading && <p>Loading...</p>}
