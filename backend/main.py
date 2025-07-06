@@ -4,8 +4,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 import os
+from ai_client import AIClient
 
 app = FastAPI(title="Programmatic SEO Tool API")
+ai_client = AIClient()
 
 # Configure CORS
 app.add_middleware(
@@ -51,41 +53,30 @@ class BusinessAnalysisResponse(BaseModel):
 async def analyze_business(request: BusinessAnalysisRequest):
     """Analyze a business and suggest programmatic SEO templates"""
     
-    # For now, return mock data to test the endpoint
-    # We'll add real AI analysis later
-    mock_response = BusinessAnalysisResponse(
-        business_name="Example Business",
-        business_description="A business focused on " + request.business_input[:50],
-        target_audience="Small to medium businesses",
-        core_offerings=[
-            "Product/Service 1",
-            "Product/Service 2",
-            "Product/Service 3"
-        ],
-        template_opportunities=[
-            TemplateOpportunity(
-                template_name="Location-Based Pages",
-                template_pattern="[Service] in [City]",
-                example_pages=[
-                    "Web Design in Toronto",
-                    "Web Design in Vancouver",
-                    "Web Design in Montreal"
-                ],
-                estimated_pages=100,
-                difficulty="Easy"
-            ),
-            TemplateOpportunity(
-                template_name="Comparison Pages",
-                template_pattern="[Product A] vs [Product B]",
-                example_pages=[
-                    "WordPress vs Wix",
-                    "Shopify vs WooCommerce",
-                    "Squarespace vs WordPress"
-                ],
-                estimated_pages=50,
-                difficulty="Medium"
-            )
-        ]
-    )
-    
-    return mock_response
+    try:
+        # Use AI client to analyze the business
+        analysis = ai_client.analyze_business(request.business_input)
+        
+        # Convert to response model
+        template_opportunities = []
+        for opp in analysis.get("template_opportunities", []):
+            template_opportunities.append(TemplateOpportunity(
+                template_name=opp["template_name"],
+                template_pattern=opp["template_pattern"],
+                example_pages=opp["example_pages"],
+                estimated_pages=opp["estimated_pages"],
+                difficulty=opp["difficulty"]
+            ))
+        
+        response = BusinessAnalysisResponse(
+            business_name=analysis["business_name"],
+            business_description=analysis["business_description"],
+            target_audience=analysis["target_audience"],
+            core_offerings=analysis["core_offerings"],
+            template_opportunities=template_opportunities
+        )
+        
+        return response
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
