@@ -1,0 +1,44 @@
+# Core framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+
+# Environment management
+python-dotenv==1.0.0
+
+# Database
+sqlalchemy==2.0.23
+alembic==1.12.1
+psycopg2-binary==2.9.9
+
+# Web scraping
+requests==2.31.0
+beautifulsoup4==4.12.2
+lxml==4.9.3
+
+# AI/ML
+openai==1.3.0
+anthropic==0.7.0
+
+# Data processing
+pandas==2.1.3
+numpy==1.26.2
+
+# Content generation
+jinja2==3.1.2
+markdown==3.5.1
+
+# Export functionality
+openpyxl==3.1.2
+
+# Async support
+aiohttp==3.9.0
+
+# Development tools
+pytest==7.4.3
+black==23.11.0
+flake8==6.1.0
+
+# WebSocket support for progress tracking
+websockets==12.0
+python-socketio==5.10.0

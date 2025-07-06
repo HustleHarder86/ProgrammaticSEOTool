@@ -18,7 +18,7 @@ init_db()
 
 # Configure logging
 logging.basicConfig(
-    level=getattr(logging, settings.log_level.upper()),
+    level=getattr(logging, settings.LOG_LEVEL.upper()),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
@@ -28,20 +28,13 @@ app = FastAPI(
     title="Programmatic SEO Tool",
     description="Generate thousands of SEO-optimized pages automatically",
     version="0.1.0",
-    debug=settings.debug
+    debug=settings.DEBUG
 )
 
 # Add CORS middleware
-# Configure allowed origins based on environment
-allowed_origins = ["http://localhost:3000", "http://localhost:3001"]
-if os.getenv("VERCEL_URL"):
-    allowed_origins.append(f"https://{os.getenv('VERCEL_URL')}")
-if os.getenv("FRONTEND_URL"):
-    allowed_origins.append(os.getenv("FRONTEND_URL"))
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins if not settings.debug else ["*"],
+    allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

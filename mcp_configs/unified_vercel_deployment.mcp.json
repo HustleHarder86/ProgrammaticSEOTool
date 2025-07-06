@@ -1,0 +1,226 @@
+{
+  "name": "Unified Vercel Deployment Agent",
+  "description": "Agent responsible for deploying both Next.js frontend and Python backend on Vercel as a single unified project",
+  "version": "1.0.0",
+  "capabilities": {
+    "vercel_configuration": true,
+    "python_serverless": true,
+    "nextjs_integration": true,
+    "api_routing": true
+  },
+  "objective": {
+    "goal": "Deploy everything on Vercel - no separate services",
+    "challenge": "Vercel needs specific structure for Python serverless functions",
+    "solution": "Use Vercel's Python serverless functions alongside Next.js"
+  },
+  "vercel_requirements": {
+    "python_functions": {
+      "location": "Must be in /api directory",
+      "format": "Each Python file becomes an endpoint",
+      "runtime": "Python 3.9 serverless functions",
+      "example": "api/analyze.py → /api/analyze endpoint"
+    },
+    "nextjs_app": {
+      "location": "Root directory with app/ or pages/",
+      "routing": "Handles all non-API routes",
+      "static": "Serves frontend pages"
+    }
+  },
+  "feasibility_analysis": {
+    "possible": true,
+    "approach": "Convert Python backend to serverless functions",
+    "limitations": [
+      "No persistent processes (must be stateless)",
+      "Function timeout limits (10 seconds default)",
+      "Database must be external (e.g., PostgreSQL on Neon/Supabase)"
+    ]
+  },
+  "implementation_plan": [
+    {
+      "step": 1,
+      "name": "Restructure for Vercel Python Functions",
+      "description": "Move Python logic to api/ directory as individual functions",
+      "structure": {
+        "api/analyze-business.py": "Business analysis endpoint",
+        "api/generate-templates.py": "Template generation endpoint",
+        "api/create-pages.py": "Page generation endpoint",
+        "api/export.py": "Export functionality endpoint"
+      }
+    },
+    {
+      "step": 2,
+      "name": "Convert Backend Structure",
+      "current_structure": {
+        "backend/main.py": "FastAPI application",
+        "backend/agents/*": "Agent classes",
+        "backend/models.py": "Database models"
+      },
+      "new_structure": {
+        "api/": "Individual Python endpoints",
+        "lib/python/": "Shared Python utilities and agents",
+        "requirements.txt": "Python dependencies at root"
+      }
+    },
+    {
+      "step": 3,
+      "name": "Create Serverless Functions",
+      "pattern": "Each API endpoint as separate Python file",
+      "example": {
+        "file": "api/analyze-business.py",
+        "content": "def handler(request, response): # Vercel function"
+      }
+    },
+    {
+      "step": 4,
+      "name": "Update Frontend API Calls",
+      "changes": "Already using relative paths (/api/*), no changes needed"
+    },
+    {
+      "step": 5,
+      "name": "Configure Vercel",
+      "vercel_json": {
+        "functions": {
+          "api/*.py": {
+            "runtime": "python3.9"
+          }
+        }
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "id": "create_serverless_structure",
+      "name": "Create Serverless API Structure",
+      "operations": [
+        "Create api/ directory at root",
+        "Create lib/python/ for shared code",
+        "Move requirements.txt to root"
+      ]
+    },
+    {
+      "id": "convert_endpoints",
+      "name": "Convert FastAPI to Serverless Functions",
+      "endpoints_to_create": [
+        {
+          "source": "POST /api/analyze-business",
+          "target": "api/analyze-business.py",
+          "function": "Analyze business from URL or text"
+        },
+        {
+          "source": "POST /api/generate-templates",
+          "target": "api/generate-templates.py",
+          "function": "Generate SEO template suggestions"
+        },
+        {
+          "source": "POST /api/generate-keywords",
+          "target": "api/generate-keywords.py",
+          "function": "Generate keyword opportunities"
+        },
+        {
+          "source": "POST /api/generate-content",
+          "target": "api/generate-content.py",
+          "function": "Generate content for keywords"
+        },
+        {
+          "source": "POST /api/export",
+          "target": "api/export.py",
+          "function": "Export generated content"
+        },
+        {
+          "source": "GET /api/health",
+          "target": "api/health.py",
+          "function": "Health check endpoint"
+        }
+      ]
+    },
+    {
+      "id": "move_shared_code",
+      "name": "Organize Shared Python Code",
+      "operations": [
+        "Move backend/agents → lib/python/agents",
+        "Move backend/utils → lib/python/utils",
+        "Move backend/models.py → lib/python/models.py",
+        "Update imports in serverless functions"
+      ]
+    },
+    {
+      "id": "handle_database",
+      "name": "Configure External Database",
+      "options": [
+        {
+          "service": "Neon",
+          "type": "PostgreSQL",
+          "reason": "Serverless-friendly, works well with Vercel"
+        },
+        {
+          "service": "Supabase",
+          "type": "PostgreSQL",
+          "reason": "Includes auth and real-time features"
+        },
+        {
+          "service": "PlanetScale",
+          "type": "MySQL",
+          "reason": "Serverless MySQL option"
+        }
+      ],
+      "migration": "Update SQLAlchemy to use PostgreSQL URL from env"
+    },
+    {
+      "id": "update_configuration",
+      "name": "Update Configuration Files",
+      "files": [
+        {
+          "file": "vercel.json",
+          "content": {
+            "functions": {
+              "api/*.py": {
+                "runtime": "python3.9",
+                "maxDuration": 10
+              }
+            }
+          }
+        },
+        {
+          "file": "requirements.txt",
+          "location": "Move to root directory",
+          "additions": ["psycopg2-binary for PostgreSQL"]
+        }
+      ]
+    },
+    {
+      "id": "remove_old_structure",
+      "name": "Clean Up Old Structure",
+      "operations": [
+        "Remove backend/ directory after moving code",
+        "Remove pages/api/[...path].ts",
+        "Clean up unused imports"
+      ]
+    }
+  ],
+  "serverless_function_template": {
+    "structure": "from http.server import BaseHTTPRequestHandler\nimport json\n\nclass handler(BaseHTTPRequestHandler):\n    def do_POST(self):\n        # Handle POST request\n        content_length = int(self.headers.get('Content-Length', 0))\n        body = self.rfile.read(content_length)\n        data = json.loads(body)\n        \n        # Process with your logic\n        result = process_data(data)\n        \n        # Send response\n        self.send_response(200)\n        self.send_header('Content-Type', 'application/json')\n        self.end_headers()\n        self.wfile.write(json.dumps(result).encode())\n        return",
+    "notes": "Each function handles one endpoint"
+  },
+  "benefits": {
+    "single_deployment": "Everything on Vercel",
+    "simplified_devops": "No separate backend service",
+    "cost_effective": "Serverless functions scale to zero",
+    "unified_domain": "Frontend and API on same domain"
+  },
+  "limitations_to_document": {
+    "no_websockets": "Serverless functions don't support WebSockets",
+    "stateless": "Can't maintain in-memory state",
+    "cold_starts": "First request may be slower",
+    "timeout": "10 second max execution time"
+  },
+  "final_structure": {
+    "/": "Next.js frontend",
+    "/api/*.py": "Python serverless functions",
+    "/lib/python/": "Shared Python code",
+    "/app/": "Next.js pages",
+    "/components/": "React components",
+    "requirements.txt": "Python dependencies",
+    "package.json": "Node dependencies",
+    "vercel.json": "Unified configuration"
+  }
+}

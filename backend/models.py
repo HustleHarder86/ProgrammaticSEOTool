@@ -68,7 +68,19 @@ class Content(Base):
     keyword = relationship("Keyword", back_populates="content_pieces")
 
 # Database setup
-engine = create_engine(settings.database_url, echo=False)
+# For PostgreSQL, we need to handle connection pooling properly
+if settings.DATABASE_URL.startswith('postgresql'):
+    engine = create_engine(
+        settings.DATABASE_URL,
+        echo=False,
+        pool_pre_ping=True,  # Verify connections before using
+        pool_size=5,         # Number of connections to maintain
+        max_overflow=10      # Maximum overflow connections
+    )
+else:
+    # SQLite for local development
+    engine = create_engine(settings.DATABASE_URL, echo=False)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def init_db():
