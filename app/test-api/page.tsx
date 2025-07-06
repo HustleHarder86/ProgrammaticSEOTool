@@ -3,8 +3,15 @@
 import { useState } from 'react';
 import { apiClient } from '@/lib/api/client';
 
+interface APIResponse {
+  status?: string;
+  service?: string;
+  message?: string;
+  timestamp?: string;
+}
+
 export default function TestAPIPage() {
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<APIResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -12,10 +19,10 @@ export default function TestAPIPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiClient.get('/health');
+      const response = await apiClient.get<APIResponse>('/health');
       setResult(response.data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
     }
     setLoading(false);
   };
@@ -24,10 +31,10 @@ export default function TestAPIPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiClient.get('/api/test');
+      const response = await apiClient.get<APIResponse>('/api/test');
       setResult(response.data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
     }
     setLoading(false);
   };
