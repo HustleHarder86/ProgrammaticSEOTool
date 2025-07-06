@@ -1,8 +1,10 @@
 import axios from 'axios';
 
-// Use relative paths since frontend and backend are in the same deployment
+// Backend is deployed on Railway
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://programmaticseotool-production.up.railway.app';
+
 export const apiClient = axios.create({
-  baseURL: '', // Empty base URL means relative to current domain
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
