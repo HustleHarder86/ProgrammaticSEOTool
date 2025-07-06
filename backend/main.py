@@ -8,8 +8,8 @@ from datetime import datetime
 import os
 
 from config import settings
-from backend.models import init_db, get_db
-from backend.agents.database_agent import DatabaseAgent
+from models import init_db, get_db
+from agents.database_agent import DatabaseAgent
 from sqlalchemy.orm import Session
 from fastapi import Depends
 
@@ -86,11 +86,11 @@ async def root():
     agents_loaded = False
     try:
         # Check if agents are available
-        from backend.agents.business_analyzer import BusinessAnalyzerAgent
-        from backend.agents.template_builder import TemplateBuilderAgent
-        from backend.agents.data_manager import DataManagerAgent
-        from backend.agents.page_generator import PageGeneratorAgent
-        from backend.agents.export_manager import ExportManagerAgent
+        from agents.business_analyzer import BusinessAnalyzerAgent
+        from agents.template_builder import TemplateBuilderAgent
+        from agents.data_manager import DataManagerAgent
+        from agents.page_generator import PageGeneratorAgent
+        from agents.export_manager import ExportManagerAgent
         agents_loaded = True
     except:
         pass
@@ -143,13 +143,13 @@ async def analyze_business(request: BusinessInput):
     try:
         if request.input_type == "text":
             # Use text analyzer
-            from backend.scanners.text_analyzer import TextBusinessAnalyzer
+            from scanners.text_analyzer import TextBusinessAnalyzer
             analyzer = TextBusinessAnalyzer()
             business_info = await analyzer.analyze(request.content)
             opportunities = await analyzer.identify_opportunities(business_info)
         elif request.input_type == "url":
             # Use URL scanner
-            from backend.scanners.url_scanner import URLBusinessScanner
+            from scanners.url_scanner import URLBusinessScanner
             async with URLBusinessScanner() as scanner:
                 business_info = await scanner.analyze(request.content)
                 opportunities = await scanner.identify_opportunities(business_info)
@@ -182,7 +182,7 @@ async def generate_templates(request: TemplateGenerationRequest):
         import os
         sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
         from api.ai_handler import AIHandler
-        from backend.agents.business_analyzer import BusinessAnalyzerAgent
+        from agents.business_analyzer import BusinessAnalyzerAgent
         
         # Initialize agents
         ai_handler = AIHandler()
@@ -248,8 +248,8 @@ async def generate_strategies(business_info: dict):
         )
     
     try:
-        from backend.researchers.strategy_generator import StrategyGenerator
-        from backend.scanners.base import BusinessInfo
+        from researchers.strategy_generator import StrategyGenerator
+        from scanners.base import BusinessInfo
         
         # Convert dict to BusinessInfo object
         info = BusinessInfo(**business_info)
@@ -277,8 +277,8 @@ async def generate_keywords_for_strategy(strategy: dict, business_info: dict, li
         )
     
     try:
-        from backend.researchers.strategy_generator import StrategyGenerator, KeywordStrategy
-        from backend.scanners.base import BusinessInfo
+        from researchers.strategy_generator import StrategyGenerator, KeywordStrategy
+        from scanners.base import BusinessInfo
         
         # Convert dicts to objects
         info = BusinessInfo(**business_info)
@@ -310,18 +310,18 @@ async def generate_keywords(request: KeywordGenerationRequest):
     try:
         # First analyze the business
         if request.business_input.input_type == "text":
-            from backend.scanners.text_analyzer import TextBusinessAnalyzer
+            from scanners.text_analyzer import TextBusinessAnalyzer
             analyzer = TextBusinessAnalyzer()
             business_info = await analyzer.analyze(request.business_input.content)
             opportunities = await analyzer.identify_opportunities(business_info)
         else:
-            from backend.scanners.url_scanner import URLBusinessScanner
+            from scanners.url_scanner import URLBusinessScanner
             async with URLBusinessScanner() as scanner:
                 business_info = await scanner.analyze(request.business_input.content)
                 opportunities = await scanner.identify_opportunities(business_info)
         
         # Expand keywords
-        from backend.researchers.keyword_researcher import KeywordResearcher
+        from researchers.keyword_researcher import KeywordResearcher
         researcher = KeywordResearcher()
         expanded_keywords = await researcher.expand_keywords(opportunities, business_info)
         
@@ -350,7 +350,7 @@ async def generate_content(request: ContentGenerationRequest):
         )
     
     try:
-        from backend.generators.content_generator import ContentGenerator
+        from generators.content_generator import ContentGenerator
         generator = ContentGenerator()
         
         generated_content = []
@@ -389,11 +389,11 @@ async def export_content(format: str = "csv", content: List[Dict] = None):
     
     try:
         if format == "csv":
-            from backend.exporters.csv_exporter import CSVExporter
+            from exporters.csv_exporter import CSVExporter
             exporter = CSVExporter()
             filepath = exporter.export_content(content or [], "seo_content")
         elif format == "wordpress":
-            from backend.exporters.wordpress_exporter import WordPressExporter
+            from exporters.wordpress_exporter import WordPressExporter
             exporter = WordPressExporter()
             filepath = exporter.export_content(content or [], "seo_content")
         else:  # json
@@ -532,7 +532,7 @@ async def generate_project_content(
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
         
-        from backend.generators.content_generator import ContentGenerator
+        from generators.content_generator import ContentGenerator
         generator = ContentGenerator()
         
         generated = []
@@ -591,7 +591,7 @@ async def generate_project_content(
 async def discover_keywords(request: KeywordDiscoveryRequest):
     """Discover new keyword opportunities using real SEO data."""
     try:
-        from backend.researchers.keyword_researcher import KeywordResearcher
+        from researchers.keyword_researcher import KeywordResearcher
         researcher = KeywordResearcher()
         
         # Discover keywords using SEO data
@@ -612,7 +612,7 @@ async def discover_keywords(request: KeywordDiscoveryRequest):
 
 # Include the new API integration routes
 try:
-    from backend.api_integration import router as integration_router
+    from api_integration import router as integration_router
     app.include_router(integration_router)
     logger.info("API integration routes loaded successfully")
 except ImportError as e:

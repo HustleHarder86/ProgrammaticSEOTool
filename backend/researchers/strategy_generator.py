@@ -1,8 +1,8 @@
 """Keyword strategy generator for programmatic SEO campaigns."""
 import logging
 from typing import List, Dict, Optional
-from backend.scanners.base import BusinessInfo
-from backend.utils.ai_client import AIClient
+from scanners.base import BusinessInfo
+from utils.ai_client import AIClient
 from config import settings
 import json
 

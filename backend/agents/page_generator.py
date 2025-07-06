@@ -10,9 +10,9 @@ from collections import defaultdict
 import random
 
 # Import dependencies
-from backend.agents.template_builder import TemplateBuilderAgent
-from backend.agents.data_manager import DataManagerAgent
-from backend.utils.ai_client import AIClient
+from agents.template_builder import TemplateBuilderAgent
+from agents.data_manager import DataManagerAgent
+from utils.ai_client import AIClient
 from api.content_variation import (
     ContentVariationEngine,
     generate_internal_links,
