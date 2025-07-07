@@ -328,7 +328,7 @@ export default function DataImportWizard({
           }}
           disabled={
             (currentStep === 'preview' && !uploadResponse) ||
-            (currentStep === 'mapping' && !validationResult?.is_valid && selectedTemplate)
+            (currentStep === 'mapping' && !validationResult?.is_valid && !!selectedTemplate)
           }
         >
           {currentStep === 'mapping' && !validationResult?.is_valid
