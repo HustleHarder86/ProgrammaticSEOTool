@@ -11,6 +11,7 @@ interface APIResponse {
 }
 
 interface BusinessAnalysisResponse {
+  project_id: string;
   business_name: string;
   business_description: string;
   target_audience: string;

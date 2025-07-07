@@ -8,9 +8,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { ProjectsList } from "@/components/projects/ProjectsList";
+import { useProjectStats } from "@/hooks/useProjectStats";
 
 export default function Home() {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const { stats, loading: statsLoading } = useProjectStats();
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -51,26 +54,26 @@ export default function Home() {
           <StatCard
             icon={<FolderOpen className="w-5 h-5 text-purple-600" />}
             label="Active Projects"
-            value="0"
-            subtext="No projects yet"
+            value={statsLoading ? "..." : stats.totalProjects.toString()}
+            subtext={stats.totalProjects === 0 ? "No projects yet" : `${stats.totalProjects} project${stats.totalProjects !== 1 ? 's' : ''}`}
           />
           <StatCard
             icon={<FileText className="w-5 h-5 text-blue-600" />}
-            label="Pages Generated"
-            value="0"
-            subtext="Start your first project"
+            label="Potential Pages"
+            value={statsLoading ? "..." : stats.totalPages.toLocaleString()}
+            subtext={stats.totalPages === 0 ? "Start your first project" : "Ready to generate"}
           />
           <StatCard
             icon={<LayoutTemplate className="w-5 h-5 text-green-600" />}
-            label="Templates Created"
-            value="0"
-            subtext="Create a template"
+            label="Templates Available"
+            value={statsLoading ? "..." : stats.totalTemplates.toString()}
+            subtext={stats.totalTemplates === 0 ? "Create a template" : `${stats.totalTemplates} template${stats.totalTemplates !== 1 ? 's' : ''}`}
           />
           <StatCard
             icon={<Activity className="w-5 h-5 text-orange-600" />}
             label="Last Activity"
-            value="Today"
-            subtext="Ready to begin"
+            value={statsLoading ? "..." : stats.lastActivity}
+            subtext={stats.totalProjects === 0 ? "Ready to begin" : "Keep going!"}
           />
         </div>
       </section>
@@ -90,7 +93,7 @@ export default function Home() {
             icon={<Globe className="w-8 h-8 text-purple-600" />}
             title="Analyze Website"
             description="Get template suggestions from any URL"
-            href="/test-api"
+            href="/analyze"
           />
           <ActionCard
             icon={<Upload className="w-8 h-8 text-purple-600" />}
@@ -129,21 +132,7 @@ export default function Home() {
             </Button>
           </Link>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
-            <FolderOpen className="w-8 h-8 text-purple-600" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No projects yet</h3>
-          <p className="text-gray-600 mb-6 max-w-md mx-auto">
-            Start a new project to begin generating SEO pages.
-          </p>
-          <Link href="/projects/new">
-            <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Create Project
-            </Button>
-          </Link>
-        </div>
+        <ProjectsList />
       </section>
 
       {/* Workflow Guide */}
