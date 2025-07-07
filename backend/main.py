@@ -1,13 +1,22 @@
 """Minimal FastAPI backend to test Railway deployment"""
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
+from sqlalchemy.orm import Session
+from datetime import datetime
 import os
 from ai_client import AIClient
+from database import get_db, init_db
+from models import Project, Template, DataSet, GeneratedPage
 
 app = FastAPI(title="Programmatic SEO Tool API")
 ai_client = AIClient()
+
+# Initialize database on startup
+@app.on_event("startup")
+def startup_event():
+    init_db()
 
 # Configure CORS
 app.add_middleware(
@@ -43,6 +52,7 @@ class TemplateOpportunity(BaseModel):
     difficulty: str
 
 class BusinessAnalysisResponse(BaseModel):
+    project_id: str
     business_name: str
     business_description: str
     target_audience: str
@@ -50,7 +60,7 @@ class BusinessAnalysisResponse(BaseModel):
     template_opportunities: List[TemplateOpportunity]
 
 @app.post("/api/analyze-business", response_model=BusinessAnalysisResponse)
-async def analyze_business(request: BusinessAnalysisRequest):
+async def analyze_business(request: BusinessAnalysisRequest, db: Session = Depends(get_db)):
     """Analyze a business and suggest programmatic SEO templates"""
     
     try:
@@ -79,7 +89,18 @@ async def analyze_business(request: BusinessAnalysisRequest):
                 print(f"Error processing template opportunity: {opp_error}")
                 continue
         
+        # Create a new project in the database
+        db_project = Project(
+            name=analysis.get("business_name", "Unknown Business"),
+            business_input=request.business_input,
+            business_analysis=analysis
+        )
+        db.add(db_project)
+        db.commit()
+        db.refresh(db_project)
+        
         response = BusinessAnalysisResponse(
+            project_id=db_project.id,
             business_name=analysis.get("business_name", "Unknown Business"),
             business_description=analysis.get("business_description", "No description"),
             target_audience=analysis.get("target_audience", "General audience"),
@@ -94,3 +115,79 @@ async def analyze_business(request: BusinessAnalysisRequest):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+# Project-related Pydantic models
+class ProjectCreate(BaseModel):
+    name: str
+    business_input: str
+    business_analysis: Optional[dict] = None
+
+class ProjectResponse(BaseModel):
+    id: str
+    name: str
+    business_input: str
+    business_analysis: Optional[dict]
+    created_at: datetime
+    updated_at: Optional[datetime]
+    
+    class Config:
+        from_attributes = True
+
+class ProjectUpdate(BaseModel):
+    name: Optional[str] = None
+    business_input: Optional[str] = None
+    business_analysis: Optional[dict] = None
+
+# CRUD endpoints for projects
+@app.post("/api/projects", response_model=ProjectResponse)
+def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
+    """Create a new project with business analysis"""
+    db_project = Project(
+        name=project.name,
+        business_input=project.business_input,
+        business_analysis=project.business_analysis
+    )
+    db.add(db_project)
+    db.commit()
+    db.refresh(db_project)
+    return db_project
+
+@app.get("/api/projects", response_model=List[ProjectResponse])
+def list_projects(db: Session = Depends(get_db)):
+    """List all projects"""
+    projects = db.query(Project).all()
+    return projects
+
+@app.get("/api/projects/{project_id}", response_model=ProjectResponse)
+def get_project(project_id: str, db: Session = Depends(get_db)):
+    """Get project details with templates and data"""
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return project
+
+@app.put("/api/projects/{project_id}", response_model=ProjectResponse)
+def update_project(project_id: str, project_update: ProjectUpdate, db: Session = Depends(get_db)):
+    """Update project"""
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    update_data = project_update.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(project, field, value)
+    
+    db.commit()
+    db.refresh(project)
+    return project
+
+@app.delete("/api/projects/{project_id}")
+def delete_project(project_id: str, db: Session = Depends(get_db)):
+    """Delete project and all related data"""
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    db.delete(project)
+    db.commit()
+    return {"message": "Project deleted successfully"}

@@ -1,96 +1,73 @@
 """Database models for the Programmatic SEO Tool."""
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey, Float, Boolean
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, sessionmaker
-from datetime import datetime
-from config import settings
+from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Integer, JSON
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+from sqlalchemy.dialects.sqlite import UUID as SQLiteUUID
+from database import Base
+import uuid
 
-Base = declarative_base()
+# Helper to generate UUIDs
+def generate_uuid():
+    return str(uuid.uuid4())
 
 class Project(Base):
-    """SEO project containing multiple content pieces."""
-    __tablename__ = 'projects'
+    """A programmatic SEO project containing templates and data."""
+    __tablename__ = "projects"
     
-    id = Column(Integer, primary_key=True)
+    id = Column(String(36), primary_key=True, default=generate_uuid)
     name = Column(String(200), nullable=False)
-    business_description = Column(Text)
-    business_url = Column(String(500))
-    industry = Column(String(100))
-    location = Column(String(200))
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    business_input = Column(Text)  # Original business description/URL
+    business_analysis = Column(JSON)  # Stored analysis results
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relationships
-    keywords = relationship("Keyword", back_populates="project", cascade="all, delete-orphan")
-    content_pieces = relationship("Content", back_populates="project", cascade="all, delete-orphan")
+    templates = relationship("Template", back_populates="project", cascade="all, delete-orphan")
+    data_sets = relationship("DataSet", back_populates="project", cascade="all, delete-orphan")
+    generated_pages = relationship("GeneratedPage", back_populates="project", cascade="all, delete-orphan")
 
-class Keyword(Base):
-    """Keywords associated with a project."""
-    __tablename__ = 'keywords'
+class Template(Base):
+    """Page template with variable placeholders."""
+    __tablename__ = "templates"
     
-    id = Column(Integer, primary_key=True)
-    project_id = Column(Integer, ForeignKey('projects.id'), nullable=False)
-    keyword = Column(String(200), nullable=False)
-    search_volume = Column(Integer)
-    difficulty = Column(Integer)
-    priority = Column(Integer, default=5)
-    content_type = Column(String(50))  # comparison, how-to, etc.
-    status = Column(String(20), default='pending')  # pending, generated, published
-    created_at = Column(DateTime, default=datetime.utcnow)
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    project_id = Column(String(36), ForeignKey("projects.id"), nullable=False)
+    name = Column(String(200), nullable=False)
+    pattern = Column(Text)  # e.g., "[City] [Service] Providers"
+    variables = Column(JSON)  # List of variables extracted from pattern
+    example_pages = Column(JSON)  # Example pages generated from this template
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
-    project = relationship("Project", back_populates="keywords")
-    content_pieces = relationship("Content", back_populates="keyword", cascade="all, delete-orphan")
+    project = relationship("Project", back_populates="templates")
+    generated_pages = relationship("GeneratedPage", back_populates="template")
 
-class Content(Base):
-    """Generated content pieces."""
-    __tablename__ = 'content'
+class DataSet(Base):
+    """Data imported for template variables."""
+    __tablename__ = "data_sets"
     
-    id = Column(Integer, primary_key=True)
-    project_id = Column(Integer, ForeignKey('projects.id'), nullable=False)
-    keyword_id = Column(Integer, ForeignKey('keywords.id'))
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    project_id = Column(String(36), ForeignKey("projects.id"), nullable=False)
+    name = Column(String(200), nullable=False)
+    data = Column(JSON)  # Stored as JSON array of objects
+    row_count = Column(Integer, default=0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    project = relationship("Project", back_populates="data_sets")
+
+class GeneratedPage(Base):
+    """Pages generated from templates + data."""
+    __tablename__ = "generated_pages"
+    
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    project_id = Column(String(36), ForeignKey("projects.id"), nullable=False)
+    template_id = Column(String(36), ForeignKey("templates.id"), nullable=False)
     title = Column(String(500), nullable=False)
-    meta_description = Column(Text)
-    slug = Column(String(500))
-    content_html = Column(Text)
-    content_markdown = Column(Text)
-    word_count = Column(Integer)
-    template_used = Column(String(50))
-    variation_number = Column(Integer, default=1)
-    status = Column(String(20), default='draft')  # draft, ready, published
-    published_at = Column(DateTime)
-    published_url = Column(String(500))
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    content = Column(JSON)  # Full page content structure
+    meta_data = Column(JSON)  # SEO metadata, URL slug, etc.
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
-    project = relationship("Project", back_populates="content_pieces")
-    keyword = relationship("Keyword", back_populates="content_pieces")
-
-# Database setup
-# For PostgreSQL, we need to handle connection pooling properly
-if settings.DATABASE_URL.startswith('postgresql'):
-    engine = create_engine(
-        settings.DATABASE_URL,
-        echo=False,
-        pool_pre_ping=True,  # Verify connections before using
-        pool_size=5,         # Number of connections to maintain
-        max_overflow=10      # Maximum overflow connections
-    )
-else:
-    # SQLite for local development
-    engine = create_engine(settings.DATABASE_URL, echo=False)
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-def init_db():
-    """Initialize the database."""
-    Base.metadata.create_all(bind=engine)
-
-def get_db():
-    """Get database session."""
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    project = relationship("Project", back_populates="generated_pages")
+    template = relationship("Template", back_populates="generated_pages")
