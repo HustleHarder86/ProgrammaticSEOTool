@@ -28,9 +28,9 @@ interface TemplateResultsProps {
 export function TemplateResults({ results, onSelectTemplate, onBack }: TemplateResultsProps) {
   const getDifficultyColor = (difficulty: string) => {
     const level = difficulty.toLowerCase();
-    if (level.includes('low') || level.includes('easy')) return 'text-green-600 bg-green-50';
-    if (level.includes('medium') || level.includes('moderate')) return 'text-yellow-600 bg-yellow-50';
-    return 'text-red-600 bg-red-50';
+    if (level.includes('low') || level.includes('easy')) return 'text-green-700 bg-green-50 border-green-200';
+    if (level.includes('medium') || level.includes('moderate')) return 'text-yellow-700 bg-yellow-50 border-yellow-200';
+    return 'text-red-700 bg-red-50 border-red-200';
   };
 
   const getIcon = (templateName: string) => {
@@ -42,28 +42,28 @@ export function TemplateResults({ results, onSelectTemplate, onBack }: TemplateR
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Business Summary */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">{results.business_name}</h3>
-        <p className="text-gray-700">{results.business_description}</p>
+      <div className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-8 shadow-sm">
+        <h3 className="text-xl font-bold text-gray-900 mb-3">{results.business_name}</h3>
+        <p className="text-gray-700 text-base leading-relaxed">{results.business_description}</p>
         
-        <div className="mt-4 space-y-3">
+        <div className="mt-6 space-y-4">
           <div>
-            <p className="font-medium text-gray-900 mb-1">Target Audience:</p>
-            <p className="text-sm text-gray-700">{results.target_audience}</p>
+            <p className="font-semibold text-purple-700 mb-2 text-sm uppercase tracking-wider">Target Audience:</p>
+            <p className="text-gray-700">{results.target_audience}</p>
           </div>
           {results.core_offerings.length > 0 && (
             <div>
-              <p className="font-medium text-gray-900 mb-2">Core Offerings:</p>
-              <ul className="space-y-1">
+              <p className="font-semibold text-purple-700 mb-3 text-sm uppercase tracking-wider">Core Offerings:</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {results.core_offerings.map((offering, index) => (
-                  <li key={index} className="flex items-start">
-                    <CheckCircle2 className="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-gray-700">{offering}</span>
-                  </li>
+                  <div key={index} className="flex items-start">
+                    <CheckCircle2 className="w-5 h-5 text-purple-600 mr-2 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700">{offering}</span>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           )}
         </div>
@@ -71,55 +71,68 @@ export function TemplateResults({ results, onSelectTemplate, onBack }: TemplateR
 
       {/* Template Suggestions */}
       <div>
-        <h3 className="text-xl font-semibold text-gray-900 mb-4">Recommended Templates</h3>
-        <div className="space-y-4">
+        <h3 className="text-2xl font-bold text-gray-900 mb-6">Recommended Templates</h3>
+        <div className="grid gap-6">
           {results.template_opportunities.map((template, index) => {
             const Icon = getIcon(template.template_name);
             
             return (
               <div
                 key={index}
-                className="border border-gray-200 rounded-lg p-6 hover:border-blue-300 transition-colors cursor-pointer"
+                className="group border-2 border-gray-200 rounded-xl p-8 hover:border-purple-300 hover:shadow-xl transition-all duration-300 cursor-pointer bg-white hover:bg-gradient-to-br hover:from-purple-50/30 hover:to-blue-50/30"
                 onClick={() => onSelectTemplate(template)}
               >
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex items-start justify-between mb-6">
                   <div className="flex items-start">
-                    <Icon className="w-6 h-6 text-blue-600 mr-3 mt-0.5" />
-                    <div>
-                      <h4 className="text-lg font-semibold text-gray-900">{template.template_name}</h4>
-                      <p className="text-sm text-gray-600 mt-1">{template.template_pattern}</p>
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-300">
+                      <Icon className="w-7 h-7 text-purple-700" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-xl font-bold text-gray-900 mb-2">{template.template_name}</h4>
+                      <p className="text-gray-600">{template.template_pattern}</p>
                     </div>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getDifficultyColor(template.difficulty)}`}>
+                  <span className={`px-4 py-2 rounded-full text-sm font-semibold border ${getDifficultyColor(template.difficulty)}`}>
                     {template.difficulty}
                   </span>
                 </div>
 
                 {/* Template Pattern */}
-                <div className="mb-3">
-                  <p className="text-sm font-medium text-gray-700 mb-1">Template Pattern:</p>
-                  <code className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-700">
+                <div className="mb-4 bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg border border-purple-100">
+                  <p className="text-sm font-semibold text-purple-700 mb-2 uppercase tracking-wider">Template Pattern:</p>
+                  <code className="text-sm font-mono text-purple-900 bg-white px-3 py-2 rounded border border-purple-200 block">
                     {template.template_pattern}
                   </code>
                 </div>
 
                 {/* Example Pages */}
-                <div className="mb-3">
-                  <p className="text-sm font-medium text-gray-700 mb-1">Example Pages:</p>
-                  <ul className="text-sm text-gray-600 space-y-1">
+                <div className="mb-6">
+                  <p className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Example Pages:</p>
+                  <ul className="space-y-2">
                     {template.example_pages.slice(0, 3).map((example, i) => (
-                      <li key={i} className="truncate">• {example}</li>
+                      <li key={i} className="flex items-start">
+                        <span className="text-purple-600 mr-2">→</span>
+                        <span className="text-gray-700">{example}</span>
+                      </li>
                     ))}
                   </ul>
                 </div>
 
                 {/* Potential */}
-                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                  <span className="text-sm text-gray-600">
-                    Estimated Pages: <span className="font-medium">{template.estimated_pages.toLocaleString()}</span>
-                  </span>
-                  <Button size="sm" variant="outline">
-                    Select Template
+                <div className="flex items-center justify-between pt-6 border-t border-gray-200">
+                  <div className="flex items-center">
+                    <div className="bg-gradient-to-br from-purple-100 to-blue-100 px-4 py-2 rounded-lg mr-4">
+                      <span className="text-sm font-semibold text-purple-700">
+                        {template.estimated_pages.toLocaleString()} pages
+                      </span>
+                    </div>
+                    <span className="text-sm text-gray-600">estimated potential</span>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
+                  >
+                    Select Template →
                   </Button>
                 </div>
               </div>
@@ -129,11 +142,18 @@ export function TemplateResults({ results, onSelectTemplate, onBack }: TemplateR
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-between pt-6">
-        <Button variant="outline" onClick={onBack}>
-          Analyze Different Business
+      <div className="flex flex-col sm:flex-row justify-between gap-4 pt-8">
+        <Button 
+          variant="outline" 
+          onClick={onBack}
+          className="border-2 border-purple-200 hover:border-purple-400 hover:bg-purple-50/50 transition-all duration-300 font-semibold"
+        >
+          ← Analyze Different Business
         </Button>
-        <Button variant="ghost">
+        <Button 
+          variant="ghost"
+          className="text-purple-700 hover:text-purple-800 hover:bg-purple-50 font-semibold"
+        >
           Create Custom Template
         </Button>
       </div>

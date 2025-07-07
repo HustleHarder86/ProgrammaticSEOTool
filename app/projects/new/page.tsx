@@ -81,34 +81,60 @@ export default function NewProjectPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50/30 overflow-hidden">
+      {/* Background Effects */}
+      <div className="fixed inset-0 -z-10">
+        <div className="absolute top-20 -left-4 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" />
+        <div className="absolute top-40 -right-4 w-96 h-96 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000" />
+        <div className="absolute -bottom-8 left-40 w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000" />
+      </div>
+      
+      <div className="relative max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <Link href="/" className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4">
-            <ArrowLeft className="w-4 h-4 mr-1" />
+        <div className="mb-12">
+          <Link href="/" className="inline-flex items-center text-sm font-medium text-purple-600 hover:text-purple-700 mb-6 transition-colors duration-200 group">
+            <ArrowLeft className="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform duration-200" />
             Back to Home
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Create New Project</h1>
-          <p className="text-gray-600 mt-2">Generate programmatic SEO pages for your business</p>
+          <h1 className="text-5xl font-black text-gray-900 tracking-tight mb-4">
+            Create Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">SEO Empire</span>
+          </h1>
+          <p className="text-xl text-gray-700 font-light">Let's analyze your business and discover programmatic SEO opportunities</p>
         </div>
 
         {/* Progress Bar */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-2">
-            <span className={`text-sm ${wizardStep !== 'input' ? 'text-blue-600 font-medium' : 'text-gray-900 font-medium'}`}>
-              1. Analyze Business
-            </span>
-            <span className={`text-sm ${wizardStep === 'results' ? 'text-blue-600 font-medium' : 'text-gray-400'}`}>
-              2. Select Templates
-            </span>
-            <span className={`text-sm text-gray-400`}>
-              3. Import Data
-            </span>
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-4">
+            <div className={`flex items-center ${wizardStep !== 'input' ? 'text-purple-700' : 'text-gray-900'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
+                wizardStep !== 'input' 
+                  ? 'bg-gradient-to-br from-purple-600 to-blue-600 text-white shadow-lg' 
+                  : 'bg-gradient-to-br from-purple-100 to-blue-100 text-purple-700'
+              }`}>
+                1
+              </div>
+              <span className="ml-3 font-semibold">Analyze Business</span>
+            </div>
+            <div className={`flex items-center ${wizardStep === 'results' ? 'text-purple-700' : 'text-gray-400'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
+                wizardStep === 'results' 
+                  ? 'bg-gradient-to-br from-purple-600 to-blue-600 text-white shadow-lg' 
+                  : 'bg-gray-200 text-gray-500'
+              }`}>
+                2
+              </div>
+              <span className="ml-3 font-semibold">Select Templates</span>
+            </div>
+            <div className="flex items-center text-gray-400">
+              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-bold text-gray-500">
+                3
+              </div>
+              <span className="ml-3 font-semibold">Import Data</span>
+            </div>
           </div>
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
             <div 
-              className="h-full bg-blue-600 transition-all duration-300"
+              className="h-full bg-gradient-to-r from-purple-600 to-blue-600 transition-all duration-500 ease-out"
               style={{ 
                 width: wizardStep === 'input' ? '33%' : wizardStep === 'loading' ? '50%' : '66%' 
               }}
@@ -117,16 +143,19 @@ export default function NewProjectPage() {
         </div>
 
         {/* Step Content */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+        <div className="bg-white rounded-2xl shadow-xl border border-purple-100 overflow-hidden">
           {wizardStep === 'input' && (
-            <div>
-              <h2 className="text-2xl font-semibold mb-6">Tell us about your business</h2>
-              <p className="text-gray-600 mb-8">
-                We&apos;ll analyze your business and suggest the best programmatic SEO templates.
+            <div className="p-8 lg:p-12">
+              <h2 className="text-3xl font-bold mb-4 text-gray-900">Tell us about your business</h2>
+              <p className="text-lg text-gray-600 mb-10 font-light">
+                We'll analyze your business and suggest the best programmatic SEO templates that can drive <span className="font-semibold text-purple-700">massive organic traffic</span>.
               </p>
               
               {error && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 flex items-start">
+                  <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
                   {error}
                 </div>
               )}
@@ -139,14 +168,18 @@ export default function NewProjectPage() {
           )}
 
           {wizardStep === 'loading' && (
-            <LoadingAnimation />
+            <div className="p-8 lg:p-12">
+              <LoadingAnimation />
+            </div>
           )}
 
           {wizardStep === 'results' && analysisResults && (
-            <div>
-              <h2 className="text-2xl font-semibold mb-6">Template Suggestions</h2>
-              <p className="text-gray-600 mb-8">
-                Based on your business analysis, here are our recommended programmatic SEO templates.
+            <div className="p-8 lg:p-12">
+              <h2 className="text-3xl font-bold mb-4 text-gray-900">
+                Perfect! Here are your <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">Template Opportunities</span>
+              </h2>
+              <p className="text-lg text-gray-600 mb-10 font-light">
+                Based on your business analysis, we've identified these high-impact programmatic SEO templates.
               </p>
               
               <TemplateResults
