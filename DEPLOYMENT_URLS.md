@@ -4,7 +4,7 @@
 ```
 RAILWAY_BACKEND_URL=https://programmaticseotool-production.up.railway.app
 ```
-*Note: Replace with your actual Railway URL after deployment*
+✅ **Deployed and Running!**
 
 ## Frontend (Vercel)
 ```

@@ -41,7 +41,7 @@ export const exportAPI = {
 
   // Download export file
   downloadExport: (exportId: string) =>
-    fetch(`/api/exports/${exportId}/download`),
+    fetch(`${API_URL}/api/exports/${exportId}/download`),
 
   // List project exports
   listProjectExports: (projectId: string) =>
