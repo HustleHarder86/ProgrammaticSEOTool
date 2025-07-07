@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Backend is deployed on Railway
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://programmaticseotool-production.up.railway.app';
+// Use relative paths for Vercel deployment compatibility
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 export const apiClient = axios.create({
   baseURL: API_URL,

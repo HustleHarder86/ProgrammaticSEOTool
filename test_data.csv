@@ -1,0 +1,16 @@
+city,state,service,population
+New York,NY,Plumbing,8336817
+Los Angeles,CA,Plumbing,3979576
+Chicago,IL,Plumbing,2693976
+Houston,TX,Plumbing,2320268
+Phoenix,AZ,Plumbing,1680992
+New York,NY,Electrical,8336817
+Los Angeles,CA,Electrical,3979576
+Chicago,IL,Electrical,2693976
+Houston,TX,Electrical,2320268
+Phoenix,AZ,Electrical,1680992
+New York,NY,HVAC,8336817
+Los Angeles,CA,HVAC,3979576
+Chicago,IL,HVAC,2693976
+Houston,TX,HVAC,2320268
+Phoenix,AZ,HVAC,1680992

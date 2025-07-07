@@ -1,5 +1,5 @@
 """Minimal FastAPI backend to test Railway deployment"""
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
@@ -10,10 +10,14 @@ from ai_client import AIClient
 from database import get_db, init_db
 from models import Project, Template, DataSet, GeneratedPage
 from template_engine import TemplateEngine
+from data_processor import DataProcessor
+from page_generator import PageGenerator
 
 app = FastAPI(title="Programmatic SEO Tool API")
 ai_client = AIClient()
 template_engine = TemplateEngine()
+data_processor = DataProcessor()
+page_generator = PageGenerator()
 
 # Initialize database on startup
 @app.on_event("startup")
@@ -415,3 +419,455 @@ def delete_template(template_id: str, db: Session = Depends(get_db)):
     db.delete(template)
     db.commit()
     return {"message": "Template deleted successfully"}
+
+# Data-related Pydantic models
+class DataSetResponse(BaseModel):
+    id: str
+    project_id: str
+    name: str
+    row_count: int
+    columns: List[str]
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+        
+    @classmethod
+    def from_orm(cls, db_dataset):
+        # Extract columns from the stored data
+        columns = []
+        if db_dataset.data and len(db_dataset.data) > 0:
+            columns = list(db_dataset.data[0].keys())
+        
+        return cls(
+            id=db_dataset.id,
+            project_id=db_dataset.project_id,
+            name=db_dataset.name,
+            row_count=db_dataset.row_count,
+            columns=columns,
+            created_at=db_dataset.created_at
+        )
+
+class DataSetDetailResponse(BaseModel):
+    id: str
+    project_id: str
+    name: str
+    data: List[Dict[str, Any]]
+    row_count: int
+    columns: List[str]
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+        
+    @classmethod
+    def from_orm(cls, db_dataset):
+        # Extract columns from the stored data
+        columns = []
+        if db_dataset.data and len(db_dataset.data) > 0:
+            columns = list(db_dataset.data[0].keys())
+        
+        return cls(
+            id=db_dataset.id,
+            project_id=db_dataset.project_id,
+            name=db_dataset.name,
+            data=db_dataset.data,
+            row_count=db_dataset.row_count,
+            columns=columns,
+            created_at=db_dataset.created_at
+        )
+
+class DataUploadResponse(BaseModel):
+    dataset_id: str
+    name: str
+    row_count: int
+    columns: List[str]
+    validation: Dict[str, Any]
+
+class ManualDataCreate(BaseModel):
+    name: str
+    data: List[Dict[str, Any]]
+
+class DataValidationResponse(BaseModel):
+    is_valid: bool
+    missing_columns: List[str]
+    warnings: List[str]
+    column_mapping_suggestions: Dict[str, Optional[str]]
+
+# Data endpoints
+@app.post("/api/projects/{project_id}/data/upload", response_model=DataUploadResponse)
+async def upload_csv_data(
+    project_id: str,
+    file: UploadFile = File(...),
+    template_id: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """Upload CSV data for a project"""
+    # Check if project exists
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    try:
+        # Process the CSV file
+        data, columns, row_count = await data_processor.process_csv_upload(file)
+        
+        # Prepare data for storage
+        dataset_name = file.filename.replace('.csv', '')
+        prepared_data = data_processor.prepare_data_for_storage(data, dataset_name)
+        
+        # Create dataset in database
+        db_dataset = DataSet(
+            project_id=project_id,
+            name=prepared_data['name'],
+            data=prepared_data['data'],
+            row_count=prepared_data['row_count']
+        )
+        db.add(db_dataset)
+        db.commit()
+        db.refresh(db_dataset)
+        
+        # Validate against template if provided
+        validation = {"is_valid": True, "missing_columns": [], "warnings": []}
+        if template_id:
+            template = db.query(Template).filter(Template.id == template_id).first()
+            if template:
+                validation = data_processor.validate_data_for_template(data, template.variables)
+        
+        return DataUploadResponse(
+            dataset_id=db_dataset.id,
+            name=db_dataset.name,
+            row_count=db_dataset.row_count,
+            columns=columns,
+            validation=validation
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
+
+@app.get("/api/projects/{project_id}/data", response_model=List[DataSetResponse])
+def get_project_data(project_id: str, db: Session = Depends(get_db)):
+    """Get all datasets for a project"""
+    # Check if project exists
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    datasets = db.query(DataSet).filter(DataSet.project_id == project_id).all()
+    return [DataSetResponse.from_orm(ds) for ds in datasets]
+
+@app.get("/api/projects/{project_id}/data/{dataset_id}", response_model=DataSetDetailResponse)
+def get_dataset_detail(project_id: str, dataset_id: str, db: Session = Depends(get_db)):
+    """Get detailed data for a specific dataset"""
+    dataset = db.query(DataSet).filter(
+        DataSet.id == dataset_id,
+        DataSet.project_id == project_id
+    ).first()
+    
+    if not dataset:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+    
+    return DataSetDetailResponse.from_orm(dataset)
+
+@app.post("/api/projects/{project_id}/data", response_model=DataSetResponse)
+def create_manual_data(
+    project_id: str,
+    data_create: ManualDataCreate,
+    db: Session = Depends(get_db)
+):
+    """Create a dataset manually (not from CSV upload)"""
+    # Check if project exists
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Validate data
+    if not data_create.data:
+        raise HTTPException(status_code=400, detail="Data cannot be empty")
+    
+    # Prepare data for storage
+    prepared_data = data_processor.prepare_data_for_storage(data_create.data, data_create.name)
+    
+    # Create dataset
+    db_dataset = DataSet(
+        project_id=project_id,
+        name=prepared_data['name'],
+        data=prepared_data['data'],
+        row_count=prepared_data['row_count']
+    )
+    db.add(db_dataset)
+    db.commit()
+    db.refresh(db_dataset)
+    
+    return DataSetResponse.from_orm(db_dataset)
+
+@app.delete("/api/projects/{project_id}/data/{dataset_id}")
+def delete_dataset(project_id: str, dataset_id: str, db: Session = Depends(get_db)):
+    """Delete a dataset"""
+    dataset = db.query(DataSet).filter(
+        DataSet.id == dataset_id,
+        DataSet.project_id == project_id
+    ).first()
+    
+    if not dataset:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+    
+    db.delete(dataset)
+    db.commit()
+    
+    return {"message": "Dataset deleted successfully"}
+
+class ValidateDatasetRequest(BaseModel):
+    template_id: str
+
+@app.post("/api/projects/{project_id}/data/{dataset_id}/validate", response_model=DataValidationResponse)
+def validate_dataset_for_template(
+    project_id: str,
+    dataset_id: str,
+    request: ValidateDatasetRequest,
+    db: Session = Depends(get_db)
+):
+    """Validate a dataset against a template's requirements"""
+    template_id = request.template_id
+    # Get dataset
+    dataset = db.query(DataSet).filter(
+        DataSet.id == dataset_id,
+        DataSet.project_id == project_id
+    ).first()
+    if not dataset:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+    
+    # Get template
+    template = db.query(Template).filter(Template.id == template_id).first()
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found")
+    
+    # Validate data
+    validation = data_processor.validate_data_for_template(dataset.data, template.variables)
+    
+    # Get column mapping suggestions
+    data_columns = list(dataset.data[0].keys()) if dataset.data else []
+    mapping_suggestions = data_processor.get_column_mapping_suggestions(data_columns, template.variables)
+    
+    return DataValidationResponse(
+        is_valid=validation['is_valid'],
+        missing_columns=validation['missing_columns'],
+        warnings=validation['warnings'],
+        column_mapping_suggestions=mapping_suggestions
+    )
+
+# Page generation endpoints
+class GeneratePreviewRequest(BaseModel):
+    limit: int = 5
+
+class GeneratePreviewResponse(BaseModel):
+    pages: List[Dict[str, Any]]
+    total_possible_pages: int
+    preview_count: int
+
+class GeneratePagesRequest(BaseModel):
+    batch_size: int = 100
+
+class GeneratePagesResponse(BaseModel):
+    total_generated: int
+    page_ids: List[str]
+    status: str
+
+class PageListResponse(BaseModel):
+    pages: List[Dict[str, Any]]
+    total: int
+    offset: int
+    limit: int
+
+@app.post("/api/projects/{project_id}/templates/{template_id}/generate-preview", response_model=GeneratePreviewResponse)
+def generate_preview_pages(
+    project_id: str,
+    template_id: str,
+    request: GeneratePreviewRequest,
+    db: Session = Depends(get_db)
+):
+    """Generate preview pages to see what will be created"""
+    try:
+        # Generate preview pages
+        preview_pages = page_generator.generate_preview_pages(
+            project_id, template_id, db, limit=request.limit
+        )
+        
+        # Calculate total possible pages
+        template = db.query(Template).filter(Template.id == template_id).first()
+        if not template:
+            raise HTTPException(status_code=404, detail="Template not found")
+        
+        variable_data = page_generator.load_datasets_for_variables(project_id, template, db)
+        all_combinations = page_generator.generate_all_combinations(variable_data)
+        total_possible = len(all_combinations)
+        
+        return GeneratePreviewResponse(
+            pages=preview_pages,
+            total_possible_pages=total_possible,
+            preview_count=len(preview_pages)
+        )
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Preview generation failed: {str(e)}")
+
+@app.post("/api/projects/{project_id}/templates/{template_id}/generate", response_model=GeneratePagesResponse)
+def generate_all_pages(
+    project_id: str,
+    template_id: str,
+    request: GeneratePagesRequest,
+    db: Session = Depends(get_db)
+):
+    """Generate all pages from template and data"""
+    try:
+        # Check if project and template exist
+        project = db.query(Project).filter(Project.id == project_id).first()
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        template = db.query(Template).filter(
+            Template.id == template_id,
+            Template.project_id == project_id
+        ).first()
+        if not template:
+            raise HTTPException(status_code=404, detail="Template not found")
+        
+        # Generate pages
+        total_generated, page_ids = page_generator.generate_all_pages(
+            project_id, template_id, db, batch_size=request.batch_size
+        )
+        
+        return GeneratePagesResponse(
+            total_generated=total_generated,
+            page_ids=page_ids,
+            status="completed" if total_generated > 0 else "no_pages_generated"
+        )
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Page generation failed: {str(e)}")
+
+@app.get("/api/projects/{project_id}/pages", response_model=PageListResponse)
+def get_generated_pages(
+    project_id: str,
+    template_id: Optional[str] = None,
+    offset: int = 0,
+    limit: int = 50,
+    db: Session = Depends(get_db)
+):
+    """Get generated pages for a project"""
+    # Check if project exists
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Get pages
+    pages = page_generator.get_generated_pages(
+        project_id, template_id, db, offset=offset, limit=limit
+    )
+    
+    # Count total pages
+    query = db.query(GeneratedPage).filter(GeneratedPage.project_id == project_id)
+    if template_id:
+        query = query.filter(GeneratedPage.template_id == template_id)
+    total = query.count()
+    
+    # Convert to response format
+    page_list = []
+    for page in pages:
+        page_data = {
+            'id': page.id,
+            'title': page.title,
+            'slug': page.meta_data.get('slug', ''),
+            'keyword': page.meta_data.get('keyword', ''),
+            'variables': page.meta_data.get('variables', {}),
+            'created_at': page.created_at.isoformat() if page.created_at else None,
+            'quality_score': page.content.get('quality_metrics', {}).get('quality_score', 0) if isinstance(page.content, dict) else 0
+        }
+        page_list.append(page_data)
+    
+    return PageListResponse(
+        pages=page_list,
+        total=total,
+        offset=offset,
+        limit=limit
+    )
+
+@app.get("/api/projects/{project_id}/pages/{page_id}")
+def get_single_page(
+    project_id: str,
+    page_id: str,
+    enhance: bool = False,
+    db: Session = Depends(get_db)
+):
+    """Get a single generated page with full content"""
+    # Get page
+    page = db.query(GeneratedPage).filter(
+        GeneratedPage.id == page_id,
+        GeneratedPage.project_id == project_id
+    ).first()
+    
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+    
+    # Get project for enhancement
+    project = db.query(Project).filter(Project.id == project_id).first()
+    
+    # Prepare response
+    page_data = {
+        'id': page.id,
+        'project_id': page.project_id,
+        'template_id': page.template_id,
+        'title': page.title,
+        'content': page.content,
+        'meta_data': page.meta_data,
+        'created_at': page.created_at.isoformat() if page.created_at else None
+    }
+    
+    # Enhance if requested
+    if enhance and project:
+        # Get all pages for internal linking
+        all_pages = db.query(GeneratedPage).filter(
+            GeneratedPage.project_id == project_id
+        ).limit(100).all()
+        
+        enhanced_content = page_generator.enhance_page_quality(page, project, all_pages)
+        page_data['enhanced_content'] = enhanced_content
+    
+    return page_data
+
+@app.delete("/api/projects/{project_id}/pages")
+def delete_generated_pages(
+    project_id: str,
+    template_id: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """Delete generated pages for a project or template"""
+    # Check if project exists
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Build query
+    query = db.query(GeneratedPage).filter(GeneratedPage.project_id == project_id)
+    if template_id:
+        query = query.filter(GeneratedPage.template_id == template_id)
+    
+    # Count pages to delete
+    count = query.count()
+    
+    # Delete pages
+    query.delete()
+    db.commit()
+    
+    return {
+        "message": f"Successfully deleted {count} pages",
+        "deleted_count": count
+    }

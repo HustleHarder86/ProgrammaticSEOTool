@@ -1,4 +1,4 @@
-# Minimal requirements for testing
+# Core requirements
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 python-multipart==0.0.6
@@ -6,3 +6,7 @@ pydantic==2.5.0
 requests==2.31.0
 python-dotenv==1.0.0
 sqlalchemy==2.0.23
+
+# Data processing
+pandas==2.1.4
+chardet==5.2.0

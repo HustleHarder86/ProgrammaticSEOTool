@@ -225,17 +225,25 @@ export default function ProjectDetailPage() {
                       </div>
                       
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
-                          <Database className="w-4 h-4 mr-2" />
-                          Import Data
-                        </Button>
+                        <Link href={`/projects/${projectId}/data`}>
+                          <Button size="sm" variant="outline">
+                            <Database className="w-4 h-4 mr-2" />
+                            Import Data
+                          </Button>
+                        </Link>
                         <Link href={`/projects/${projectId}/templates?template=${encodeURIComponent(template.template_name)}`}>
+                          <Button size="sm" variant="outline">
+                            <LayoutTemplate className="w-4 h-4 mr-2" />
+                            Build Template
+                          </Button>
+                        </Link>
+                        <Link href={`/projects/${projectId}/generate`}>
                           <Button 
                             size="sm"
                             className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
                           >
-                            <LayoutTemplate className="w-4 h-4 mr-2" />
-                            Build Template
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Generate Pages
                           </Button>
                         </Link>
                       </div>
@@ -262,6 +270,18 @@ export default function ProjectDetailPage() {
               <Button variant="outline">
                 <FileText className="w-4 h-4 mr-2" />
                 Create Custom Template
+              </Button>
+            </Link>
+            <Link href={`/projects/${projectId}/data`}>
+              <Button variant="outline">
+                <Database className="w-4 h-4 mr-2" />
+                Manage Data
+              </Button>
+            </Link>
+            <Link href={`/projects/${projectId}/generate`}>
+              <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
+                <Sparkles className="w-4 h-4 mr-2" />
+                Generate Pages
               </Button>
             </Link>
             <Button variant="outline">
