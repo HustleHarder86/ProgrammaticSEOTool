@@ -1,0 +1,74 @@
+{
+  "name": "Backend Railway Deployment Agent",
+  "version": "1.0.0",
+  "description": "Deploy backend to Railway and verify all endpoints",
+  "author": "Claude",
+  "created": "2025-01-07",
+  "tasks": [
+    {
+      "id": "railway_setup",
+      "description": "Configure Railway project settings",
+      "priority": "critical",
+      "steps": [
+        "Set root directory to /backend",
+        "Configure start command: uvicorn main:app --host 0.0.0.0 --port $PORT",
+        "Set Python version if needed",
+        "Configure build command if necessary"
+      ]
+    },
+    {
+      "id": "env_variables",
+      "description": "Set environment variables in Railway",
+      "priority": "critical",
+      "steps": [
+        "Add OPENAI_API_KEY or ANTHROPIC_API_KEY or PERPLEXITY_API_KEY",
+        "Set DATABASE_URL if needed",
+        "Add FRONTEND_URL for CORS",
+        "Configure any other required variables"
+      ]
+    },
+    {
+      "id": "deploy_backend",
+      "description": "Deploy backend code to Railway",
+      "priority": "critical",
+      "steps": [
+        "Push code to Railway",
+        "Monitor deployment logs",
+        "Check for any errors",
+        "Wait for successful deployment"
+      ]
+    },
+    {
+      "id": "test_endpoints",
+      "description": "Test all API endpoints",
+      "priority": "high",
+      "steps": [
+        "Test GET /health",
+        "Test POST /api/analyze-business",
+        "Test GET /api/projects",
+        "Test all CRUD operations",
+        "Verify database operations work"
+      ]
+    },
+    {
+      "id": "document_url",
+      "description": "Document Railway backend URL",
+      "priority": "high",
+      "steps": [
+        "Get the Railway deployment URL",
+        "Document in README",
+        "Save for frontend configuration",
+        "Test URL accessibility"
+      ]
+    }
+  ],
+  "success_criteria": {
+    "deployment_successful": "Railway shows successful deployment",
+    "health_check_passes": "GET /health returns 200 OK",
+    "all_endpoints_work": "All API endpoints respond correctly",
+    "database_works": "Can create and retrieve data",
+    "url_documented": "Backend URL saved and accessible"
+  },
+  "estimated_time": "1 hour",
+  "dependencies": ["06_backend_railway_prep"]
+}

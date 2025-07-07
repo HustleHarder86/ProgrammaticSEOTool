@@ -10,3 +10,14 @@ sqlalchemy==2.0.23
 # Data processing
 pandas==2.1.4
 chardet==5.2.0
+
+# AI Clients (optional - at least one recommended)
+# openai==1.3.0
+# anthropic==0.7.0
+
+# Export functionality
+lxml==4.9.3  # For XML processing in WordPress export
+
+# Development/Testing (optional)
+# pytest==7.4.3
+# black==23.11.0

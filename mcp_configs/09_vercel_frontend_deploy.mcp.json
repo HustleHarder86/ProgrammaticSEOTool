@@ -1,0 +1,74 @@
+{
+  "name": "Vercel Frontend Deployment Agent",
+  "version": "1.0.0",
+  "description": "Deploy updated frontend to Vercel with Railway backend integration",
+  "author": "Claude",
+  "created": "2025-01-07",
+  "tasks": [
+    {
+      "id": "simplify_vercel_config",
+      "description": "Update vercel.json for frontend-only deployment",
+      "priority": "critical",
+      "steps": [
+        "Remove all Python runtime configuration",
+        "Remove /api rewrite rules",
+        "Keep only Next.js specific settings",
+        "Commit simplified configuration"
+      ]
+    },
+    {
+      "id": "vercel_env_setup",
+      "description": "Configure Vercel environment variables",
+      "priority": "critical",
+      "steps": [
+        "Go to Vercel project settings",
+        "Add NEXT_PUBLIC_API_URL with Railway backend URL",
+        "Set for production environment",
+        "Verify environment variable is set"
+      ]
+    },
+    {
+      "id": "deploy_frontend",
+      "description": "Deploy frontend to Vercel",
+      "priority": "critical",
+      "steps": [
+        "Push code to trigger deployment",
+        "Monitor build logs",
+        "Check for any build errors",
+        "Wait for successful deployment"
+      ]
+    },
+    {
+      "id": "production_testing",
+      "description": "Test all features in production",
+      "priority": "high",
+      "steps": [
+        "Test business analysis",
+        "Test template creation",
+        "Test data import (CSV)",
+        "Test page generation",
+        "Test export functionality"
+      ]
+    },
+    {
+      "id": "cleanup",
+      "description": "Remove unnecessary backend code",
+      "priority": "medium",
+      "steps": [
+        "Remove /api directory if still exists",
+        "Clean up unused dependencies",
+        "Remove backend-related configurations",
+        "Update package.json if needed"
+      ]
+    }
+  ],
+  "success_criteria": {
+    "vercel_deployed": "Frontend accessible at Vercel URL",
+    "api_connected": "Frontend successfully calls Railway backend",
+    "no_cors_errors": "No CORS errors in browser console",
+    "all_features_work": "Complete user workflow functions",
+    "clean_codebase": "No unnecessary backend code in frontend"
+  },
+  "estimated_time": "1 hour",
+  "dependencies": ["08_frontend_api_migration"]
+}

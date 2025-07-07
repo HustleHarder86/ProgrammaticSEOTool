@@ -1,0 +1,74 @@
+{
+  "name": "Integration Testing & Optimization Agent",
+  "version": "1.0.0",
+  "description": "Ensure complete system works end-to-end and optimize performance",
+  "author": "Claude",
+  "created": "2025-01-07",
+  "tasks": [
+    {
+      "id": "end_to_end_testing",
+      "description": "Test complete user workflow",
+      "priority": "critical",
+      "steps": [
+        "Create new project via business analysis",
+        "Generate template from opportunity",
+        "Import CSV data",
+        "Generate bulk pages",
+        "Export in multiple formats"
+      ]
+    },
+    {
+      "id": "data_persistence",
+      "description": "Verify data persistence on Railway",
+      "priority": "high",
+      "steps": [
+        "Create test data",
+        "Restart Railway backend",
+        "Verify data still exists",
+        "Test database backups if needed"
+      ]
+    },
+    {
+      "id": "performance_monitoring",
+      "description": "Monitor and optimize performance",
+      "priority": "medium",
+      "steps": [
+        "Measure API response times",
+        "Check for slow queries",
+        "Monitor memory usage",
+        "Identify bottlenecks"
+      ]
+    },
+    {
+      "id": "add_caching",
+      "description": "Implement caching if needed",
+      "priority": "low",
+      "steps": [
+        "Identify cacheable endpoints",
+        "Add Redis if necessary",
+        "Implement cache headers",
+        "Test cache effectiveness"
+      ]
+    },
+    {
+      "id": "update_documentation",
+      "description": "Update all documentation",
+      "priority": "high",
+      "steps": [
+        "Update README with new architecture",
+        "Document deployment process",
+        "Create user guide",
+        "Update CLAUDE.md if needed"
+      ]
+    }
+  ],
+  "success_criteria": {
+    "workflow_complete": "Can complete full user journey",
+    "data_persists": "Data survives backend restarts",
+    "performance_good": "API responses under 2 seconds",
+    "documentation_updated": "README reflects current architecture",
+    "system_stable": "No errors in 24-hour test period"
+  },
+  "estimated_time": "2 hours",
+  "dependencies": ["09_vercel_frontend_deploy"]
+}

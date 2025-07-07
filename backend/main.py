@@ -27,9 +27,16 @@ def startup_event():
     init_db()
 
 # Configure CORS
+# For production, use specific origins
+origins = [
+    "http://localhost:3000",  # Local development
+    "https://programmatic-seo-tool.vercel.app",  # Production Vercel
+    "https://programmatic-seo-tool-*.vercel.app",  # Preview deployments
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with your frontend URL
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -40,8 +47,20 @@ def root():
     return {"message": "Programmatic SEO Tool API is running!"}
 
 @app.get("/health")
-def health_check():
-    return {"status": "healthy", "service": "programmatic-seo-backend"}
+def health_check(db: Session = Depends(get_db)):
+    try:
+        # Test database connection
+        db.execute("SELECT 1")
+        db_status = "connected"
+    except Exception as e:
+        db_status = f"error: {str(e)}"
+    
+    return {
+        "status": "healthy",
+        "service": "programmatic-seo-backend",
+        "database": db_status,
+        "timestamp": datetime.utcnow().isoformat()
+    }
 
 @app.get("/api/test")
 def test_endpoint():

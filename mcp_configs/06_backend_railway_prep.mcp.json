@@ -1,0 +1,73 @@
+{
+  "name": "Backend Railway Preparation Agent",
+  "version": "1.0.0",
+  "description": "Prepare backend for Railway deployment with CORS and proper configuration",
+  "author": "Claude",
+  "created": "2025-01-07",
+  "tasks": [
+    {
+      "id": "cors_config",
+      "description": "Add CORS middleware to backend/main.py for Vercel frontend",
+      "priority": "critical",
+      "steps": [
+        "Import CORSMiddleware from fastapi.middleware.cors",
+        "Add CORS configuration after app initialization",
+        "Allow origins from Vercel frontend domain",
+        "Allow all methods and headers for development"
+      ]
+    },
+    {
+      "id": "health_endpoint",
+      "description": "Ensure health check endpoint exists",
+      "priority": "high",
+      "steps": [
+        "Check if /health endpoint exists",
+        "Create simple health check that returns status",
+        "Include database connection check",
+        "Return JSON response with status"
+      ]
+    },
+    {
+      "id": "import_fixes",
+      "description": "Fix all imports for Railway deployment",
+      "priority": "high",
+      "steps": [
+        "Remove 'backend.' prefix from all imports",
+        "Update relative imports to work from backend root",
+        "Test all imports work correctly",
+        "Fix any circular import issues"
+      ]
+    },
+    {
+      "id": "env_config",
+      "description": "Create Railway environment configuration",
+      "priority": "medium",
+      "steps": [
+        "Create .env.example with all required variables",
+        "Document each environment variable purpose",
+        "Add Railway-specific configurations",
+        "Ensure database path works with Railway"
+      ]
+    },
+    {
+      "id": "requirements_check",
+      "description": "Verify requirements.txt completeness",
+      "priority": "high",
+      "steps": [
+        "Check all imports have corresponding packages",
+        "Verify version compatibility",
+        "Remove unused dependencies",
+        "Add any missing packages"
+      ]
+    }
+  ],
+  "success_criteria": {
+    "cors_configured": "CORS allows Vercel frontend domain",
+    "health_endpoint": "GET /health returns 200 OK",
+    "imports_fixed": "No import errors when running from backend/",
+    "env_documented": "All environment variables documented",
+    "requirements_complete": "pip install -r requirements.txt succeeds"
+  },
+  "estimated_time": "2 hours",
+  "dependencies": []
+}

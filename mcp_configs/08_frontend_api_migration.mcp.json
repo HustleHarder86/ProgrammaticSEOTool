@@ -1,0 +1,74 @@
+{
+  "name": "Frontend API Migration Agent",
+  "version": "1.0.0",
+  "description": "Update frontend to use Railway backend instead of mock APIs",
+  "author": "Claude",
+  "created": "2025-01-07",
+  "tasks": [
+    {
+      "id": "update_api_client",
+      "description": "Update API client configuration",
+      "priority": "critical",
+      "steps": [
+        "Modify lib/api/client.ts to use NEXT_PUBLIC_API_URL",
+        "Ensure baseURL uses environment variable",
+        "Keep fallback for local development",
+        "Test API client configuration"
+      ]
+    },
+    {
+      "id": "remove_mock_apis",
+      "description": "Remove all mock API routes",
+      "priority": "critical",
+      "steps": [
+        "Delete all files in pages/api/",
+        "Remove mock data responses",
+        "Clean up any mock utilities",
+        "Verify no mock endpoints remain"
+      ]
+    },
+    {
+      "id": "env_configuration",
+      "description": "Configure environment variables",
+      "priority": "high",
+      "steps": [
+        "Create .env.local file",
+        "Add NEXT_PUBLIC_API_URL with Railway backend URL",
+        "Add to .gitignore if not already",
+        "Create .env.example for documentation"
+      ]
+    },
+    {
+      "id": "error_handling",
+      "description": "Add proper error handling",
+      "priority": "medium",
+      "steps": [
+        "Add network error handling to API calls",
+        "Create user-friendly error messages",
+        "Add retry logic for failed requests",
+        "Handle loading states properly"
+      ]
+    },
+    {
+      "id": "local_testing",
+      "description": "Test frontend with Railway backend",
+      "priority": "critical",
+      "steps": [
+        "Run frontend locally",
+        "Test business analysis flow",
+        "Test template creation",
+        "Test data import",
+        "Verify all features work"
+      ]
+    }
+  ],
+  "success_criteria": {
+    "api_client_updated": "API client uses environment variable",
+    "no_mock_apis": "No files in pages/api/",
+    "env_configured": ".env.local has Railway backend URL",
+    "error_handling_works": "Network errors handled gracefully",
+    "all_features_work": "Complete workflow functions with real backend"
+  },
+  "estimated_time": "2 hours",
+  "dependencies": ["07_backend_railway_deploy"]
+}
