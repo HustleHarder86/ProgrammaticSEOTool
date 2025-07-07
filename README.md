@@ -1,6 +1,6 @@
 # Programmatic SEO Tool
 
-Create hundreds or thousands of SEO-optimized pages using the power of templates + data. Works for ANY business type.
+Generate thousands of SEO-optimized pages automatically using templates and data. Perfect for creating location-based pages, comparison pages, and other scalable content strategies.
 
 ## What is Programmatic SEO?
 

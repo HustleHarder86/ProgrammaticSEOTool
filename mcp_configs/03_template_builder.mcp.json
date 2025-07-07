@@ -1,0 +1,140 @@
+{
+  "task": "Template Builder Implementation",
+  "agent": "Template Builder Agent",
+  "priority": "MEDIUM",
+  "status": "PENDING",
+  "estimated_time": "3-4 hours",
+  
+  "objectives": [
+    "Create visual template builder interface",
+    "Support variable extraction and validation",
+    "Enable template preview with sample data",
+    "Allow custom template creation beyond AI suggestions"
+  ],
+  
+  "context": {
+    "current_state": "AI suggests templates, but users can't customize",
+    "template_format": "Uses {variable} syntax for placeholders",
+    "example": "[Service] in [City] → {service} in {city}"
+  },
+  
+  "requirements": {
+    "features": [
+      {
+        "name": "Template Editor",
+        "description": "Rich text editor with variable insertion",
+        "components": [
+          "Variable palette (drag & drop)",
+          "Syntax highlighting for variables",
+          "Real-time preview",
+          "Template validation"
+        ]
+      },
+      {
+        "name": "Variable Manager",
+        "description": "Define and manage template variables",
+        "components": [
+          "Add/edit/delete variables",
+          "Set variable types (text, number, date)",
+          "Define variable constraints",
+          "Map variables to data columns"
+        ]
+      },
+      {
+        "name": "Content Sections",
+        "description": "Build complete page templates",
+        "sections": [
+          "Title template",
+          "Meta description template",
+          "H1 heading template",
+          "Introduction paragraph",
+          "Main content blocks",
+          "Schema markup template"
+        ]
+      }
+    ],
+    
+    "api_endpoints": [
+      {
+        "method": "POST",
+        "path": "/api/projects/{id}/templates",
+        "description": "Create new template"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/templates/{id}",
+        "description": "Update template"
+      },
+      {
+        "method": "POST",
+        "path": "/api/templates/{id}/preview",
+        "description": "Preview template with sample data"
+      },
+      {
+        "method": "POST",
+        "path": "/api/templates/{id}/validate",
+        "description": "Validate template syntax"
+      }
+    ]
+  },
+  
+  "implementation_steps": [
+    {
+      "step": 1,
+      "task": "Create template editor component",
+      "details": "Rich text editor with variable support",
+      "files": ["components/template-builder/TemplateEditor.tsx"]
+    },
+    {
+      "step": 2,
+      "task": "Build variable manager",
+      "details": "UI for managing template variables",
+      "files": ["components/template-builder/VariableManager.tsx"]
+    },
+    {
+      "step": 3,
+      "task": "Implement template preview",
+      "details": "Show live preview with sample data",
+      "files": ["components/template-builder/TemplatePreview.tsx"]
+    },
+    {
+      "step": 4,
+      "task": "Add backend template logic",
+      "details": "Template validation and storage",
+      "files": ["backend/template_engine.py"]
+    }
+  ],
+  
+  "template_structure": {
+    "example": {
+      "name": "City Service Pages",
+      "pattern": "{service} in {city} - Find Top Providers",
+      "variables": {
+        "service": {
+          "type": "text",
+          "required": true,
+          "examples": ["Plumbing", "Electrical", "HVAC"]
+        },
+        "city": {
+          "type": "text",
+          "required": true,
+          "examples": ["Toronto", "Vancouver", "Montreal"]
+        }
+      },
+      "sections": {
+        "title": "{service} in {city} | Top Rated Local Providers",
+        "meta_description": "Find the best {service} providers in {city}. Compare prices, read reviews, and book online.",
+        "h1": "Best {service} Services in {city}",
+        "intro": "Looking for reliable {service} services in {city}? We've compiled a list of the top-rated providers..."
+      }
+    }
+  },
+  
+  "success_criteria": [
+    "Users can create custom templates",
+    "Variables are properly extracted and validated",
+    "Preview shows accurate representation",
+    "Templates can be saved and reused",
+    "SEO best practices built into templates"
+  ]
+}

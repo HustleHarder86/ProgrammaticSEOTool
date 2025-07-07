@@ -1,0 +1,148 @@
+{
+  "task": "Database Integration",
+  "agent": "Database Integration Agent",
+  "priority": "HIGH",
+  "status": "PENDING",
+  "estimated_time": "2-3 hours",
+  
+  "objectives": [
+    "Add SQLite database to backend",
+    "Create models for projects, templates, and data",
+    "Implement CRUD operations",
+    "Add data persistence layer"
+  ],
+  
+  "context": {
+    "current_state": "No database, everything in memory",
+    "database_choice": "SQLite for simplicity, PostgreSQL ready",
+    "orm": "SQLAlchemy already in requirements_full.txt",
+    "deployment": "Railway supports both SQLite and PostgreSQL"
+  },
+  
+  "requirements": {
+    "database_models": [
+      {
+        "model": "Project",
+        "fields": [
+          "id: UUID",
+          "name: str",
+          "business_input: str",
+          "business_analysis: JSON",
+          "created_at: datetime",
+          "updated_at: datetime"
+        ]
+      },
+      {
+        "model": "Template",
+        "fields": [
+          "id: UUID",
+          "project_id: UUID (FK)",
+          "name: str",
+          "pattern: str",
+          "variables: JSON",
+          "example_pages: JSON",
+          "created_at: datetime"
+        ]
+      },
+      {
+        "model": "DataSet",
+        "fields": [
+          "id: UUID",
+          "project_id: UUID (FK)",
+          "name: str",
+          "data: JSON",
+          "row_count: int",
+          "created_at: datetime"
+        ]
+      },
+      {
+        "model": "GeneratedPage",
+        "fields": [
+          "id: UUID",
+          "project_id: UUID (FK)",
+          "template_id: UUID (FK)",
+          "title: str",
+          "content: JSON",
+          "meta_data: JSON",
+          "created_at: datetime"
+        ]
+      }
+    ],
+    
+    "api_endpoints": [
+      {
+        "method": "POST",
+        "path": "/api/projects",
+        "description": "Create new project with business analysis"
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "description": "List all projects"
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects/{id}",
+        "description": "Get project details with templates and data"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/projects/{id}",
+        "description": "Update project"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/projects/{id}",
+        "description": "Delete project and all related data"
+      }
+    ]
+  },
+  
+  "implementation_steps": [
+    {
+      "step": 1,
+      "task": "Add database dependencies",
+      "details": "Update backend/requirements.txt with SQLAlchemy",
+      "files": ["backend/requirements.txt"]
+    },
+    {
+      "step": 2,
+      "task": "Create database models",
+      "details": "Define SQLAlchemy models for all entities",
+      "files": ["backend/models.py"]
+    },
+    {
+      "step": 3,
+      "task": "Set up database connection",
+      "details": "Create database.py with connection logic",
+      "files": ["backend/database.py"]
+    },
+    {
+      "step": 4,
+      "task": "Update main.py with CRUD endpoints",
+      "details": "Add project management endpoints",
+      "files": ["backend/main.py"]
+    },
+    {
+      "step": 5,
+      "task": "Create database initialization",
+      "details": "Auto-create tables on startup",
+      "files": ["backend/init_db.py"]
+    }
+  ],
+  
+  "success_criteria": [
+    "Projects persist between backend restarts",
+    "Can create, read, update, delete projects",
+    "Database migrations work smoothly",
+    "No performance issues with SQLite",
+    "Easy to switch to PostgreSQL later"
+  ],
+  
+  "testing_approach": [
+    "Test CRUD operations via API",
+    "Verify data persistence",
+    "Check foreign key relationships",
+    "Test concurrent access"
+  ]
+}

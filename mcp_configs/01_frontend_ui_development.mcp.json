@@ -1,0 +1,107 @@
+{
+  "task": "Frontend UI Development",
+  "agent": "Frontend Developer Agent",
+  "priority": "HIGH",
+  "status": "PENDING",
+  "estimated_time": "4-6 hours",
+  
+  "objectives": [
+    "Replace test-api page with production-ready UI",
+    "Create intuitive business analysis wizard",
+    "Build template management interface",
+    "Design responsive, modern UI components"
+  ],
+  
+  "context": {
+    "current_state": "Test API page working at /test-api",
+    "backend_url": "https://programmaticseotool-production.up.railway.app",
+    "frontend_framework": "Next.js 14 with TypeScript",
+    "ui_library": "Tailwind CSS + shadcn/ui components"
+  },
+  
+  "requirements": {
+    "pages_to_create": [
+      {
+        "path": "/",
+        "description": "Landing page with clear value proposition and CTA"
+      },
+      {
+        "path": "/projects/new",
+        "description": "Business analysis wizard (multi-step form)"
+      },
+      {
+        "path": "/projects/[id]",
+        "description": "Project dashboard showing analysis results"
+      },
+      {
+        "path": "/projects/[id]/templates",
+        "description": "Template builder and management"
+      },
+      {
+        "path": "/projects/[id]/data",
+        "description": "Data import interface (CSV upload, manual entry)"
+      },
+      {
+        "path": "/projects/[id]/generate",
+        "description": "Page generation preview and controls"
+      }
+    ],
+    
+    "components_needed": [
+      "BusinessAnalysisForm - Multi-step form for business input",
+      "TemplateCard - Display template opportunities",
+      "TemplateBuilder - Visual template editor",
+      "DataImporter - CSV upload with preview",
+      "PagePreview - Show generated page examples",
+      "ExportOptions - Download formats selection"
+    ],
+    
+    "api_integration": [
+      "POST /api/analyze-business - Already working",
+      "GET /api/projects - To be created",
+      "POST /api/projects - To be created",
+      "PUT /api/projects/[id]/templates - To be created"
+    ]
+  },
+  
+  "implementation_steps": [
+    {
+      "step": 1,
+      "task": "Create landing page",
+      "details": "Hero section, features, how it works, testimonials",
+      "files": ["app/page.tsx", "components/landing/*"]
+    },
+    {
+      "step": 2,
+      "task": "Build business analysis wizard",
+      "details": "Multi-step form: business info → loading → results",
+      "files": ["app/projects/new/page.tsx", "components/business-analysis/*"]
+    },
+    {
+      "step": 3,
+      "task": "Create project dashboard",
+      "details": "Show analysis results, template suggestions, next steps",
+      "files": ["app/projects/[id]/page.tsx", "components/project/*"]
+    },
+    {
+      "step": 4,
+      "task": "Implement state management",
+      "details": "Use Zustand for project state, React Query for API calls",
+      "files": ["lib/store.ts", "lib/api/projects.ts"]
+    }
+  ],
+  
+  "success_criteria": [
+    "User can analyze a business and see results",
+    "Template suggestions are displayed clearly",
+    "UI is responsive on mobile and desktop",
+    "Loading states and error handling implemented",
+    "Navigation between steps is smooth"
+  ],
+  
+  "dependencies": [
+    "Backend API must be running",
+    "AI analysis endpoint working",
+    "Design system components available"
+  ]
+}

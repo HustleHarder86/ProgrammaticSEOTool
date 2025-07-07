@@ -1,0 +1,163 @@
+{
+  "task": "Export Functionality",
+  "agent": "Export Manager Agent",
+  "priority": "MEDIUM",
+  "status": "PENDING",
+  "estimated_time": "2-3 hours",
+  
+  "objectives": [
+    "Export pages in multiple formats",
+    "Support bulk downloads",
+    "Enable CMS integration",
+    "Provide SEO-ready content"
+  ],
+  
+  "context": {
+    "current_state": "No export functionality",
+    "export_formats": "CSV, JSON, WordPress XML, HTML files",
+    "scale": "Must handle exporting 1000+ pages"
+  },
+  
+  "requirements": {
+    "export_formats": [
+      {
+        "format": "CSV",
+        "description": "Spreadsheet format for easy editing",
+        "columns": [
+          "page_title",
+          "meta_description",
+          "h1_heading",
+          "content",
+          "url_slug",
+          "canonical_url",
+          "schema_markup"
+        ]
+      },
+      {
+        "format": "WordPress XML",
+        "description": "Direct import to WordPress",
+        "features": [
+          "WXR format compliance",
+          "Custom fields support",
+          "Category/tag assignment",
+          "SEO plugin compatibility",
+          "Featured image URLs"
+        ]
+      },
+      {
+        "format": "JSON",
+        "description": "API-ready format",
+        "structure": {
+          "pages": "Array of page objects",
+          "metadata": "Project and template info",
+          "seo_settings": "Global SEO configuration"
+        }
+      },
+      {
+        "format": "HTML Files",
+        "description": "Static HTML pages in ZIP",
+        "features": [
+          "Complete HTML pages",
+          "Organized folder structure",
+          "Assets included",
+          "Ready to upload"
+        ]
+      }
+    ],
+    
+    "export_options": [
+      {
+        "name": "Filtering",
+        "options": [
+          "Export all pages",
+          "Export by template",
+          "Export by date range",
+          "Custom selection"
+        ]
+      },
+      {
+        "name": "Customization",
+        "options": [
+          "Include/exclude fields",
+          "Custom URL structure",
+          "Add prefix/suffix",
+          "Bulk find/replace"
+        ]
+      }
+    ],
+    
+    "api_endpoints": [
+      {
+        "method": "POST",
+        "path": "/api/projects/{id}/export",
+        "description": "Start export job"
+      },
+      {
+        "method": "GET",
+        "path": "/api/exports/{export_id}/status",
+        "description": "Check export progress"
+      },
+      {
+        "method": "GET",
+        "path": "/api/exports/{export_id}/download",
+        "description": "Download exported file"
+      }
+    ]
+  },
+  
+  "implementation_steps": [
+    {
+      "step": 1,
+      "task": "Create export UI",
+      "details": "Format selection and options",
+      "files": ["components/export/ExportDialog.tsx"]
+    },
+    {
+      "step": 2,
+      "task": "Implement CSV export",
+      "details": "Convert pages to CSV format",
+      "files": ["backend/exporters/csv_exporter.py"]
+    },
+    {
+      "step": 3,
+      "task": "Build WordPress exporter",
+      "details": "Generate WXR format XML",
+      "files": ["backend/exporters/wordpress_exporter.py"]
+    },
+    {
+      "step": 4,
+      "task": "Add progress tracking",
+      "details": "WebSocket updates for large exports",
+      "files": ["backend/export_manager.py"]
+    }
+  ],
+  
+  "wordpress_xml_example": {
+    "structure": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+    "content": {
+      "channel": {
+        "title": "Programmatic SEO Export",
+        "items": [
+          {
+            "title": "Page Title",
+            "content": "Page content with HTML",
+            "post_type": "page",
+            "status": "draft",
+            "meta": {
+              "_yoast_wpseo_title": "SEO Title",
+              "_yoast_wpseo_metadesc": "Meta description"
+            }
+          }
+        ]
+      }
+    }
+  },
+  
+  "success_criteria": [
+    "Exports complete without memory issues",
+    "All formats properly formatted",
+    "WordPress import works seamlessly",
+    "Large exports show progress",
+    "Downloads are compressed for size"
+  ]
+}
