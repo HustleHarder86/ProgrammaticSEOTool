@@ -37,8 +37,8 @@ interface Project {
 export default function ProjectDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
-  const projectId = params.id as string;
-  const selectedTemplate = searchParams.get('template');
+  const projectId = params?.id as string;
+  const selectedTemplate = searchParams?.get('template');
   
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);

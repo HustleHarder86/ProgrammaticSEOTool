@@ -81,7 +81,7 @@ const exportFormats: ExportFormat[] = [
 
 export default function ExportPage() {
   const params = useParams();
-  const projectId = params.id as string;
+  const projectId = params?.id as string;
   
   const [project, setProject] = useState<Project | null>(null);
   const [exportJobs, setExportJobs] = useState<ExportJob[]>([]);

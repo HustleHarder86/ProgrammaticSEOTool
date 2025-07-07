@@ -36,7 +36,7 @@ interface PreviewPage {
   variables: Record<string, unknown>;
 }
 
-export function PagePreview({ template, dataset, settings }: PagePreviewProps) {
+export function PagePreview({ template, dataset }: PagePreviewProps) {
   const [previewPages, setPreviewPages] = useState<PreviewPage[]>([]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [viewMode, setViewMode] = useState<'preview' | 'html' | 'seo'>('preview');

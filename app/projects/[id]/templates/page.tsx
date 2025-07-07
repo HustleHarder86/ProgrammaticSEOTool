@@ -41,8 +41,8 @@ export default function TemplateBuilderPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const projectId = params.id as string;
-  const templateName = searchParams.get('template');
+  const projectId = params?.id as string;
+  const templateName = searchParams?.get('template');
   
   const [project, setProject] = useState<Project | null>(null);
   const [template, setTemplate] = useState<Template>({
