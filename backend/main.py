@@ -1,6 +1,7 @@
 """Minimal FastAPI backend to test Railway deployment"""
 from fastapi import FastAPI, HTTPException, Depends, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
@@ -12,6 +13,7 @@ from models import Project, Template, DataSet, GeneratedPage
 from template_engine import TemplateEngine
 from data_processor import DataProcessor
 from page_generator import PageGenerator
+from export_manager import export_manager, ExportFormat
 
 app = FastAPI(title="Programmatic SEO Tool API")
 ai_client = AIClient()
@@ -871,3 +873,135 @@ def delete_generated_pages(
         "message": f"Successfully deleted {count} pages",
         "deleted_count": count
     }
+
+# Export-related Pydantic models
+class ExportRequest(BaseModel):
+    format: str  # csv, json, wordpress, html
+    options: Optional[Dict[str, Any]] = None
+
+class ExportResponse(BaseModel):
+    export_id: str
+    status: str
+    message: str
+
+class ExportStatusResponse(BaseModel):
+    id: str
+    project_id: str
+    format: str
+    status: str
+    progress: float
+    total_items: int
+    processed_items: int
+    created_at: str
+    started_at: Optional[str] = None
+    completed_at: Optional[str] = None
+    error_message: Optional[str] = None
+    download_url: Optional[str] = None
+
+# Export endpoints
+@app.post("/api/projects/{project_id}/export", response_model=ExportResponse)
+def start_export(
+    project_id: str,
+    request: ExportRequest,
+    db: Session = Depends(get_db)
+):
+    """Start a new export job for a project."""
+    # Validate project exists
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Validate format
+    try:
+        export_format = ExportFormat(request.format.lower())
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported export format: {request.format}. Supported formats: csv, json, wordpress, html"
+        )
+    
+    try:
+        # Start export job
+        export_id = export_manager.start_export(
+            project_id=project_id,
+            format=export_format,
+            options=request.options
+        )
+        
+        return ExportResponse(
+            export_id=export_id,
+            status="started",
+            message=f"Export job {export_id} started successfully"
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to start export: {str(e)}")
+
+@app.get("/api/exports/{export_id}/status", response_model=ExportStatusResponse)
+def get_export_status(export_id: str):
+    """Get the status of an export job."""
+    status = export_manager.get_export_status(export_id)
+    
+    if not status:
+        raise HTTPException(status_code=404, detail="Export job not found")
+    
+    return ExportStatusResponse(**status)
+
+@app.get("/api/exports/{export_id}/download")
+def download_export(export_id: str):
+    """Download the exported file."""
+    file_path = export_manager.get_file_path(export_id)
+    
+    if not file_path or not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Export file not found or not ready")
+    
+    # Get filename from path
+    filename = os.path.basename(file_path)
+    
+    return FileResponse(
+        path=file_path,
+        filename=filename,
+        media_type='application/octet-stream'
+    )
+
+@app.get("/api/projects/{project_id}/exports")
+def list_project_exports(project_id: str, db: Session = Depends(get_db)):
+    """List all export jobs for a project."""
+    # Validate project exists
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    exports = export_manager.list_exports(project_id=project_id)
+    return {"exports": exports}
+
+@app.get("/api/exports")
+def list_all_exports():
+    """List all export jobs across all projects."""
+    exports = export_manager.list_exports()
+    return {"exports": exports}
+
+@app.delete("/api/exports/{export_id}")
+def cancel_export(export_id: str):
+    """Cancel an active export job."""
+    success = export_manager.cancel_export(export_id)
+    
+    if not success:
+        raise HTTPException(
+            status_code=400,
+            detail="Export job not found or cannot be cancelled"
+        )
+    
+    return {"message": f"Export job {export_id} cancelled successfully"}
+
+@app.post("/api/exports/cleanup")
+def cleanup_old_exports(days_old: int = 7):
+    """Clean up old export files and jobs."""
+    try:
+        cleaned_count = export_manager.cleanup_old_exports(days_old)
+        return {
+            "message": f"Cleaned up {cleaned_count} old export jobs",
+            "cleaned_count": cleaned_count
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Cleanup failed: {str(e)}")

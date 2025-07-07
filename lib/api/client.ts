@@ -28,3 +28,34 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Export API methods
+export const exportAPI = {
+  // Start a new export
+  startExport: (projectId: string, format: string, options?: Record<string, any>) =>
+    apiClient.post(`/api/projects/${projectId}/export`, { format, options }),
+
+  // Get export status
+  getExportStatus: (exportId: string) =>
+    apiClient.get(`/api/exports/${exportId}/status`),
+
+  // Download export file
+  downloadExport: (exportId: string) =>
+    fetch(`/api/exports/${exportId}/download`),
+
+  // List project exports
+  listProjectExports: (projectId: string) =>
+    apiClient.get(`/api/projects/${projectId}/exports`),
+
+  // List all exports
+  listAllExports: () =>
+    apiClient.get('/api/exports'),
+
+  // Cancel export
+  cancelExport: (exportId: string) =>
+    apiClient.delete(`/api/exports/${exportId}`),
+
+  // Cleanup old exports
+  cleanupOldExports: (daysOld: number = 7) =>
+    apiClient.post('/api/exports/cleanup', { days_old: daysOld })
+};

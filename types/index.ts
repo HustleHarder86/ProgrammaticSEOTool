@@ -115,3 +115,48 @@ export interface ExportOptions {
   include_variables: boolean;
   filename?: string;
 }
+
+export interface ExportJob {
+  id: string;
+  project_id: string;
+  format: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'failed' | 'cancelled';
+  progress: number;
+  total_items: number;
+  processed_items: number;
+  created_at: string;
+  started_at?: string;
+  completed_at?: string;
+  error_message?: string;
+  download_url?: string;
+}
+
+export interface ExportRequest {
+  format: string;
+  options?: Record<string, any>;
+}
+
+export interface ExportResponse {
+  export_id: string;
+  status: string;
+  message: string;
+}
+
+export interface ExportFormat {
+  id: string;
+  name: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  fileExtension: string;
+  recommended?: boolean;
+  options?: ExportFormatOption[];
+}
+
+export interface ExportFormatOption {
+  id: string;
+  name: string;
+  description: string;
+  type: 'boolean' | 'select' | 'text' | 'number';
+  defaultValue: any;
+  options?: { value: string; label: string }[];
+}

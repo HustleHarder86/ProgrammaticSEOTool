@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { apiClient } from '@/lib/api/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Sparkles, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { ArrowLeft, Sparkles, AlertCircle, CheckCircle, Clock, Download } from 'lucide-react';
 import { GenerationWizard } from '@/components/page-generation/GenerationWizard';
 import { 
   Project, 
@@ -258,10 +258,16 @@ export default function GeneratePagesPage() {
                 </div>
                 
                 {generationResult.status === 'completed' && (
-                  <div className="flex justify-center">
+                  <div className="flex justify-center gap-3">
                     <Button onClick={handleViewResults} className="bg-gradient-to-r from-purple-600 to-blue-600">
                       View All Results
                     </Button>
+                    <Link href={`/projects/${projectId}/export`}>
+                      <Button variant="outline">
+                        <Download className="w-4 h-4 mr-2" />
+                        Export Pages
+                      </Button>
+                    </Link>
                   </div>
                 )}
               </CardContent>

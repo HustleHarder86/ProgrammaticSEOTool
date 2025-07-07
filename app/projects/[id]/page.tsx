@@ -284,10 +284,12 @@ export default function ProjectDetailPage() {
                 Generate Pages
               </Button>
             </Link>
-            <Button variant="outline">
-              <Download className="w-4 h-4 mr-2" />
-              Export Project Data
-            </Button>
+            <Link href={`/projects/${projectId}/export`}>
+              <Button variant="outline">
+                <Download className="w-4 h-4 mr-2" />
+                Export Project Data
+              </Button>
+            </Link>
             <Link href="/analyze">
               <Button variant="outline">
                 <Plus className="w-4 h-4 mr-2" />
