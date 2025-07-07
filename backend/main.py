@@ -49,8 +49,9 @@ def root():
 @app.get("/health")
 def health_check(db: Session = Depends(get_db)):
     try:
-        # Test database connection
-        db.execute("SELECT 1")
+        # Test database connection with proper SQLAlchemy syntax
+        from sqlalchemy import text
+        result = db.execute(text("SELECT 1"))
         db_status = "connected"
     except Exception as e:
         db_status = f"error: {str(e)}"
