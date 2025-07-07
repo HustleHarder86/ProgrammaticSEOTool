@@ -1,13 +1,12 @@
 """Template Engine for handling template operations"""
 from typing import List, Dict, Any, Optional
 import re
-from agents.template_builder import TemplateBuilderAgent
 
 class TemplateEngine:
     """Engine for template operations including variable extraction, validation, and preview generation"""
     
     def __init__(self):
-        self.template_builder = TemplateBuilderAgent()
+        pass
     
     def extract_variables(self, template_string: str) -> List[str]:
         """

@@ -1,7 +1,8 @@
 """Database Integration Agent for managing persistent storage."""
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
-from models import Project, Keyword, Content, get_db
+from models import Project, Template, DataSet, GeneratedPage
+from database import get_db
 from datetime import datetime
 import logging
 
