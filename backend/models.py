@@ -35,6 +35,7 @@ class Template(Base):
     name = Column(String(200), nullable=False)
     pattern = Column(Text)  # e.g., "[City] [Service] Providers"
     variables = Column(JSON)  # List of variables extracted from pattern
+    template_sections = Column(JSON)  # Stores SEO structure and content sections
     example_pages = Column(JSON)  # Example pages generated from this template
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     

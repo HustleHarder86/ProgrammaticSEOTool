@@ -229,13 +229,15 @@ export default function ProjectDetailPage() {
                           <Database className="w-4 h-4 mr-2" />
                           Import Data
                         </Button>
-                        <Button 
-                          size="sm"
-                          className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-                        >
-                          <LayoutTemplate className="w-4 h-4 mr-2" />
-                          Build Template
-                        </Button>
+                        <Link href={`/projects/${projectId}/templates?template=${encodeURIComponent(template.template_name)}`}>
+                          <Button 
+                            size="sm"
+                            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                          >
+                            <LayoutTemplate className="w-4 h-4 mr-2" />
+                            Build Template
+                          </Button>
+                        </Link>
                       </div>
                     </div>
                   </div>
@@ -256,10 +258,12 @@ export default function ProjectDetailPage() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4">
-            <Button variant="outline">
-              <FileText className="w-4 h-4 mr-2" />
-              Create Custom Template
-            </Button>
+            <Link href={`/projects/${projectId}/templates`}>
+              <Button variant="outline">
+                <FileText className="w-4 h-4 mr-2" />
+                Create Custom Template
+              </Button>
+            </Link>
             <Button variant="outline">
               <Download className="w-4 h-4 mr-2" />
               Export Project Data
