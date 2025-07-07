@@ -58,7 +58,7 @@ export default function DataImportWizard({
   const [uploadResponse, setUploadResponse] = useState<UploadResponse | null>(null)
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null)
   const [columnMappings, setColumnMappings] = useState<ColumnMapping>({})
-  const [validationResult, setValidationResult] = useState<{ is_valid?: boolean; errors?: string[]; warnings?: string[]; missing_columns?: string[] } | null>(null)
+  const [validationResult, setValidationResult] = useState<{ is_valid?: boolean; errors?: string[]; warnings?: string[]; missing_columns?: string[]; column_mapping_suggestions?: Record<string, string> } | null>(null)
 
   const handleUploadComplete = (response: UploadResponse) => {
     setUploadResponse(response)
@@ -253,7 +253,7 @@ export default function DataImportWizard({
               <h4 className="font-medium mb-4">Column Mappings</h4>
               <div className="space-y-3">
                 {selectedTemplate.variables.map((variable) => {
-                  const suggestion = validationResult.column_mapping_suggestions[variable]
+                  const suggestion = validationResult.column_mapping_suggestions?.[variable]
                   return (
                     <div key={variable} className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
