@@ -210,7 +210,7 @@ export function ExportDialog({
             <input
               type="checkbox"
               id={option.id}
-              checked={value}
+              checked={value as boolean}
               onChange={(e) => handleOptionChange(option.id, e.target.checked)}
               className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
             />
@@ -227,7 +227,7 @@ export function ExportDialog({
               {option.name}
             </label>
             <select
-              value={value}
+              value={value as string}
               onChange={(e) => handleOptionChange(option.id, e.target.value)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-purple-500 focus:border-purple-500"
             >
@@ -248,7 +248,7 @@ export function ExportDialog({
             </label>
             <input
               type="text"
-              value={value}
+              value={value as string}
               onChange={(e) => handleOptionChange(option.id, e.target.value)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-purple-500 focus:border-purple-500"
               placeholder={option.description}
@@ -264,7 +264,7 @@ export function ExportDialog({
             </label>
             <input
               type="number"
-              value={value}
+              value={value as number}
               onChange={(e) => handleOptionChange(option.id, parseInt(e.target.value))}
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-purple-500 focus:border-purple-500"
               placeholder={option.description}
