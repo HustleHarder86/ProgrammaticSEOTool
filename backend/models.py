@@ -2,7 +2,6 @@
 from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Integer, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from sqlalchemy.dialects.sqlite import UUID as SQLiteUUID
 from database import Base
 import uuid
 
