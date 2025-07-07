@@ -57,26 +57,40 @@ async def analyze_business(request: BusinessAnalysisRequest):
         # Use AI client to analyze the business
         analysis = ai_client.analyze_business(request.business_input)
         
+        # Validate the analysis has required fields
+        required_fields = ["business_name", "business_description", "target_audience", "core_offerings", "template_opportunities"]
+        for field in required_fields:
+            if field not in analysis:
+                print(f"Missing field in analysis: {field}")
+                raise ValueError(f"Analysis missing required field: {field}")
+        
         # Convert to response model
         template_opportunities = []
         for opp in analysis.get("template_opportunities", []):
-            template_opportunities.append(TemplateOpportunity(
-                template_name=opp["template_name"],
-                template_pattern=opp["template_pattern"],
-                example_pages=opp["example_pages"],
-                estimated_pages=opp["estimated_pages"],
-                difficulty=opp["difficulty"]
-            ))
+            try:
+                template_opportunities.append(TemplateOpportunity(
+                    template_name=opp.get("template_name", "Unknown"),
+                    template_pattern=opp.get("template_pattern", "Unknown"),
+                    example_pages=opp.get("example_pages", []),
+                    estimated_pages=opp.get("estimated_pages", 0),
+                    difficulty=opp.get("difficulty", "Medium")
+                ))
+            except Exception as opp_error:
+                print(f"Error processing template opportunity: {opp_error}")
+                continue
         
         response = BusinessAnalysisResponse(
-            business_name=analysis["business_name"],
-            business_description=analysis["business_description"],
-            target_audience=analysis["target_audience"],
-            core_offerings=analysis["core_offerings"],
+            business_name=analysis.get("business_name", "Unknown Business"),
+            business_description=analysis.get("business_description", "No description"),
+            target_audience=analysis.get("target_audience", "General audience"),
+            core_offerings=analysis.get("core_offerings", []),
             template_opportunities=template_opportunities
         )
         
         return response
         
     except Exception as e:
+        print(f"Error in analyze_business endpoint: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
