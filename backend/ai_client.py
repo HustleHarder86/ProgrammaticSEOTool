@@ -14,8 +14,12 @@ class AIClient:
     def analyze_business(self, business_input: str) -> Dict[str, Any]:
         """Use Perplexity to analyze a business for programmatic SEO opportunities"""
         
+        print(f"Analyzing business: {business_input[:50]}...")
+        print(f"API Key present: {bool(self.api_key)}")
+        
         if not self.api_key:
             # Return enhanced mock data if no API key
+            print("No API key, using mock data")
             return self._get_mock_analysis(business_input)
         
         prompt = f"""
@@ -53,10 +57,12 @@ class AIClient:
             if response.status_code == 200:
                 # Parse and return the response
                 result = response.json()
+                print(f"API Response: {result}")
                 # Extract the actual content from Perplexity response
                 # This will need adjustment based on actual Perplexity response format
                 return self._parse_ai_response(result)
             else:
+                print(f"API Error: {response.status_code} - {response.text}")
                 return self._get_mock_analysis(business_input)
                 
         except Exception as e:
@@ -65,13 +71,32 @@ class AIClient:
     
     def _parse_ai_response(self, response: Dict) -> Dict[str, Any]:
         """Parse Perplexity response into our format"""
-        # This is a placeholder - adjust based on actual Perplexity response
-        return self._get_mock_analysis("AI-enhanced analysis")
+        try:
+            # Get the AI response content
+            content = response.get('choices', [{}])[0].get('message', {}).get('content', '')
+            
+            # Try to parse JSON from the response
+            import json
+            import re
+            
+            # Extract JSON from the response (it might be wrapped in text)
+            json_match = re.search(r'\{.*\}', content, re.DOTALL)
+            if json_match:
+                parsed = json.loads(json_match.group())
+                return parsed
+            else:
+                # If no JSON found, return mock data
+                return self._get_mock_analysis("Failed to parse AI response")
+        except Exception as e:
+            print(f"Error parsing AI response: {e}")
+            return self._get_mock_analysis("AI-enhanced analysis")
     
     def _get_mock_analysis(self, business_input: str) -> Dict[str, Any]:
         """Return mock analysis for testing"""
         # Enhanced mock data based on input
-        if "real estate" in business_input.lower():
+        business_lower = business_input.lower()
+        
+        if "real estate" in business_lower and ("analysis" in business_lower or "tool" in business_lower):
             return {
                 "business_name": "Canadian Real Estate Analytics",
                 "business_description": "SaaS platform providing comprehensive real estate analysis tools for Canadian realtors",
