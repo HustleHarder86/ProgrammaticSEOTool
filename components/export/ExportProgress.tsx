@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
   CheckCircle, AlertCircle, Clock, X, RefreshCw, 
-  Download, FileText, AlertTriangle
+  Download, AlertTriangle
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 

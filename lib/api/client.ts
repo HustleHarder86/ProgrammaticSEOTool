@@ -32,7 +32,7 @@ apiClient.interceptors.response.use(
 // Export API methods
 export const exportAPI = {
   // Start a new export
-  startExport: (projectId: string, format: string, options?: Record<string, any>) =>
+  startExport: (projectId: string, format: string, options?: Record<string, unknown>) =>
     apiClient.post(`/api/projects/${projectId}/export`, { format, options }),
 
   // Get export status

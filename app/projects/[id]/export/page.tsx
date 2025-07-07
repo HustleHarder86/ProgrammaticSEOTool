@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api/client';
 import { Button } from '@/components/ui/button';
@@ -81,7 +81,6 @@ const exportFormats: ExportFormat[] = [
 
 export default function ExportPage() {
   const params = useParams();
-  const router = useRouter();
   const projectId = params.id as string;
   
   const [project, setProject] = useState<Project | null>(null);
@@ -92,24 +91,7 @@ export default function ExportPage() {
   const [exporting, setExporting] = useState(false);
   const [activeExportId, setActiveExportId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (projectId) {
-      loadData();
-    }
-  }, [projectId]);
-
-  useEffect(() => {
-    // Poll for export status updates
-    const interval = setInterval(() => {
-      if (activeExportId) {
-        checkExportStatus(activeExportId);
-      }
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [activeExportId]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const [projectRes, exportsRes] = await Promise.all([
@@ -124,9 +106,9 @@ export default function ExportPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId]);
 
-  const checkExportStatus = async (exportId: string) => {
+  const checkExportStatus = useCallback(async (exportId: string) => {
     try {
       const response = await apiClient.get<ExportJob>(`/api/exports/${exportId}/status`);
       const updatedJob = response.data;
@@ -142,7 +124,24 @@ export default function ExportPage() {
     } catch (err) {
       console.error('Failed to check export status:', err);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (projectId) {
+      loadData();
+    }
+  }, [projectId, loadData]);
+
+  useEffect(() => {
+    // Poll for export status updates
+    const interval = setInterval(() => {
+      if (activeExportId) {
+        checkExportStatus(activeExportId);
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [activeExportId, checkExportStatus]);
 
   const startExport = async (format: string) => {
     try {

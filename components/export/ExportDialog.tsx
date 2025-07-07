@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { 
   Download, FileText, Code, Database, Globe, X, 
   Settings, RefreshCw, CheckCircle, AlertCircle 
@@ -12,7 +12,7 @@ interface ExportDialogProps {
   projectId: string;
   isOpen: boolean;
   onClose: () => void;
-  onExportStart: (format: string, options: any) => void;
+  onExportStart: (format: string, options: Record<string, unknown>) => void;
   isExporting: boolean;
   exportProgress?: {
     status: string;
@@ -36,7 +36,7 @@ interface ExportOption {
   name: string;
   description: string;
   type: 'boolean' | 'select' | 'text' | 'number';
-  defaultValue: any;
+  defaultValue: unknown;
   options?: { value: string; label: string }[];
 }
 
@@ -165,7 +165,6 @@ const exportFormats: ExportFormat[] = [
 ];
 
 export function ExportDialog({ 
-  projectId, 
   isOpen, 
   onClose, 
   onExportStart, 
@@ -173,7 +172,7 @@ export function ExportDialog({
   exportProgress 
 }: ExportDialogProps) {
   const [selectedFormat, setSelectedFormat] = useState<string>('csv');
-  const [exportOptions, setExportOptions] = useState<Record<string, any>>({});
+  const [exportOptions, setExportOptions] = useState<Record<string, unknown>>({});
   const [showOptions, setShowOptions] = useState(false);
 
   useEffect(() => {
@@ -181,7 +180,7 @@ export function ExportDialog({
       // Reset options when dialog opens
       const format = exportFormats.find(f => f.id === selectedFormat);
       if (format?.options) {
-        const defaultOptions: Record<string, any> = {};
+        const defaultOptions: Record<string, unknown> = {};
         format.options.forEach(option => {
           defaultOptions[option.id] = option.defaultValue;
         });
@@ -194,7 +193,7 @@ export function ExportDialog({
     onExportStart(selectedFormat, exportOptions);
   };
 
-  const handleOptionChange = (optionId: string, value: any) => {
+  const handleOptionChange = (optionId: string, value: unknown) => {
     setExportOptions(prev => ({
       ...prev,
       [optionId]: value
