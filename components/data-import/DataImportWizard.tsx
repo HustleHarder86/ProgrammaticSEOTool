@@ -58,7 +58,7 @@ export default function DataImportWizard({
   const [uploadResponse, setUploadResponse] = useState<UploadResponse | null>(null)
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null)
   const [columnMappings, setColumnMappings] = useState<ColumnMapping>({})
-  const [validationResult, setValidationResult] = useState<{ is_valid?: boolean; errors?: string[]; warnings?: string[] } | null>(null)
+  const [validationResult, setValidationResult] = useState<{ is_valid?: boolean; errors?: string[]; warnings?: string[]; missing_columns?: string[] } | null>(null)
 
   const handleUploadComplete = (response: UploadResponse) => {
     setUploadResponse(response)
