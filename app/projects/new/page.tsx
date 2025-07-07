@@ -99,7 +99,7 @@ export default function NewProjectPage() {
           <h1 className="text-5xl font-black text-gray-900 tracking-tight mb-4">
             Create Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">SEO Empire</span>
           </h1>
-          <p className="text-xl text-gray-700 font-light">Let's analyze your business and discover programmatic SEO opportunities</p>
+          <p className="text-xl text-gray-700 font-light">Let&apos;s analyze your business and discover programmatic SEO opportunities</p>
         </div>
 
         {/* Progress Bar */}
@@ -148,7 +148,7 @@ export default function NewProjectPage() {
             <div className="p-8 lg:p-12">
               <h2 className="text-3xl font-bold mb-4 text-gray-900">Tell us about your business</h2>
               <p className="text-lg text-gray-600 mb-10 font-light">
-                We'll analyze your business and suggest the best programmatic SEO templates that can drive <span className="font-semibold text-purple-700">massive organic traffic</span>.
+                We&apos;ll analyze your business and suggest the best programmatic SEO templates that can drive <span className="font-semibold text-purple-700">massive organic traffic</span>.
               </p>
               
               {error && (
@@ -179,7 +179,7 @@ export default function NewProjectPage() {
                 Perfect! Here are your <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">Template Opportunities</span>
               </h2>
               <p className="text-lg text-gray-600 mb-10 font-light">
-                Based on your business analysis, we've identified these high-impact programmatic SEO templates.
+                Based on your business analysis, we&apos;ve identified these high-impact programmatic SEO templates.
               </p>
               
               <TemplateResults

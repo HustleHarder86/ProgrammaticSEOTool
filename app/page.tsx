@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Zap, Upload, Globe, Sparkles, Database, Download, CheckCircle, TrendingUp, Users, BarChart3, Layers, Rocket } from "lucide-react";
+import { ArrowRight, Zap, Upload, Globe, Sparkles, Database, Download, CheckCircle, TrendingUp, BarChart3, Layers, Rocket } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {

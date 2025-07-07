@@ -78,7 +78,7 @@ export function BusinessAnalysisForm({ onSubmit, isLoading = false }: BusinessAn
             <Globe className={`w-6 h-6 ${inputType === 'url' ? 'text-white' : 'text-gray-600'}`} />
           </div>
           <div className="text-base font-semibold text-gray-900">Enter Website URL</div>
-          <div className="text-sm text-gray-500 mt-1">We'll analyze your site</div>
+          <div className="text-sm text-gray-500 mt-1">We&apos;ll analyze your site</div>
         </button>
       </div>
 
@@ -137,15 +137,15 @@ export function BusinessAnalysisForm({ onSubmit, isLoading = false }: BusinessAn
             <>
               <li className="flex items-start">
                 <span className="text-purple-600 mr-2 mt-0.5">•</span>
-                <span>"We sell running shoes and athletic gear online"</span>
+                <span>&ldquo;We sell running shoes and athletic gear online&rdquo;</span>
               </li>
               <li className="flex items-start">
                 <span className="text-purple-600 mr-2 mt-0.5">•</span>
-                <span>"SaaS platform for real estate investment analysis"</span>
+                <span>&ldquo;SaaS platform for real estate investment analysis&rdquo;</span>
               </li>
               <li className="flex items-start">
                 <span className="text-purple-600 mr-2 mt-0.5">•</span>
-                <span>"Local plumbing services in major US cities"</span>
+                <span>&ldquo;Local plumbing services in major US cities&rdquo;</span>
               </li>
             </>
           ) : (
