@@ -42,6 +42,61 @@ export function PagePreview({ template, dataset }: PagePreviewProps) {
   const [viewMode, setViewMode] = useState<'preview' | 'html' | 'seo'>('preview');
   const [loading, setLoading] = useState(false);
 
+  const generatePageFromTemplate = useCallback((template: Template, data: Record<string, unknown>): PreviewPage => {
+    // Simple template variable replacement
+    let content = template.template_html;
+    let seoTitle = template.seo_settings.meta_title || '';
+    let seoDescription = template.seo_settings.meta_description || '';
+    
+    // Replace variables in content
+    template.variables.forEach(variable => {
+      const value = data[variable.name] || variable.example || `{${variable.name}}`;
+      const regex = new RegExp(`\\{\\{${variable.name}\\}\\}`, 'g');
+      content = content.replace(regex, value);
+      seoTitle = seoTitle.replace(regex, value);
+      seoDescription = seoDescription.replace(regex, value);
+    });
+
+    // Generate title from first heading or use template name
+    const titleMatch = content.match(/<h1[^>]*>([^<]+)<\/h1>/);
+    const title = titleMatch ? titleMatch[1] : template.name;
+
+    // Generate slug from title
+    const slug = title.toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+    // Extract keywords from content
+    const extractKeywords = (content: string): string[] => {
+      // Simple keyword extraction - remove HTML tags and get common words
+      const text = content.replace(/<[^>]*>/g, '').toLowerCase();
+      const words = text.split(/\s+/).filter(word => word.length > 3);
+      const commonWords = new Set(['this', 'that', 'with', 'from', 'your', 'have', 'more', 'will', 'been', 'were', 'they', 'them', 'than', 'what', 'when', 'where', 'how']);
+      const keywords = [...new Set(words.filter(word => !commonWords.has(word)))];
+      return keywords.slice(0, 10);
+    };
+
+    const extractDescription = (content: string): string => {
+      // Extract first paragraph or first 160 characters
+      const text = content.replace(/<[^>]*>/g, '');
+      const paragraphs = text.split('\n').filter(p => p.trim().length > 0);
+      const description = paragraphs[0] || text;
+      return description.length > 160 ? description.substring(0, 157) + '...' : description;
+    };
+
+    const keywords = extractKeywords(content);
+
+    return {
+      title,
+      slug,
+      content,
+      seo_title: seoTitle || title,
+      seo_description: seoDescription || extractDescription(content),
+      seo_keywords: keywords,
+      variables: data
+    };
+  }, []);
+
   const generatePreviewPages = useCallback(async () => {
     if (!template || !dataset) return;
     
@@ -68,61 +123,6 @@ export function PagePreview({ template, dataset }: PagePreviewProps) {
   useEffect(() => {
     generatePreviewPages();
   }, [generatePreviewPages]);
-
-  const generatePageFromTemplate = useCallback((template: Template, data: Record<string, unknown>): PreviewPage => {
-    // Simple template variable replacement
-    let content = template.template_html;
-    let seoTitle = template.seo_settings.meta_title || '';
-    let seoDescription = template.seo_settings.meta_description || '';
-    
-    // Replace variables in content
-    template.variables.forEach(variable => {
-      const value = data[variable.name] || variable.example || `{${variable.name}}`;
-      const regex = new RegExp(`\\{\\{${variable.name}\\}\\}`, 'g');
-      content = content.replace(regex, value);
-      seoTitle = seoTitle.replace(regex, value);
-      seoDescription = seoDescription.replace(regex, value);
-    });
-
-    // Generate title from first heading or use template name
-    const titleMatch = content.match(/<h1[^>]*>([^<]+)<\/h1>/);
-    const title = titleMatch ? titleMatch[1] : template.name;
-
-    // Generate slug from title
-    const slug = title.toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-
-    // Extract keywords from content
-    const keywords = extractKeywords(content);
-
-    return {
-      title,
-      slug,
-      content,
-      seo_title: seoTitle || title,
-      seo_description: seoDescription || extractDescription(content),
-      seo_keywords: keywords,
-      variables: data
-    };
-  }, []);
-
-  const extractKeywords = (content: string): string[] => {
-    // Simple keyword extraction - remove HTML tags and get common words
-    const text = content.replace(/<[^>]*>/g, '').toLowerCase();
-    const words = text.split(/\s+/).filter(word => word.length > 3);
-    const commonWords = new Set(['this', 'that', 'with', 'from', 'your', 'have', 'more', 'will', 'been', 'were', 'they', 'them', 'than', 'what', 'when', 'where', 'how']);
-    const keywords = [...new Set(words.filter(word => !commonWords.has(word)))];
-    return keywords.slice(0, 10);
-  };
-
-  const extractDescription = (content: string): string => {
-    // Extract first paragraph or first 160 characters
-    const text = content.replace(/<[^>]*>/g, '');
-    const paragraphs = text.split('\n').filter(p => p.trim().length > 0);
-    const description = paragraphs[0] || text;
-    return description.length > 160 ? description.substring(0, 157) + '...' : description;
-  };
 
   const currentPage = previewPages[currentPageIndex];
 
