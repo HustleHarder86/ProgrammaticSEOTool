@@ -48,6 +48,29 @@ const config: Config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      animation: {
+        gradient: "gradient 3s ease infinite",
+        "bounce-x": "bounce-x 1s ease-in-out infinite",
+        float: "float 20s ease-in-out infinite",
+        "float-delayed": "float 20s ease-in-out 5s infinite",
+        "float-slow": "float 30s ease-in-out infinite",
+      },
+      keyframes: {
+        gradient: {
+          "0%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+          "100%": { backgroundPosition: "0% 50%" },
+        },
+        "bounce-x": {
+          "0%, 100%": { transform: "translateX(0)" },
+          "50%": { transform: "translateX(0.25rem)" },
+        },
+        float: {
+          "0%, 100%": { transform: "translate(0, 0) rotate(0deg)" },
+          "33%": { transform: "translate(30px, -30px) rotate(120deg)" },
+          "66%": { transform: "translate(-20px, 20px) rotate(240deg)" },
+        },
+      },
     },
   },
   plugins: [],
