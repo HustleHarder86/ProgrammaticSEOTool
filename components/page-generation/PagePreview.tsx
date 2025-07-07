@@ -63,13 +63,13 @@ export function PagePreview({ template, dataset, settings }: PagePreviewProps) {
     } finally {
       setLoading(false);
     }
-  }, [template, dataset, settings]);
+  }, [template, dataset, settings, generatePageFromTemplate]);
 
   useEffect(() => {
     generatePreviewPages();
   }, [generatePreviewPages]);
 
-  const generatePageFromTemplate = (template: Template, data: Record<string, any>): PreviewPage => {
+  const generatePageFromTemplate = useCallback((template: Template, data: Record<string, unknown>): PreviewPage => {
     // Simple template variable replacement
     let content = template.template_html;
     let seoTitle = template.seo_settings.meta_title || '';
@@ -105,7 +105,7 @@ export function PagePreview({ template, dataset, settings }: PagePreviewProps) {
       seo_keywords: keywords,
       variables: data
     };
-  };
+  }, []);
 
   const extractKeywords = (content: string): string[] => {
     // Simple keyword extraction - remove HTML tags and get common words
