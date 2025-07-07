@@ -79,17 +79,45 @@ class AIClient:
             import json
             import re
             
-            # Extract JSON from the response (it might be wrapped in text)
-            json_match = re.search(r'\{.*\}', content, re.DOTALL)
+            # Extract JSON from markdown code block
+            json_match = re.search(r'```json\s*(.*?)\s*```', content, re.DOTALL)
             if json_match:
-                parsed = json.loads(json_match.group())
-                return parsed
+                json_str = json_match.group(1)
             else:
-                # If no JSON found, return mock data
-                return self._get_mock_analysis("Failed to parse AI response")
+                # Try to extract raw JSON
+                json_match = re.search(r'\{.*\}', content, re.DOTALL)
+                if json_match:
+                    json_str = json_match.group()
+                else:
+                    return self._get_mock_analysis("Failed to find JSON in response")
+            
+            # Parse the JSON
+            parsed = json.loads(json_str)
+            
+            # Map Perplexity response to our format
+            template_opportunities = []
+            for template in parsed.get('programmatic_seo_templates', []):
+                template_opportunities.append({
+                    "template_name": template.get('template_name', ''),
+                    "template_pattern": template.get('pattern', ''),
+                    "example_pages": template.get('example_pages', []),
+                    "estimated_pages": template.get('estimated_number_of_pages', 0),
+                    "difficulty": template.get('difficulty_level', 'Medium')
+                })
+            
+            return {
+                "business_name": parsed.get('business_name', 'Unknown Business'),
+                "business_description": parsed.get('description', parsed.get('business_description', '')),
+                "target_audience": ', '.join(parsed.get('target_audience', [])) if isinstance(parsed.get('target_audience'), list) else parsed.get('target_audience', ''),
+                "core_offerings": parsed.get('core_offerings', []),
+                "template_opportunities": template_opportunities
+            }
+            
         except Exception as e:
             print(f"Error parsing AI response: {e}")
-            return self._get_mock_analysis("AI-enhanced analysis")
+            import traceback
+            traceback.print_exc()
+            return self._get_mock_analysis("AI parsing failed")
     
     def _get_mock_analysis(self, business_input: str) -> Dict[str, Any]:
         """Return mock analysis for testing"""
