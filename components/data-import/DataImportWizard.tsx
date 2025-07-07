@@ -242,7 +242,7 @@ export default function DataImportWizard({
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Missing columns: {validationResult.missing_columns.join(', ')}
+                Missing columns: {validationResult.missing_columns?.join(', ') || 'None'}
               </AlertDescription>
             </Alert>
           )}
