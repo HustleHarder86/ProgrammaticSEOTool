@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -33,7 +33,7 @@ interface PreviewPage {
   seo_title: string;
   seo_description: string;
   seo_keywords: string[];
-  variables: Record<string, any>;
+  variables: Record<string, unknown>;
 }
 
 export function PagePreview({ template, dataset, settings }: PagePreviewProps) {
@@ -42,11 +42,7 @@ export function PagePreview({ template, dataset, settings }: PagePreviewProps) {
   const [viewMode, setViewMode] = useState<'preview' | 'html' | 'seo'>('preview');
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    generatePreviewPages();
-  }, [template, dataset, settings]);
-
-  const generatePreviewPages = async () => {
+  const generatePreviewPages = useCallback(async () => {
     if (!template || !dataset) return;
     
     setLoading(true);
@@ -67,7 +63,11 @@ export function PagePreview({ template, dataset, settings }: PagePreviewProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [template, dataset, settings]);
+
+  useEffect(() => {
+    generatePreviewPages();
+  }, [generatePreviewPages]);
 
   const generatePageFromTemplate = (template: Template, data: Record<string, any>): PreviewPage => {
     // Simple template variable replacement

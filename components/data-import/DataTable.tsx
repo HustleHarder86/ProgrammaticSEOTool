@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -22,7 +22,7 @@ interface DataTableProps {
 interface DatasetDetail {
   id: string
   name: string
-  data: Record<string, any>[]
+  data: Record<string, unknown>[]
   row_count: number
   columns: string[]
 }
@@ -38,11 +38,7 @@ export default function DataTable({
   const [currentPage, setCurrentPage] = useState(1)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchDataset()
-  }, [datasetId, projectId])
-
-  const fetchDataset = async () => {
+  const fetchDataset = useCallback(async () => {
     setIsLoading(true)
     setError(null)
 
@@ -58,7 +54,11 @@ export default function DataTable({
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [datasetId, projectId])
+
+  useEffect(() => {
+    fetchDataset()
+  }, [fetchDataset])
 
   if (isLoading) {
     return (

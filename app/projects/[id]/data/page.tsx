@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import DataImportWizard from '@/components/data-import/DataImportWizard'
 import DataTable from '@/components/data-import/DataTable'
@@ -32,13 +32,7 @@ export default function DataPage() {
   const [isImporting, setIsImporting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Load existing datasets and templates
-  useEffect(() => {
-    fetchDatasets()
-    fetchTemplates()
-  }, [projectId])
-
-  const fetchDatasets = async () => {
+  const fetchDatasets = useCallback(async () => {
     try {
       const response = await fetch(`/api/projects/${projectId}/data`)
       if (response.ok) {
@@ -50,9 +44,9 @@ export default function DataPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [projectId])
 
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     try {
       const response = await fetch(`/api/projects/${projectId}/templates`)
       if (response.ok) {
@@ -62,7 +56,13 @@ export default function DataPage() {
     } catch (error) {
       console.error('Error fetching templates:', error)
     }
-  }
+  }, [projectId])
+
+  // Load existing datasets and templates
+  useEffect(() => {
+    fetchDatasets()
+    fetchTemplates()
+  }, [fetchDatasets, fetchTemplates])
 
   const handleDatasetClick = async (dataset: DataSet) => {
     setSelectedDataset(dataset)
