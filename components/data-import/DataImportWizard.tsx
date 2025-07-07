@@ -42,10 +42,6 @@ interface UploadResponse {
   }
 }
 
-interface ColumnMapping {
-  [templateVariable: string]: string | null
-}
-
 type WizardStep = 'upload' | 'preview' | 'mapping' | 'complete'
 
 export default function DataImportWizard({
@@ -57,7 +53,6 @@ export default function DataImportWizard({
   const [currentStep, setCurrentStep] = useState<WizardStep>('upload')
   const [uploadResponse, setUploadResponse] = useState<UploadResponse | null>(null)
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null)
-  const [columnMappings, setColumnMappings] = useState<ColumnMapping>({})
   const [validationResult, setValidationResult] = useState<{ is_valid?: boolean; errors?: string[]; warnings?: string[]; missing_columns?: string[]; column_mapping_suggestions?: Record<string, string> } | null>(null)
 
   const handleUploadComplete = (response: UploadResponse) => {
@@ -68,15 +63,7 @@ export default function DataImportWizard({
   const handleTemplateSelection = (template: Template) => {
     setSelectedTemplate(template)
     // Initialize column mappings
-    const initialMappings: ColumnMapping = {}
-    template.variables.forEach(variable => {
-      // Try to auto-match columns
-      const matchingColumn = uploadResponse?.columns.find(
-        col => col.toLowerCase() === variable.toLowerCase()
-      )
-      initialMappings[variable] = matchingColumn || null
-    })
-    setColumnMappings(initialMappings)
+    // Column mapping is now handled by the backend validation
   }
 
   const validateDataWithTemplate = async () => {
@@ -280,7 +267,7 @@ export default function DataImportWizard({
             </CardContent>
           </Card>
 
-          {validationResult.warnings.length > 0 && (
+          {validationResult.warnings && validationResult.warnings.length > 0 && (
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
