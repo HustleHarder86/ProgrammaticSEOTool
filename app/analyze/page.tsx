@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Globe, FileText, Loader2, ArrowRight, Sparkles } from 'lucide-react';
+import { Globe, FileText, Loader2, Sparkles } from 'lucide-react';
 
 interface BusinessAnalysisResponse {
   project_id: string;
@@ -56,7 +56,7 @@ export default function AnalyzePage() {
     }
   };
 
-  const handleSelectTemplate = (template: any) => {
+  const handleSelectTemplate = (template: { template_name: string }) => {
     if (analysisResult?.project_id) {
       // Navigate to project page with selected template
       router.push(`/projects/${analysisResult.project_id}?template=${encodeURIComponent(template.template_name)}`);
@@ -133,7 +133,7 @@ export default function AnalyzePage() {
                 className="w-full"
               />
               <p className="text-sm text-gray-500">
-                We'll analyze your website to understand your business and suggest templates
+                We&apos;ll analyze your website to understand your business and suggest templates
               </p>
             </div>
           ) : (
@@ -192,7 +192,7 @@ export default function AnalyzePage() {
             }}
             className="text-left p-3 bg-white rounded-lg border border-purple-200 hover:border-purple-400 transition-colors"
           >
-            <strong>Marketing Agency:</strong> "Digital marketing agency specializing in SEO and PPC for e-commerce brands"
+            <strong>Marketing Agency:</strong> &quot;Digital marketing agency specializing in SEO and PPC for e-commerce brands&quot;
           </button>
           <button
             onClick={() => {
@@ -201,7 +201,7 @@ export default function AnalyzePage() {
             }}
             className="text-left p-3 bg-white rounded-lg border border-purple-200 hover:border-purple-400 transition-colors"
           >
-            <strong>SaaS Tool:</strong> "Project management tool for remote teams with task tracking and collaboration"
+            <strong>SaaS Tool:</strong> &quot;Project management tool for remote teams with task tracking and collaboration&quot;
           </button>
           <button
             onClick={() => {
@@ -210,7 +210,7 @@ export default function AnalyzePage() {
             }}
             className="text-left p-3 bg-white rounded-lg border border-purple-200 hover:border-purple-400 transition-colors"
           >
-            <strong>Fitness Platform:</strong> "Online fitness coaching with personalized workout plans and nutrition guidance"
+            <strong>Fitness Platform:</strong> &quot;Online fitness coaching with personalized workout plans and nutrition guidance&quot;
           </button>
         </div>
       </div>

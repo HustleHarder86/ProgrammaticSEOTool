@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { apiClient } from '@/lib/api/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FolderOpen, Calendar, ArrowRight, Plus, Sparkles } from 'lucide-react';
+import { FolderOpen, Calendar, ArrowRight, Plus } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface Project {
