@@ -50,7 +50,7 @@ export function PagePreview({ template, dataset }: PagePreviewProps) {
     
     // Replace variables in content
     template.variables.forEach(variable => {
-      const value = data[variable.name] || variable.example || `{${variable.name}}`;
+      const value = String(data[variable.name] || variable.example || `{${variable.name}}`);
       const regex = new RegExp(`\\{\\{${variable.name}\\}\\}`, 'g');
       content = content.replace(regex, value);
       seoTitle = seoTitle.replace(regex, value);
