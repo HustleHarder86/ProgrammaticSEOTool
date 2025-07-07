@@ -25,7 +25,7 @@ interface Template {
 
 export default function DataPage() {
   const params = useParams()
-  const projectId = params.id as string
+  const projectId = params?.id as string
   const [datasets, setDatasets] = useState<DataSet[]>([])
   const [templates, setTemplates] = useState<Template[]>([])
   const [selectedDataset, setSelectedDataset] = useState<DataSet | null>(null)

@@ -63,7 +63,7 @@ export function PagePreview({ template, dataset, settings }: PagePreviewProps) {
     } finally {
       setLoading(false);
     }
-  }, [template, dataset, settings, generatePageFromTemplate]);
+  }, [template, dataset, generatePageFromTemplate]);
 
   useEffect(() => {
     generatePreviewPages();
