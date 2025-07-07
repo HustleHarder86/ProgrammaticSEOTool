@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/main.py": {
-      "runtime": "@vercel/python@3.9.18"
+      "runtime": "python3.9"
     }
   },
   "rewrites": [
