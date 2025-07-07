@@ -25,19 +25,22 @@ class AIClient:
         prompt = f"""
         Analyze this business for programmatic SEO opportunities: {business_input}
         
-        Provide:
-        1. Business name and description
-        2. Target audience
-        3. Core offerings (3-5 main products/services)
-        4. Template opportunities for programmatic SEO with:
-           - Template name
-           - Pattern (e.g., [Service] in [City])
-           - 3 example pages
-           - Estimated number of pages possible
-           - Difficulty level (Easy/Medium/Hard)
+        Provide a JSON response with:
+        1. business_name: A clear business name
+        2. description: Business description
+        3. target_audience: Who the business serves
+        4. core_offerings: List of 3-5 main products/services
+        5. programmatic_seo_templates: Array of template opportunities, each with:
+           - template_name: Descriptive name
+           - pattern: Template pattern (e.g., [Service] in [City])
+           - example_pages: 3 example page titles
+           - estimated_number_of_pages: Number between 50-500 based on realistic data availability
+           - difficulty_level: Easy/Medium/Hard
         
-        Focus on templates that could generate 50+ pages.
-        Format as JSON.
+        Focus on templates that could realistically generate 50+ pages for Canadian markets.
+        Consider major Canadian cities, provinces, neighborhoods, and property types.
+        
+        Format response as JSON in a markdown code block.
         """
         
         try:
@@ -101,7 +104,7 @@ class AIClient:
                     "template_name": template.get('template_name', ''),
                     "template_pattern": template.get('pattern', ''),
                     "example_pages": template.get('example_pages', []),
-                    "estimated_pages": template.get('estimated_number_of_pages', 0),
+                    "estimated_pages": template.get('estimated_number_of_pages', template.get('estimated_pages', 50)),
                     "difficulty": template.get('difficulty_level', 'Medium')
                 })
             
