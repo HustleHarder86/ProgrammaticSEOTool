@@ -61,7 +61,7 @@ export function useProjectStats() {
       let lastActivity = 'No activity yet';
       if (lastActivityDate) {
         const now = new Date();
-        const diffInHours = (now.getTime() - lastActivityDate.getTime()) / (1000 * 60 * 60);
+        const diffInHours = (now.getTime() - (lastActivityDate as Date).getTime()) / (1000 * 60 * 60);
         
         if (diffInHours < 1) {
           lastActivity = 'Just now';

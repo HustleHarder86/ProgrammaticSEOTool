@@ -117,36 +117,41 @@ When implementing features:
 
 ## Deployment Configuration (CRITICAL)
 
-**This project is deployed on Vercel as a unified Next.js + FastAPI application.**
+**This project uses a separated architecture: Frontend on Vercel, Backend on Railway**
 
-### Vercel Requirements
-1. **Single Project Structure**: Frontend (Next.js) at root, Backend (FastAPI) in `/api`
-2. **No Separate Frontend/Backend**: Everything deploys as one project
-3. **API Routes**: FastAPI handles `/api/*` routes via `/api/main.py`
-4. **Environment Variables**: Set in Vercel dashboard, not in code
-5. **Python Runtime**: Must specify exact version (e.g., `python3.9`, not `python3`)
+### Current Deployment Architecture
+1. **Frontend**: Next.js deployed on Vercel
+2. **Backend**: FastAPI deployed on Railway (separate project)
+3. **Communication**: Frontend calls Railway backend via environment variable URL
+4. **Why Separated**: Vercel couldn't handle mixed Python/Next.js well (discovered during development)
+
+### Deployment URLs
+- **Frontend (Vercel)**: https://programmatic-seo-tool.vercel.app
+- **Backend (Railway)**: https://programmaticseotool-production.up.railway.app
+
+### Frontend (Vercel) Requirements
+1. **Next.js Only**: Pure Next.js frontend, no Python
+2. **Environment Variable**: `NEXT_PUBLIC_API_URL` points to Railway backend
+3. **API Calls**: Use axios client with backend URL from environment
+4. **CORS**: Backend configured to accept Vercel frontend origin
+
+### Backend (Railway) Requirements
+1. **FastAPI Application**: Full backend in `/backend` directory
+2. **Database**: SQLite for persistence
+3. **Environment Variables**: AI provider keys set in Railway
+4. **CORS Middleware**: Configured to accept frontend domain
 
 ### All Subagents MUST Follow These Rules:
-1. **Never create separate frontend/backend projects**
-2. **Always use relative API paths** (e.g., `/api/analyze`, not `http://localhost:8000/api/analyze`)
-3. **Never hardcode URLs** - use relative paths
-4. **Keep vercel.json minimal** - only Python runtime and rewrites
-5. **Test deployment compatibility** before pushing
+1. **Keep frontend and backend separate** - they deploy to different platforms
+2. **Use environment variable for API URL** in frontend (not hardcoded)
+3. **Frontend uses `NEXT_PUBLIC_API_URL`** for all API calls
+4. **Test CORS configuration** when making API changes
+5. **Update both deployments** when making breaking changes
 
-### Current vercel.json Structure:
+### Current vercel.json Structure (Frontend Only):
 ```json
 {
-  "functions": {
-    "api/main.py": {
-      "runtime": "python3.9"
-    }
-  },
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "/api/main"
-    }
-  ]
+  "framework": "nextjs"
 }
 ```
 

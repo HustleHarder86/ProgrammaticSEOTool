@@ -1,79 +1,108 @@
-# Vercel Frontend Deployment Guide
+# Vercel Frontend Deployment Instructions
 
-## 1. Environment Variables
+## Architecture Overview
 
-Add this environment variable in Vercel Dashboard:
+This project uses a **separated architecture**:
+- **Frontend**: Next.js on Vercel (this deployment)
+- **Backend**: FastAPI on Railway (separate deployment)
 
-### Go to: Project Settings → Environment Variables
+The frontend communicates with the Railway backend via the `NEXT_PUBLIC_API_URL` environment variable.
 
-Add the following:
+## Fixed Issues
 
+The project has been corrected to use the proper separated architecture:
+
+### 1. Removed Unified Deployment Attempt
+- Removed `/api` directory (no Python in Vercel)
+- Reverted `vercel.json` to Next.js-only configuration
+- Updated API client to use Railway backend URL
+
+### 2. Configuration Changes
+- Frontend uses `NEXT_PUBLIC_API_URL` environment variable
+- API client properly configured with backend URL
+- Fixed all TypeScript build errors
+
+### 3. Environment Variables
+- **Required**: `NEXT_PUBLIC_API_URL` - Railway backend URL
+- Backend URL: `https://programmaticseotool-production.up.railway.app`
+
+## Deployment Steps
+
+1. **Set up Environment Variable**
+   Create `.env.local` file:
+   ```bash
+   NEXT_PUBLIC_API_URL=https://programmaticseotool-production.up.railway.app
+   ```
+
+2. **Push to GitHub**
+   ```bash
+   git add .
+   git commit -m "Fix Vercel deployment - use separated architecture"
+   git push
+   ```
+
+3. **Deploy to Vercel**
+   ```bash
+   vercel
+   ```
+   Or connect your GitHub repo in Vercel dashboard
+
+4. **Set Environment Variables in Vercel Dashboard**
+   - Go to your project settings in Vercel
+   - Add `NEXT_PUBLIC_API_URL` with the Railway backend URL
+   - This ensures the frontend can communicate with the backend
+
+5. **Verify Deployment**
+   - Check that the frontend loads at your Vercel URL
+   - Test API connectivity on the `/test-api` page
+   - Verify no CORS errors in browser console
+
+## Key Configuration Files
+
+1. **vercel.json** - Simple Next.js configuration:
+   ```json
+   {
+     "framework": "nextjs"
+   }
+   ```
+
+2. **API Client** (`lib/api/client.ts`):
+   ```typescript
+   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+   ```
+
+3. **.env.example** - Shows required environment variables
+
+## Testing Locally
+
+```bash
+# Install dependencies
+npm install
+
+# Create .env.local with backend URL
+echo "NEXT_PUBLIC_API_URL=https://programmaticseotool-production.up.railway.app" > .env.local
+
+# Test build
+npm run build
+
+# Run locally
+npm run dev
 ```
-Name: NEXT_PUBLIC_API_URL
-Value: https://programmaticseotool-production.up.railway.app
-Environment: Production, Preview, Development
-```
 
-Click "Save"
+## Backend Information
 
-## 2. Deploy to Vercel
+The backend is deployed separately on Railway:
+- URL: `https://programmaticseotool-production.up.railway.app`
+- Repository: Same repo, `/backend` directory
+- Has CORS configured to accept the Vercel frontend
 
-The deployment will happen automatically when you push to GitHub, or you can:
+## Troubleshooting
 
-1. Go to your Vercel dashboard
-2. Click on your project
-3. Click "Redeploy" → "Redeploy with existing Build Cache"
+If deployment fails:
+1. Ensure `NEXT_PUBLIC_API_URL` is set in Vercel environment variables
+2. Check that the Railway backend is running
+3. Verify no TypeScript errors with `npm run build`
+4. Check browser console for CORS errors
+5. Ensure the backend URL doesn't have a trailing slash
 
-## 3. Verify Deployment
-
-After deployment, test these features:
-
-### 1. Home Page
-- Visit: https://programmatic-seo-tool.vercel.app
-- Should see the landing page without errors
-
-### 2. Business Analysis
-- Click "Analyze Business" 
-- Enter: "Digital marketing agency specializing in SEO"
-- Should return template opportunities
-
-### 3. Check Browser Console
-- Open Developer Tools (F12)
-- Go to Console tab
-- Should see no CORS errors
-- API calls should go to Railway backend
-
-## 4. Common Issues
-
-### CORS Error
-- Check Railway backend logs
-- Verify CORS origins include your Vercel URL
-
-### 500 Internal Server Error
-- Check if PERPLEXITY_API_KEY is set in Railway
-- Check Railway logs for specific error
-
-### API Not Found (404)
-- Verify NEXT_PUBLIC_API_URL is set correctly
-- Should NOT have trailing slash
-
-### Connection Refused
-- Check if Railway backend is running
-- Verify Railway URL is correct
-
-## 5. Testing Checklist
-
-- [ ] Home page loads
-- [ ] Business analysis works
-- [ ] No console errors
-- [ ] API calls use Railway URL
-- [ ] Templates display correctly
-- [ ] Can navigate between pages
-
-## 6. Success Indicators
-
-✅ No build errors in Vercel
-✅ Environment variable is set
-✅ API calls show Railway URL in Network tab
-✅ Business analysis returns results
-✅ No CORS errors in console
+The frontend should now deploy successfully on Vercel!

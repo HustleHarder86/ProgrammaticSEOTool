@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Use relative paths for Vercel deployment compatibility
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+// Use environment variable for Railway backend URL
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export const apiClient = axios.create({
   baseURL: API_URL,

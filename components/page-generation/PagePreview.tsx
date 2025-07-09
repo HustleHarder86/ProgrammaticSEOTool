@@ -208,7 +208,7 @@ export function PagePreview({ template, dataset }: PagePreviewProps) {
                 {Object.entries(currentPage.variables).map(([key, value]) => (
                   <div key={key} className="flex justify-between py-1">
                     <span className="text-gray-600">{key}:</span>
-                    <span className="text-gray-900 font-medium">{value}</span>
+                    <span className="text-gray-900 font-medium">{String(value)}</span>
                   </div>
                 ))}
               </div>
