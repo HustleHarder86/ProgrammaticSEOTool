@@ -63,6 +63,37 @@ def health_check(db: Session = Depends(get_db)):
 def test_endpoint():
     return {"message": "API is working!", "timestamp": "2025-01-06"}
 
+@app.get("/debug/templates")
+def debug_all_templates(db: Session = Depends(get_db)):
+    """Debug endpoint to see all templates in database"""
+    templates = db.query(Template).all()
+    projects = db.query(Project).all()
+    
+    result = {
+        "total_templates": len(templates),
+        "total_projects": len(projects),
+        "templates": [],
+        "projects": []
+    }
+    
+    for template in templates:
+        result["templates"].append({
+            "id": template.id,
+            "project_id": template.project_id,
+            "name": template.name,
+            "pattern": template.pattern,
+            "created_at": template.created_at.isoformat() if template.created_at else None
+        })
+    
+    for project in projects:
+        result["projects"].append({
+            "id": project.id,
+            "name": project.name,
+            "created_at": project.created_at.isoformat() if project.created_at else None
+        })
+    
+    return result
+
 # Pydantic models
 class BusinessAnalysisRequest(BaseModel):
     business_input: str
@@ -291,6 +322,10 @@ def create_template(project_id: str, template: TemplateCreate, db: Session = Dep
         )
     
     # Create database template
+    print(f"DEBUG: Creating template for project_id: {project_id}")
+    print(f"DEBUG: Template name: {structured_template['name']}")
+    print(f"DEBUG: Template pattern: {structured_template['pattern']}")
+    
     db_template = Template(
         project_id=project_id,
         name=structured_template['name'],
@@ -307,17 +342,28 @@ def create_template(project_id: str, template: TemplateCreate, db: Session = Dep
     db.commit()
     db.refresh(db_template)
     
+    print(f"DEBUG: Template created successfully with id: {db_template.id}")
+    
     return db_template
 
 @app.get("/api/projects/{project_id}/templates", response_model=List[TemplateResponse])
 def list_project_templates(project_id: str, db: Session = Depends(get_db)):
     """List all templates for a project"""
+    print(f"DEBUG: Fetching templates for project_id: {project_id}")
+    
     # Check if project exists
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
+        print(f"DEBUG: Project {project_id} not found!")
         raise HTTPException(status_code=404, detail="Project not found")
     
+    print(f"DEBUG: Project found: {project.name}")
+    
     templates = db.query(Template).filter(Template.project_id == project_id).all()
+    print(f"DEBUG: Found {len(templates)} templates for project {project_id}")
+    for template in templates:
+        print(f"DEBUG: - Template {template.id}: {template.name} (project_id: {template.project_id})")
+    
     return templates
 
 @app.get("/api/templates/{template_id}", response_model=TemplateDetailResponse)
