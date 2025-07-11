@@ -14,12 +14,14 @@ from template_engine import TemplateEngine
 from data_processor import DataProcessor
 from page_generator import PageGenerator
 from export_manager import export_manager, ExportFormat
+from agents.variable_generator import VariableGeneratorAgent
 
 app = FastAPI(title="Programmatic SEO Tool API")
 ai_client = AIClient()
 template_engine = TemplateEngine()
 data_processor = DataProcessor()
 page_generator = PageGenerator()
+variable_generator = VariableGeneratorAgent()
 
 # Initialize database on startup
 @app.on_event("startup")
@@ -30,6 +32,8 @@ def startup_event():
 # For production, use specific origins
 origins = [
     "http://localhost:3000",  # Local development
+    "http://localhost:3001",  # Local development (alternate port)
+    "http://localhost:3002",  # Local development (alternate port)
     "https://programmatic-seo-tool.vercel.app",  # Production Vercel
     "https://programmatic-seo-tool-*.vercel.app",  # Preview deployments
 ]
@@ -691,6 +695,8 @@ class GeneratePreviewResponse(BaseModel):
 
 class GeneratePagesRequest(BaseModel):
     batch_size: int = 100
+    selected_titles: Optional[List[str]] = None
+    variables_data: Optional[Dict[str, List[str]]] = None
 
 class GeneratePagesResponse(BaseModel):
     total_generated: int
@@ -737,6 +743,67 @@ def generate_preview_pages(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Preview generation failed: {str(e)}")
 
+# Variable generation models
+class GenerateVariablesRequest(BaseModel):
+    additional_context: Optional[str] = None
+    target_count: int = 25
+
+class GenerateVariablesResponse(BaseModel):
+    variables: Dict[str, List[str]]
+    titles: List[str]
+    total_count: int
+    template_pattern: str
+    variable_types: Dict[str, str]
+
+@app.post("/api/projects/{project_id}/templates/{template_id}/generate-variables", response_model=GenerateVariablesResponse)
+async def generate_variables(
+    project_id: str,
+    template_id: str,
+    request: GenerateVariablesRequest,
+    db: Session = Depends(get_db)
+):
+    """Generate AI-powered variables for a template based on business context"""
+    try:
+        # Get project and template
+        project = db.query(Project).filter(Project.id == project_id).first()
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        template = db.query(Template).filter(
+            Template.id == template_id,
+            Template.project_id == project_id
+        ).first()
+        if not template:
+            raise HTTPException(status_code=404, detail="Template not found")
+        
+        # Get business context from project
+        business_context = project.business_analysis or {}
+        
+        # Generate variables using AI
+        result = await variable_generator.generate_variables(
+            template_pattern=template.pattern,
+            business_context=business_context,
+            additional_context=request.additional_context,
+            target_count=request.target_count
+        )
+        
+        # Validate generated variables
+        validation = variable_generator.validate_generated_variables(result["variables"])
+        if not validation["is_valid"]:
+            raise HTTPException(
+                status_code=400,
+                detail={"errors": validation["errors"], "warnings": validation["warnings"]}
+            )
+        
+        return GenerateVariablesResponse(**result)
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Variable generation failed: {str(e)}")
+
 @app.post("/api/projects/{project_id}/templates/{template_id}/generate", response_model=GeneratePagesResponse)
 def generate_all_pages(
     project_id: str,
@@ -759,9 +826,19 @@ def generate_all_pages(
             raise HTTPException(status_code=404, detail="Template not found")
         
         # Generate pages
-        total_generated, page_ids = page_generator.generate_all_pages(
-            project_id, template_id, db, batch_size=request.batch_size
-        )
+        if request.selected_titles and request.variables_data:
+            # Use AI-generated variables and selected titles
+            total_generated, page_ids = page_generator.generate_pages_from_variables(
+                project_id, template_id, 
+                request.variables_data,
+                request.selected_titles,
+                db, batch_size=request.batch_size
+            )
+        else:
+            # Use traditional CSV data
+            total_generated, page_ids = page_generator.generate_all_pages(
+                project_id, template_id, db, batch_size=request.batch_size
+            )
         
         return GeneratePagesResponse(
             total_generated=total_generated,

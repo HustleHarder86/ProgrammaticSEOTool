@@ -392,6 +392,116 @@ class PageGenerator:
         
         return sample_data
     
+    def generate_pages_from_variables(self, project_id: str, template_id: str,
+                                     variables_data: Dict[str, List[str]], 
+                                     selected_titles: Optional[List[str]],
+                                     db: Session, batch_size: int = 100) -> Tuple[int, List[str]]:
+        """Generate pages from AI-generated variables and selected titles
+        
+        Args:
+            project_id: Project ID
+            template_id: Template ID
+            variables_data: Dict mapping variable names to their values
+            selected_titles: Optional list of specific titles to generate
+            db: Database session
+            batch_size: Number of pages to process at once
+            
+        Returns:
+            Tuple of (total_pages_generated, list_of_page_ids)
+        """
+        # Get template and project
+        template = db.query(Template).filter(Template.id == template_id).first()
+        if not template:
+            raise ValueError(f"Template {template_id} not found")
+        
+        project = db.query(Project).filter(Project.id == project_id).first()
+        if not project:
+            raise ValueError(f"Project {project_id} not found")
+        
+        # Convert variables_data to the expected format
+        variable_data = {}
+        for var_name, values in variables_data.items():
+            variable_data[var_name] = [
+                {'value': val, 'dataset_id': 'ai_generated', 'dataset_name': 'AI Generated', 'metadata': {}}
+                for val in values
+            ]
+        
+        # Generate combinations
+        all_combinations = self.generate_all_combinations(variable_data)
+        
+        # Filter combinations if specific titles are selected
+        if selected_titles:
+            filtered_combinations = []
+            for combo in all_combinations:
+                # Generate title from combination
+                title = self._generate_title_from_combo(template.pattern, combo)
+                if title in selected_titles:
+                    filtered_combinations.append(combo)
+            all_combinations = filtered_combinations
+        
+        total_combinations = len(all_combinations)
+        if total_combinations == 0:
+            return 0, []
+        
+        # Process pages (same as generate_all_pages from here)
+        generated_page_ids = []
+        
+        for batch_start in range(0, total_combinations, batch_size):
+            batch_end = min(batch_start + batch_size, total_combinations)
+            batch_combinations = all_combinations[batch_start:batch_end]
+            
+            for i, combination in enumerate(batch_combinations):
+                global_index = batch_start + i
+                
+                # Generate unique content
+                page_content = self.generate_unique_content(
+                    template, combination, global_index, total_combinations
+                )
+                
+                # Create content hash to check for duplicates
+                content_hash = self._generate_content_hash(page_content)
+                
+                # Check if page already exists
+                existing_page = db.query(GeneratedPage).filter(
+                    GeneratedPage.project_id == project_id,
+                    GeneratedPage.template_id == template_id,
+                    GeneratedPage.content_hash == content_hash
+                ).first()
+                
+                if not existing_page:
+                    # Save generated page
+                    generated_page = GeneratedPage(
+                        project_id=project_id,
+                        template_id=template_id,
+                        title=page_content['title'],
+                        content=page_content,
+                        content_hash=content_hash,
+                        meta_data={
+                            'keyword': page_content.get('keyword', ''),
+                            'slug': page_content.get('slug', ''),
+                            'variables': combination,
+                            'seo_score': page_content.get('seo_score', 0),
+                            'quality_score': page_content.get('quality_metrics', {}).get('quality_score', 0)
+                        }
+                    )
+                    
+                    db.add(generated_page)
+                    generated_page_ids.append(generated_page.id)
+            
+            # Commit batch
+            db.commit()
+        
+        return len(generated_page_ids), generated_page_ids
+    
+    def _generate_title_from_combo(self, pattern: str, combination: Dict[str, Any]) -> str:
+        """Generate title from pattern and combination"""
+        title = pattern
+        for var_name, var_data in combination.items():
+            value = var_data['value'] if isinstance(var_data, dict) else var_data
+            title = title.replace(f'[{var_name}]', str(value))
+            title = title.replace(f'{{{var_name}}}', str(value))
+        return title
+    
     def generate_all_pages(self, project_id: str, template_id: str, 
                           db: Session, batch_size: int = 100) -> Tuple[int, List[str]]:
         """Generate all pages for a template

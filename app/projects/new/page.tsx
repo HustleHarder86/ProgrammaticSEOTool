@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { BusinessAnalysisForm } from '@/components/business/BusinessAnalysisForm';
 import { LoadingAnimation } from '@/components/business/LoadingAnimation';
 import { TemplateResults } from '@/components/business/TemplateResults';
+import { apiClient } from '@/lib/api/client';
 
 type WizardStep = 'input' | 'loading' | 'results';
 
@@ -23,6 +24,7 @@ interface TemplateResult {
 }
 
 interface AnalysisResults {
+  project_id: string;
   business_name: string;
   business_description: string;
   target_audience: string;
@@ -35,44 +37,90 @@ export default function NewProjectPage() {
   const [, setAnalysisData] = useState<AnalysisData | null>(null);
   const [analysisResults, setAnalysisResults] = useState<AnalysisResults | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loadingAction, setLoadingAction] = useState<'analyzing' | 'creating-template'>('analyzing');
 
   const handleBusinessSubmit = async (data: AnalysisData) => {
     setAnalysisData(data);
     setWizardStep('loading');
+    setLoadingAction('analyzing');
     setError(null);
 
     try {
-      // Call the API
-      const response = await fetch('/api/analyze-business', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          business_input: data.businessInput,
-          input_type: data.inputType,
-        }),
+      // Call the API using apiClient
+      const response = await apiClient.post('/api/analyze-business', {
+        business_input: data.businessInput,
+        input_type: data.inputType,
       });
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-
-      const result = await response.json();
+      const result = response.data;
       setAnalysisResults(result);
       setWizardStep('results');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Analysis error:', err);
-      setError('Failed to analyze business. Please try again.');
+      const errorMessage = err.response?.data?.detail || err.message || 'Failed to analyze business. Please try again.';
+      setError(errorMessage);
       setWizardStep('input');
     }
   };
 
-  const handleSelectTemplate = (template: TemplateResult) => {
-    // For now, just log the selected template
-    console.log('Selected template:', template);
-    // In a real implementation, this would move to the next step in the wizard
-    alert('Template selected! Next steps: Data import and page generation.');
+  const handleSelectTemplate = async (template: TemplateResult) => {
+    if (!analysisResults?.project_id) {
+      alert('Error: No project found');
+      return;
+    }
+
+    try {
+      setWizardStep('loading');
+      setLoadingAction('creating-template');
+      console.log('Creating template:', template);
+      
+      // Extract variables from template pattern (e.g., {Service} in {City} -> [Service, City])
+      const variables = template.template_pattern.match(/\{([^}]+)\}/g)?.map(v => v.slice(1, -1)) || [];
+      
+      // Create more dynamic content based on the template pattern
+      const cleanPattern = template.template_pattern.toLowerCase().replace(/[{}]/g, '');
+      
+      // Create the template in the database
+      const response = await apiClient.post(`/api/projects/${analysisResults.project_id}/templates`, {
+        name: template.template_name,
+        pattern: template.template_pattern,
+        template_type: 'programmatic_seo',
+        title_template: `${template.template_pattern} | ${analysisResults.business_name}`,
+        meta_description_template: `Discover ${cleanPattern} with ${analysisResults.business_name}. Expert solutions and comprehensive guidance for your needs.`,
+        h1_template: template.template_pattern,
+        content_sections: [
+          {
+            heading: 'Overview',
+            content: `Welcome to our comprehensive guide on ${cleanPattern}. At ${analysisResults.business_name}, we provide expert solutions tailored to your specific needs.`
+          },
+          {
+            heading: 'Our Expertise', 
+            content: `Our team specializes in delivering high-quality ${cleanPattern} services. With years of experience and proven results, we ensure exceptional outcomes for every client.`
+          },
+          {
+            heading: 'Why Choose Us',
+            content: `Choose ${analysisResults.business_name} for reliable, professional service. We offer competitive pricing, expert knowledge, and personalized solutions that deliver real results.`
+          },
+          {
+            heading: 'Get Started',
+            content: 'Ready to begin? Contact us today to discuss your specific requirements and discover how we can help you achieve your goals.'
+          }
+        ]
+      });
+
+      if (response.status === 200 || response.status === 201) {
+        // Template created successfully, redirect to the project's generate page
+        setTimeout(() => {
+          window.location.href = `/projects/${analysisResults.project_id}/generate`;
+        }, 1000);
+      } else {
+        throw new Error('Failed to create template');
+      }
+    } catch (error) {
+      console.error('Error creating template:', error);
+      setError('Failed to create template. Please try again.');
+      setWizardStep('results');
+    }
   };
 
   const handleBack = () => {
@@ -169,7 +217,18 @@ export default function NewProjectPage() {
 
           {wizardStep === 'loading' && (
             <div className="p-8 lg:p-12">
-              <LoadingAnimation />
+              {loadingAction === 'analyzing' ? (
+                <LoadingAnimation />
+              ) : (
+                <LoadingAnimation 
+                  message="Creating your template..." 
+                  steps={[
+                    'Processing template structure',
+                    'Generating SEO-optimized content',
+                    'Setting up variables and patterns'
+                  ]}
+                />
+              )}
             </div>
           )}
 

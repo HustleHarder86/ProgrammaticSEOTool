@@ -22,7 +22,7 @@ class AIHandler:
     def __init__(self):
         self.openai_key = os.environ.get('OPENAI_API_KEY')
         self.anthropic_key = os.environ.get('ANTHROPIC_API_KEY')
-        self.perplexity_key = os.environ.get('PerplexityAPI')
+        self.perplexity_key = os.environ.get('PERPLEXITY_API_KEY')
         
     def has_ai_provider(self):
         """Check if at least one AI provider is configured"""

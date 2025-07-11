@@ -12,7 +12,7 @@ import random
 # Import dependencies
 from agents.template_builder import TemplateBuilderAgent
 from agents.data_manager import DataManagerAgent
-from utils.ai_client import AIClient
+from ai_client import AIClient
 from api.content_variation import (
     ContentVariationEngine,
     generate_internal_links,

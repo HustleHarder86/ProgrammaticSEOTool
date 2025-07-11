@@ -7,12 +7,11 @@ import { apiClient } from '@/lib/api/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Sparkles, AlertCircle, CheckCircle, Clock, Download } from 'lucide-react';
-import { GenerationWizard } from '@/components/page-generation/GenerationWizard';
+import { AIGenerationWizard } from '@/components/generation';
 import { 
   Project, 
   Template, 
   Dataset, 
-  GenerationConfig, 
   GenerationResult 
 } from '@/types';
 
@@ -55,41 +54,12 @@ export default function GeneratePagesPage() {
     }
   }, [projectId, loadProjectData]);
 
-  const handleGeneration = async (config: GenerationConfig) => {
-    try {
-      setError(null);
-      setGenerationResult({ 
-        status: 'pending', 
-        total_pages: 0, 
-        generated_pages: 0, 
-        failed_pages: 0,
-        preview_pages: []
-      });
-
-      // Use backend API structure: /api/projects/{project_id}/templates/{template_id}/generate
-      const response = await apiClient.post(
-        `/api/projects/${projectId}/templates/${config.template_id}/generate`,
-        {
-          batch_size: config.generation_settings.max_pages || 100
-        }
-      );
-
-      const result = response.data;
-      setGenerationResult({
-        status: result.status === 'completed' ? 'completed' : 'failed',
-        total_pages: result.total_generated,
-        generated_pages: result.total_generated,
-        failed_pages: 0,
-        preview_pages: []
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to generate pages');
-      setGenerationResult(null);
+  const handleGenerationComplete = (result: GenerationResult) => {
+    setGenerationResult(result);
+    if (result.status === 'completed') {
+      // Could redirect to results page or show inline
+      router.push(`/projects/${projectId}/pages`);
     }
-  };
-
-  const handleViewResults = () => {
-    router.push(`/projects/${projectId}/results`);
   };
 
   if (loading) {
@@ -116,11 +86,6 @@ export default function GeneratePagesPage() {
     );
   }
 
-  // Check if we have required data
-  const hasTemplates = templates.length > 0;
-  const hasDatasets = datasets.length > 0;
-  const canGenerate = hasTemplates && hasDatasets;
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       {/* Header */}
@@ -143,167 +108,84 @@ export default function GeneratePagesPage() {
           </div>
           <div className="flex items-center text-sm text-gray-500">
             <Sparkles className="w-4 h-4 mr-1" />
-            <span>Bulk Page Generation</span>
+            <span>AI-Powered Generation</span>
           </div>
         </div>
       </div>
 
-      {/* Prerequisites Check */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Prerequisites</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className={`${hasTemplates ? 'border-green-200 bg-green-50' : 'border-orange-200 bg-orange-50'}`}>
-            <CardContent className="p-4">
-              <div className="flex items-center">
-                {hasTemplates ? (
-                  <CheckCircle className="w-5 h-5 text-green-600 mr-3" />
-                ) : (
-                  <AlertCircle className="w-5 h-5 text-orange-600 mr-3" />
-                )}
-                <div>
-                  <p className="font-medium">Templates</p>
-                  <p className="text-sm text-gray-600">
-                    {hasTemplates ? `${templates.length} templates ready` : 'No templates found'}
-                  </p>
-                </div>
-              </div>
-              {!hasTemplates && (
-                <Link href={`/projects/${projectId}/templates`}>
-                  <Button size="sm" className="mt-2">
-                    Create Template
-                  </Button>
-                </Link>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className={`${hasDatasets ? 'border-green-200 bg-green-50' : 'border-orange-200 bg-orange-50'}`}>
-            <CardContent className="p-4">
-              <div className="flex items-center">
-                {hasDatasets ? (
-                  <CheckCircle className="w-5 h-5 text-green-600 mr-3" />
-                ) : (
-                  <AlertCircle className="w-5 h-5 text-orange-600 mr-3" />
-                )}
-                <div>
-                  <p className="font-medium">Data</p>
-                  <p className="text-sm text-gray-600">
-                    {hasDatasets ? `${datasets.length} datasets ready` : 'No data imported'}
-                  </p>
-                </div>
-              </div>
-              {!hasDatasets && (
-                <Link href={`/projects/${projectId}/data`}>
-                  <Button size="sm" className="mt-2">
-                    Import Data
-                  </Button>
-                </Link>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Generation Wizard or Results */}
-      {canGenerate ? (
-        <div className="space-y-6">
-          {/* Error Display */}
-          {error && (
-            <Card className="border-red-200 bg-red-50">
-              <CardContent className="p-4">
-                <div className="flex items-center">
-                  <AlertCircle className="w-5 h-5 text-red-600 mr-3" />
-                  <div>
-                    <p className="font-medium text-red-800">Generation Error</p>
-                    <p className="text-sm text-red-600">{error}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Generation Results */}
-          {generationResult && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  {generationResult.status === 'completed' ? (
-                    <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
-                  ) : (
-                    <Clock className="w-5 h-5 text-blue-600 mr-2" />
-                  )}
-                  Generation {generationResult.status}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">
-                      {generationResult.generated_pages}
-                    </div>
-                    <div className="text-sm text-gray-600">Pages Generated</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">
-                      {generationResult.total_pages}
-                    </div>
-                    <div className="text-sm text-gray-600">Total Pages</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-red-600">
-                      {generationResult.failed_pages}
-                    </div>
-                    <div className="text-sm text-gray-600">Failed Pages</div>
-                  </div>
-                </div>
-                
-                {generationResult.status === 'completed' && (
-                  <div className="flex justify-center gap-3">
-                    <Button onClick={handleViewResults} className="bg-gradient-to-r from-purple-600 to-blue-600">
-                      View All Results
-                    </Button>
-                    <Link href={`/projects/${projectId}/export`}>
-                      <Button variant="outline">
-                        <Download className="w-4 h-4 mr-2" />
-                        Export Pages
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Generation Wizard */}
-          <GenerationWizard
-            projectId={projectId}
-            templates={templates}
-            datasets={datasets}
-            onGenerate={handleGeneration}
-            generationResult={generationResult}
-          />
-        </div>
-      ) : (
+      {/* Show message if no templates */}
+      {templates.length === 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle>Ready to Generate?</CardTitle>
+            <CardTitle>No Templates Found</CardTitle>
             <CardDescription>
-              Complete the prerequisites above to start generating pages.
+              You need to create a template first before generating pages.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <p className="text-gray-600">
-                You need at least one template and one dataset to generate pages.
-              </p>
-              <div className="flex gap-4">
-                <Link href={`/projects/${projectId}/templates`}>
-                  <Button variant="outline">Create Template</Button>
-                </Link>
-                <Link href={`/projects/${projectId}/data`}>
-                  <Button variant="outline">Import Data</Button>
-                </Link>
+            <Link href={`/projects/${projectId}/templates`}>
+              <Button>Create Template</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      ) : (
+        /* AI Generation Wizard */
+        <AIGenerationWizard 
+          projectId={projectId}
+          templates={templates}
+          businessContext={project?.business_analysis || {}}
+          onGenerationComplete={handleGenerationComplete}
+        />
+      )}
+
+      {/* Generation Results */}
+      {generationResult && (
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              {generationResult.status === 'completed' ? (
+                <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+              ) : (
+                <Clock className="w-5 h-5 text-blue-600 mr-2" />
+              )}
+              Generation {generationResult.status}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">
+                  {generationResult.generated_pages}
+                </div>
+                <div className="text-sm text-gray-600">Pages Generated</div>
               </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">
+                  {generationResult.template_used}
+                </div>
+                <div className="text-sm text-gray-600">Template Used</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-600">
+                  {generationResult.dataset_used}
+                </div>
+                <div className="text-sm text-gray-600">Dataset Used</div>
+              </div>
+            </div>
+            
+            <div className="flex gap-4">
+              <Button 
+                onClick={() => router.push(`/projects/${projectId}/pages`)}
+                className="flex-1"
+              >
+                View Generated Pages
+              </Button>
+              <Link href={`/projects/${projectId}/export`}>
+                <Button variant="outline">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Pages
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>

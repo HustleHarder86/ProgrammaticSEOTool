@@ -4,15 +4,18 @@ import { useEffect, useState } from 'react';
 
 interface LoadingAnimationProps {
   message?: string;
+  steps?: string[];
 }
 
-export function LoadingAnimation({ message = 'Analyzing your business...' }: LoadingAnimationProps) {
-  const [currentStep, setCurrentStep] = useState(0);
-  const steps = [
+export function LoadingAnimation({ 
+  message = 'Analyzing your business...', 
+  steps = [
     'Extracting business information',
     'Identifying programmatic SEO opportunities',
     'Generating template suggestions'
-  ];
+  ]
+}: LoadingAnimationProps) {
+  const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {

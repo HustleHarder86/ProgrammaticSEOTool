@@ -1,0 +1,169 @@
+{
+  "name": "AI Data Generation Agent",
+  "description": "Implement AI-powered automatic variable generation for programmatic SEO templates based on business context",
+  "version": "2.0.0",
+  "author": "Programmatic SEO Tool Team",
+  "created_at": "2025-01-11",
+  "priority": "CRITICAL",
+  
+  "objective": "Create an AI-powered system that generates relevant variables (like city names) based on business context from step 1 and template structure from step 2, showing all potential page titles for user selection before full page generation",
+  
+  "context": {
+    "problem": "Users currently must manually create CSV files with correct column names and relevant data, which is a major UX blocker",
+    "solution": "AI intelligently generates variables based on business context and template pattern, shows all titles for user review/selection",
+    "impact": "Users can see exactly what pages will be created and select which ones they want before generation"
+  },
+  
+  "workflow": {
+    "step_1": "User analyzes business (e.g., Canadian Real Estate Investment Tool)",
+    "step_2": "User selects template (e.g., '{City} with Best Investment Potential')",
+    "step_3": "AI generates variables based on context (e.g., 25 Canadian cities)",
+    "step_4": "User sees all potential titles and can select all/some",
+    "step_5": "System generates full pages only for selected titles"
+  },
+  
+  "key_features": [
+    {
+      "feature": "Context-Aware Variable Generation",
+      "description": "AI uses business context to generate relevant variables (e.g., knows to use Canadian cities for Canadian business)"
+    },
+    {
+      "feature": "Title Preview",
+      "description": "Show all potential page titles before generation (e.g., 'Toronto with Best Investment Potential')"
+    },
+    {
+      "feature": "Selective Generation",
+      "description": "Users can select all titles or choose specific ones for full page generation"
+    },
+    {
+      "feature": "Additional Context Input",
+      "description": "Optional field for users to add context to improve variable accuracy (e.g., 'Focus on major cities only')"
+    }
+  ],
+  
+  "implementation_steps": [
+    {
+      "step": 1,
+      "task": "Create Variable Generation Endpoint",
+      "description": "Add POST /api/projects/{id}/templates/{template_id}/generate-variables",
+      "details": "This endpoint takes business context + template pattern and returns relevant variables",
+      "files": ["backend/main.py", "backend/agents/variable_generator.py"]
+    },
+    {
+      "step": 2,
+      "task": "Build Context-Aware AI Prompts",
+      "description": "Create prompts that combine business analysis from step 1 with template structure",
+      "example_prompt": "Business: Canadian Real Estate Investment Tool\\nTemplate: {City} with Best Investment Potential\\nGenerate 25-30 relevant Canadian cities for this template",
+      "files": ["backend/agents/variable_generator.py"]
+    },
+    {
+      "step": 3,
+      "task": "Create Title Preview Component",
+      "description": "UI component that shows all potential page titles with checkboxes for selection",
+      "mockup": "[✓] Toronto with Best Investment Potential\\n[✓] Vancouver with Best Investment Potential\\n[✓] Montreal with Best Investment Potential",
+      "files": ["components/generation/TitlePreview.tsx"]
+    },
+    {
+      "step": 4,
+      "task": "Add Additional Context Input",
+      "description": "Optional textarea for users to provide extra context before variable generation",
+      "example": "User adds: 'Focus on cities with population over 100k and active rental markets'",
+      "files": ["components/generation/VariableGenerationForm.tsx"]
+    },
+    {
+      "step": 5,
+      "task": "Implement Selection Logic",
+      "description": "Allow bulk select/deselect and individual title selection",
+      "features": ["Select All", "Deselect All", "Individual checkboxes", "Selected count display"],
+      "files": ["components/generation/TitleSelector.tsx"]
+    },
+    {
+      "step": 6,
+      "task": "Update Page Generation Flow",
+      "description": "Modify generation to only create pages for selected titles",
+      "files": ["backend/agents/page_generator.py", "app/projects/[id]/generate/page.tsx"]
+    }
+  ],
+  
+  "ui_flow": {
+    "screen_1": {
+      "title": "Generate Variables for Your Template",
+      "elements": [
+        "Template Pattern Display: '{City} with Best Investment Potential'",
+        "Business Context Summary (from step 1)",
+        "Additional Context Input (optional)",
+        "Generate Variables Button"
+      ]
+    },
+    "screen_2": {
+      "title": "Select Pages to Generate",
+      "elements": [
+        "Title List with Checkboxes",
+        "Select All / Deselect All buttons",
+        "Selected Count: '23 of 25 pages selected'",
+        "Generate Selected Pages Button",
+        "Back to Edit Variables Button"
+      ]
+    }
+  },
+  
+  "api_specification": {
+    "generate_variables": {
+      "endpoint": "POST /api/projects/{id}/templates/{template_id}/generate-variables",
+      "request": {
+        "additional_context": "optional string with user-provided context"
+      },
+      "response": {
+        "variables": ["Toronto", "Vancouver", "Montreal"],
+        "titles": ["Toronto with Best Investment Potential", "..."],
+        "total_count": 25
+      }
+    },
+    "generate_selected_pages": {
+      "endpoint": "POST /api/projects/{id}/templates/{template_id}/generate-pages",
+      "request": {
+        "selected_titles": ["array of selected titles"],
+        "variables_data": {"City": ["Toronto", "Vancouver"]}
+      }
+    }
+  },
+  
+  "example_scenarios": [
+    {
+      "business": "Canadian Real Estate Tool",
+      "template": "{City} with Best Investment Potential",
+      "ai_generates": ["Toronto", "Vancouver", "Montreal", "Calgary", "Ottawa", "Edmonton"],
+      "user_sees": "List of all cities with checkboxes",
+      "user_action": "Deselects smaller cities, keeps major ones",
+      "result": "Generates pages only for selected cities"
+    },
+    {
+      "business": "Social Media Starter Pack Tool",
+      "template": "Best {Niche} Starter Packs on {Platform}",
+      "ai_generates": {
+        "Niche": ["Tech", "Design", "Marketing", "AI", "Gaming"],
+        "Platform": ["Bluesky", "Twitter", "LinkedIn"]
+      },
+      "titles_shown": "15 combinations (5 niches × 3 platforms)",
+      "user_action": "Selects only Bluesky-related titles",
+      "result": "Generates 5 pages (all niches but only for Bluesky)"
+    }
+  ],
+  
+  "success_criteria": [
+    "AI generates contextually relevant variables based on business analysis",
+    "Users see all potential page titles before generation",
+    "Users can select/deselect individual titles",
+    "Additional context improves variable quality",
+    "Only selected pages are generated",
+    "Process takes less than 10 seconds"
+  ],
+  
+  "testing_requirements": [
+    "Test with various business contexts",
+    "Verify AI understands geographic/market constraints",
+    "Test title selection UI with 100+ titles",
+    "Verify only selected pages are generated",
+    "Test additional context impact on results"
+  ]
+}

@@ -53,133 +53,105 @@ class DatabaseAgent:
             self.db.refresh(project)
         return project
     
-    # Keyword Operations
-    def add_keywords(self, project_id: int, keywords_data: List[Dict[str, Any]]) -> List[Keyword]:
-        """Add keywords to a project."""
-        keywords = []
-        for kw_data in keywords_data:
-            keyword = Keyword(
-                project_id=project_id,
-                keyword=kw_data['keyword'],
-                search_volume=kw_data.get('search_volume'),
-                difficulty=kw_data.get('difficulty'),
-                content_type=kw_data.get('content_type'),
-                priority=kw_data.get('priority', 5)
-            )
-            self.db.add(keyword)
-            keywords.append(keyword)
-        
-        self.db.commit()
-        logger.info(f"Added {len(keywords)} keywords to project {project_id}")
-        return keywords
-    
-    def get_project_keywords(self, project_id: int, status: Optional[str] = None) -> List[Keyword]:
-        """Get keywords for a project, optionally filtered by status."""
-        query = self.db.query(Keyword).filter(Keyword.project_id == project_id)
-        if status:
-            query = query.filter(Keyword.status == status)
-        return query.order_by(Keyword.priority.desc()).all()
-    
-    def update_keyword_status(self, keyword_id: int, status: str) -> Optional[Keyword]:
-        """Update keyword status."""
-        keyword = self.db.query(Keyword).filter(Keyword.id == keyword_id).first()
-        if keyword:
-            keyword.status = status
-            self.db.commit()
-            self.db.refresh(keyword)
-        return keyword
-    
-    # Content Operations
-    def save_content(self, project_id: int, keyword_id: Optional[int], 
-                    title: str, content_html: str, content_markdown: str,
-                    meta_description: str, slug: str, template_used: str,
-                    word_count: int, variation_number: int = 1) -> Content:
-        """Save generated content."""
-        content = Content(
+    # Template Operations
+    def create_template(self, project_id: str, name: str, pattern: str, 
+                       variables: List[str], template_sections: Dict[str, Any]) -> Template:
+        """Create a new template."""
+        template = Template(
             project_id=project_id,
-            keyword_id=keyword_id,
-            title=title,
-            meta_description=meta_description,
-            slug=slug,
-            content_html=content_html,
-            content_markdown=content_markdown,
-            word_count=word_count,
-            template_used=template_used,
-            variation_number=variation_number
+            name=name,
+            pattern=pattern,
+            variables=variables,
+            template_sections=template_sections
         )
-        self.db.add(content)
+        self.db.add(template)
         self.db.commit()
-        self.db.refresh(content)
-        
-        # Update keyword status if provided
-        if keyword_id:
-            self.update_keyword_status(keyword_id, 'generated')
-        
-        logger.info(f"Saved content: {content.id} - {content.title}")
-        return content
+        self.db.refresh(template)
+        logger.info(f"Created template: {template.id} - {template.name}")
+        return template
     
-    def get_project_content(self, project_id: int, status: Optional[str] = None) -> List[Content]:
-        """Get all content for a project."""
-        query = self.db.query(Content).filter(Content.project_id == project_id)
-        if status:
-            query = query.filter(Content.status == status)
-        return query.order_by(Content.created_at.desc()).all()
+    def get_template(self, template_id: str) -> Optional[Template]:
+        """Get template by ID."""
+        return self.db.query(Template).filter(Template.id == template_id).first()
     
-    def update_content_status(self, content_id: int, status: str, 
-                            published_url: Optional[str] = None) -> Optional[Content]:
-        """Update content status and optionally set published URL."""
-        content = self.db.query(Content).filter(Content.id == content_id).first()
-        if content:
-            content.status = status
-            if status == 'published' and published_url:
-                content.published_url = published_url
-                content.published_at = datetime.utcnow()
-            content.updated_at = datetime.utcnow()
-            self.db.commit()
-            self.db.refresh(content)
-        return content
+    def list_project_templates(self, project_id: str) -> List[Template]:
+        """List all templates for a project."""
+        return self.db.query(Template).filter(Template.project_id == project_id).all()
     
-    def get_content_by_keyword(self, keyword_id: int) -> List[Content]:
-        """Get all content variations for a keyword."""
-        return self.db.query(Content).filter(
-            Content.keyword_id == keyword_id
-        ).order_by(Content.variation_number).all()
+    # DataSet Operations
+    def create_dataset(self, project_id: str, name: str, data: List[Dict[str, Any]]) -> DataSet:
+        """Create a new dataset."""
+        dataset = DataSet(
+            project_id=project_id,
+            name=name,
+            data=data
+        )
+        self.db.add(dataset)
+        self.db.commit()
+        self.db.refresh(dataset)
+        logger.info(f"Created dataset: {dataset.id} - {dataset.name}")
+        return dataset
+    
+    def get_dataset(self, dataset_id: str) -> Optional[DataSet]:
+        """Get dataset by ID."""
+        return self.db.query(DataSet).filter(DataSet.id == dataset_id).first()
+    
+    def list_project_datasets(self, project_id: str) -> List[DataSet]:
+        """List all datasets for a project."""
+        return self.db.query(DataSet).filter(DataSet.project_id == project_id).all()
+    
+    # GeneratedPage Operations
+    def create_generated_page(self, project_id: str, template_id: str, 
+                            dataset_id: str, title: str, url_slug: str,
+                            content: str, seo_data: Dict[str, Any]) -> GeneratedPage:
+        """Create a new generated page."""
+        page = GeneratedPage(
+            project_id=project_id,
+            template_id=template_id,
+            dataset_id=dataset_id,
+            title=title,
+            url_slug=url_slug,
+            content=content,
+            seo_data=seo_data
+        )
+        self.db.add(page)
+        self.db.commit()
+        self.db.refresh(page)
+        logger.info(f"Created generated page: {page.id} - {page.title}")
+        return page
+    
+    def get_generated_page(self, page_id: str) -> Optional[GeneratedPage]:
+        """Get generated page by ID."""
+        return self.db.query(GeneratedPage).filter(GeneratedPage.id == page_id).first()
+    
+    def list_project_pages(self, project_id: str, limit: int = 100) -> List[GeneratedPage]:
+        """List all generated pages for a project."""
+        return self.db.query(GeneratedPage).filter(
+            GeneratedPage.project_id == project_id
+        ).limit(limit).all()
     
     # Statistics
-    def get_project_stats(self, project_id: int) -> Dict[str, Any]:
+    def get_project_stats(self, project_id: str) -> Dict[str, Any]:
         """Get statistics for a project."""
         project = self.get_project(project_id)
         if not project:
             return {}
         
-        total_keywords = self.db.query(Keyword).filter(
-            Keyword.project_id == project_id
+        total_templates = self.db.query(Template).filter(
+            Template.project_id == project_id
         ).count()
         
-        keywords_by_status = {}
-        for status in ['pending', 'generated', 'published']:
-            count = self.db.query(Keyword).filter(
-                Keyword.project_id == project_id,
-                Keyword.status == status
-            ).count()
-            keywords_by_status[status] = count
-        
-        total_content = self.db.query(Content).filter(
-            Content.project_id == project_id
+        total_datasets = self.db.query(DataSet).filter(
+            DataSet.project_id == project_id
         ).count()
         
-        content_by_status = {}
-        for status in ['draft', 'ready', 'published']:
-            count = self.db.query(Content).filter(
-                Content.project_id == project_id,
-                Content.status == status
-            ).count()
-            content_by_status[status] = count
+        total_pages = self.db.query(GeneratedPage).filter(
+            GeneratedPage.project_id == project_id
+        ).count()
         
         return {
             'project': project,
-            'total_keywords': total_keywords,
-            'keywords_by_status': keywords_by_status,
-            'total_content': total_content,
-            'content_by_status': content_by_status
+            'total_templates': total_templates,
+            'total_datasets': total_datasets,
+            'total_pages': total_pages
         }

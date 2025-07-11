@@ -20,7 +20,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from exporters.csv_exporter import CSVExporter
 from exporters.wordpress_exporter import WordPressExporter
 from agents.page_generator import PageGeneratorAgent
-from models import Content, Project, Keyword, get_db
+from models import Project, GeneratedPage
+from database import get_db
 from config import settings
 
 logger = logging.getLogger(__name__)

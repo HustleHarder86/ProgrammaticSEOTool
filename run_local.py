@@ -31,20 +31,21 @@ signal.signal(signal.SIGINT, signal_handler)
 
 def run_fastapi():
     """Run FastAPI server."""
-    process = subprocess.Popen(["uvicorn", "app.main:app", "--reload", "--port", "8000"])
+    # Change to backend directory and run
+    process = subprocess.Popen(["python3", "-m", "uvicorn", "main:app", "--reload", "--port", "8000"], cwd="backend")
     process_manager.add_process(process)
     process.wait()
 
 def run_nextjs():
     """Run Next.js frontend."""
-    # Check if frontend directory exists
-    if not os.path.exists("frontend"):
-        print("\n⚠️  Frontend directory not found!")
-        print("Run ./setup_frontend.sh to create the Next.js frontend")
+    # Check if package.json exists (Next.js is in root)
+    if not os.path.exists("package.json"):
+        print("\n⚠️  Next.js package.json not found!")
+        print("Run npm install to install dependencies")
         return None
     
-    # Change to frontend directory and run
-    process = subprocess.Popen(["npm", "run", "dev"], cwd="frontend")
+    # Run in current directory (root)
+    process = subprocess.Popen(["npm", "run", "dev"])
     process_manager.add_process(process)
     return process
 
@@ -76,7 +77,7 @@ def main():
     time.sleep(3)
     
     # Check which frontend to use
-    if os.path.exists("frontend"):
+    if os.path.exists("package.json"):
         print("⚛️  Next.js will run on http://localhost:3000")
         nextjs_process = run_nextjs()
         if nextjs_process:

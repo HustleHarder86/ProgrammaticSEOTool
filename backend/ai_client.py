@@ -3,6 +3,7 @@ import os
 import requests
 from typing import Dict, Any
 from dotenv import load_dotenv
+from urllib.parse import urlparse
 
 load_dotenv()
 
@@ -17,31 +18,57 @@ class AIClient:
         print(f"Analyzing business: {business_input[:50]}...")
         print(f"API Key present: {bool(self.api_key)}")
         
+        # Check if input is a URL
+        is_url = business_input.startswith(('http://', 'https://'))
+        url_content = ""
+        
+        if is_url:
+            # Fetch URL content
+            url_content = self._fetch_url_content(business_input)
+            print(f"Fetched URL content length: {len(url_content)}")
+        
         if not self.api_key:
             # Return enhanced mock data if no API key
             print("No API key, using mock data")
             return self._get_mock_analysis(business_input)
         
-        prompt = f"""
-        Analyze this business for programmatic SEO opportunities: {business_input}
-        
-        Provide a JSON response with:
-        1. business_name: A clear business name
-        2. description: Business description
-        3. target_audience: Who the business serves
-        4. core_offerings: List of 3-5 main products/services
-        5. programmatic_seo_templates: Array of template opportunities, each with:
-           - template_name: Descriptive name
-           - pattern: Template pattern (e.g., [Service] in [City])
-           - example_pages: 3 example page titles
-           - estimated_number_of_pages: Number between 50-500 based on realistic data availability
-           - difficulty_level: Easy/Medium/Hard
-        
-        Focus on templates that could realistically generate 50+ pages for Canadian markets.
-        Consider major Canadian cities, provinces, neighborhoods, and property types.
-        
-        Format response as JSON in a markdown code block.
-        """
+        if is_url and url_content:
+            prompt = f"""
+            Analyze this website for programmatic SEO opportunities.
+            
+            Website URL: {business_input}
+            Website Content:
+            {url_content[:2000]}
+            
+            Based on this website, provide a JSON response with:
+            1. business_name: The actual business name from the website
+            2. business_description: What this business/app actually does based on the website content
+            3. target_audience: Who actually uses this product/service
+            4. core_offerings: List of 3-5 main features/services from the website
+            5. template_opportunities: Array of realistic programmatic SEO template opportunities
+            
+            IMPORTANT: Base your analysis on what the website ACTUALLY does, not assumptions.
+            
+            Format response as JSON in a markdown code block.
+            """
+        else:
+            prompt = f"""
+            Analyze this business for programmatic SEO opportunities: {business_input}
+            
+            Provide a JSON response with:
+            1. business_name: A clear business name
+            2. business_description: Business description  
+            3. target_audience: Who the business serves
+            4. core_offerings: List of 3-5 main products/services
+            5. template_opportunities: Array of template opportunities, each with:
+               - template_name: Descriptive name
+               - template_pattern: Template pattern (e.g., {{Service}} in {{City}})
+               - example_pages: 3 example page titles
+               - estimated_pages: Number between 50-500
+               - difficulty: Easy/Medium/Hard
+            
+            Format response as JSON in a markdown code block.
+            """
         
         try:
             response = requests.post(
@@ -72,6 +99,51 @@ class AIClient:
             print(f"AI API error: {e}")
             return self._get_mock_analysis(business_input)
     
+    def _fetch_url_content(self, url: str) -> str:
+        """Fetch and extract text content from a URL"""
+        try:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+            response = requests.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            # Simple text extraction from HTML
+            from html.parser import HTMLParser
+            
+            class TextExtractor(HTMLParser):
+                def __init__(self):
+                    super().__init__()
+                    self.text = []
+                    self.skip_tags = {'script', 'style', 'meta', 'link'}
+                    self.current_tag = None
+                
+                def handle_starttag(self, tag, attrs):
+                    self.current_tag = tag
+                
+                def handle_endtag(self, tag):
+                    self.current_tag = None
+                
+                def handle_data(self, data):
+                    if self.current_tag not in self.skip_tags:
+                        text = data.strip()
+                        if text:
+                            self.text.append(text)
+            
+            parser = TextExtractor()
+            parser.feed(response.text)
+            
+            # Join and clean up the text
+            content = ' '.join(parser.text)
+            # Remove extra whitespace
+            content = ' '.join(content.split())
+            
+            return content[:3000]  # Limit content length
+            
+        except Exception as e:
+            print(f"Error fetching URL content: {e}")
+            return ""
+    
     def _parse_ai_response(self, response: Dict) -> Dict[str, Any]:
         """Parse Perplexity response into our format"""
         try:
@@ -99,13 +171,14 @@ class AIClient:
             
             # Map Perplexity response to our format
             template_opportunities = []
-            for template in parsed.get('programmatic_seo_templates', []):
+            templates = parsed.get('template_opportunities', parsed.get('programmatic_seo_templates', []))
+            for template in templates:
                 template_opportunities.append({
                     "template_name": template.get('template_name', ''),
-                    "template_pattern": template.get('pattern', ''),
+                    "template_pattern": template.get('template_pattern', template.get('pattern', '')),
                     "example_pages": template.get('example_pages', []),
-                    "estimated_pages": template.get('estimated_number_of_pages', template.get('estimated_pages', 50)),
-                    "difficulty": template.get('difficulty_level', 'Medium')
+                    "estimated_pages": template.get('estimated_pages', template.get('estimated_number_of_pages', 50)),
+                    "difficulty": template.get('difficulty', template.get('difficulty_level', 'Medium'))
                 })
             
             return {
@@ -121,6 +194,62 @@ class AIClient:
             import traceback
             traceback.print_exc()
             return self._get_mock_analysis("AI parsing failed")
+    
+    async def generate(self, prompt: str, temperature: float = 0.7, max_tokens: int = 1000) -> str:
+        """Generate text using Perplexity AI for variable generation and other tasks"""
+        
+        print(f"Generating with prompt: {prompt[:100]}...")
+        print(f"API Key present: {bool(self.api_key)}")
+        
+        if not self.api_key:
+            # Return mock data if no API key
+            print("No API key, using mock data")
+            return self._get_mock_generation(prompt)
+        
+        try:
+            response = requests.post(
+                f"{self.base_url}/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": "sonar",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": temperature,
+                    "max_tokens": max_tokens
+                }
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                print(f"API Response: {result}")
+                # Extract the actual content from Perplexity response
+                content = result.get('choices', [{}])[0].get('message', {}).get('content', '')
+                return content
+            else:
+                print(f"API Error: {response.status_code} - {response.text}")
+                return self._get_mock_generation(prompt)
+                
+        except Exception as e:
+            print(f"AI API error: {e}")
+            return self._get_mock_generation(prompt)
+    
+    def _get_mock_generation(self, prompt: str) -> str:
+        """Return mock generation for testing"""
+        prompt_lower = prompt.lower()
+        
+        if 'city' in prompt_lower or 'location' in prompt_lower:
+            return '''["Toronto", "Vancouver", "Calgary", "Ottawa", "Montreal", "Edmonton", "Winnipeg", "Quebec City", "Hamilton", "London"]'''
+        elif 'service' in prompt_lower:
+            return '''["Digital Marketing", "Web Development", "SEO Consulting", "Social Media Management", "Content Creation", "Graphic Design", "Email Marketing", "PPC Advertising", "Brand Strategy", "Analytics"]'''
+        elif 'product' in prompt_lower:
+            return '''["Analytics Dashboard", "CRM Software", "Project Management Tool", "Marketing Automation", "Customer Support Platform", "Sales Pipeline", "Reporting System", "Data Visualization", "Lead Generation", "Conversion Tracking"]'''
+        elif 'industry' in prompt_lower:
+            return '''["Real Estate", "Healthcare", "Technology", "Finance", "Education", "Retail", "Manufacturing", "Hospitality", "Legal Services", "Consulting"]'''
+        else:
+            # Generic fallback
+            return '''["Option 1", "Option 2", "Option 3", "Option 4", "Option 5", "Option 6", "Option 7", "Option 8", "Option 9", "Option 10"]'''
     
     def _get_mock_analysis(self, business_input: str) -> Dict[str, Any]:
         """Return mock analysis for testing"""
