@@ -630,7 +630,8 @@ class ExportManagerAgent:
                 frontmatter = self._generate_frontmatter(item)
                 full_content = f"{frontmatter}\n\n# {item['title']}\n\n{md_content}"
                 
-                filename = f"{item.get('slug', f'page-{item.get("id", "unknown")}')}.md"
+                default_slug = f"page-{item.get('id', 'unknown')}"
+                filename = f"{item.get('slug', default_slug)}.md"
                 filepath = os.path.join(export_dir, filename)
                 
                 with open(filepath, 'w', encoding='utf-8') as f:
@@ -776,7 +777,9 @@ class ExportManagerAgent:
         
         # Convert headers
         for i in range(6, 0, -1):
-            html = re.sub(f'<h{i}>(.*?)</h{i}>', lambda m: f"{'#' * i} {m.group(1)}", html)
+            pattern = f'<h{i}>(.*?)</h{i}>'
+            replacement = lambda m: f"{'#' * i} {m.group(1)}"
+            html = re.sub(pattern, replacement, html)
         
         # Convert paragraphs
         html = re.sub(r'<p>(.*?)</p>', r'\1\n\n', html)
