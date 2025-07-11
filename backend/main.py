@@ -94,6 +94,71 @@ def debug_all_templates(db: Session = Depends(get_db)):
     
     return result
 
+@app.post("/debug/seed-test-data")
+def seed_test_data(db: Session = Depends(get_db)):
+    """Seed database with test data for development"""
+    try:
+        # Create a test project
+        test_project = Project(
+            name="Test SEO Project",
+            business_input="AI-powered productivity tools for remote teams",
+            business_analysis={
+                "business_name": "ProductivityAI",
+                "business_description": "We provide AI-powered productivity tools for remote teams",
+                "target_audience": "Remote workers and distributed teams",
+                "core_offerings": ["AI task management", "Smart scheduling", "Team collaboration"],
+                "template_opportunities": [
+                    {
+                        "template_name": "Location-based Remote Work",
+                        "template_pattern": "Remote Work Tools for {City} Teams",
+                        "example_pages": ["Remote Work Tools for New York Teams"],
+                        "estimated_pages": 100,
+                        "difficulty": "easy"
+                    }
+                ]
+            }
+        )
+        db.add(test_project)
+        db.commit()
+        db.refresh(test_project)
+        
+        # Create a test template
+        test_template = Template(
+            project_id=test_project.id,
+            name="Remote Work Tools by City",
+            pattern="Remote Work Tools for {City} Teams",
+            variables=["City"],
+            template_sections={
+                "seo_structure": {
+                    "title_template": "Remote Work Tools for {City} Teams | ProductivityAI",
+                    "meta_description_template": "Discover the best remote work tools for teams in {City}",
+                    "h1_template": "Remote Work Tools for {City} Teams"
+                },
+                "content_sections": [
+                    {
+                        "heading": "Overview",
+                        "content": "Find the perfect remote work tools for your team in {City}"
+                    }
+                ]
+            }
+        )
+        db.add(test_template)
+        db.commit()
+        
+        return {
+            "status": "success",
+            "message": "Test data created",
+            "project_id": test_project.id,
+            "template_id": test_template.id
+        }
+        
+    except Exception as e:
+        db.rollback()
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
 # Pydantic models
 class BusinessAnalysisRequest(BaseModel):
     business_input: str
