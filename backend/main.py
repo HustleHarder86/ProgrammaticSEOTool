@@ -369,14 +369,21 @@ class TemplatePreviewResponse(BaseModel):
 @app.post("/api/projects/{project_id}/templates", response_model=TemplateResponse)
 def create_template(project_id: str, template: TemplateCreate, db: Session = Depends(get_db)):
     """Create a new template for a project"""
+    print(f"DEBUG: Received template creation request for project_id: {project_id}")
+    print(f"DEBUG: Template data: {template.dict()}")
+    
     # Check if project exists
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
+        print(f"DEBUG: Project {project_id} not found!")
         raise HTTPException(status_code=404, detail="Project not found")
+    
+    print(f"DEBUG: Found project: {project.name}")
     
     # Create template structure
     template_data = template.dict()
     structured_template = template_engine.create_template_structure(template_data)
+    print(f"DEBUG: Structured template: {structured_template}")
     
     # Validate template
     validation = template_engine.validate_template(template_data)
