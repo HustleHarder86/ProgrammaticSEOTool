@@ -17,6 +17,7 @@ chardet==5.2.0
 
 # Export functionality
 lxml==4.9.3  # For XML processing in WordPress export
+markdown==3.5.1  # For markdown to HTML conversion
 
 # Development/Testing (optional)
 # pytest==7.4.3
