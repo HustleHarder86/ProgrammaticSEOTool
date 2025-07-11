@@ -161,15 +161,15 @@ export default function GeneratePagesPage() {
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">
-                  {generationResult.template_used}
+                  {generationResult.total_pages}
                 </div>
-                <div className="text-sm text-gray-600">Template Used</div>
+                <div className="text-sm text-gray-600">Total Pages</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-purple-600">
-                  {generationResult.dataset_used}
+                  {generationResult.failed_pages}
                 </div>
-                <div className="text-sm text-gray-600">Dataset Used</div>
+                <div className="text-sm text-gray-600">Failed Pages</div>
               </div>
             </div>
             

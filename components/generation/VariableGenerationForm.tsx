@@ -17,7 +17,7 @@ interface VariableGenerationFormProps {
     target_audience: string;
     industry?: string;
   };
-  onVariablesGenerated: (data: Record<string, unknown>) => void;
+  onVariablesGenerated: (data: any) => void;
 }
 
 export default function VariableGenerationForm({

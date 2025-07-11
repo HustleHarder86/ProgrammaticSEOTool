@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { GenerationResult, Template } from '@/types';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -21,21 +22,6 @@ import TitlePreview from './TitlePreview';
 import TitleSelector from './TitleSelector';
 import { apiClient } from '@/lib/api/client';
 
-interface Template {
-  id: string;
-  name: string;
-  pattern: string;
-  variables: string[];
-  created_at: string;
-}
-
-interface GenerationResult {
-  status: string;
-  total_pages: number;
-  generated_pages: number;
-  failed_pages: number;
-  preview_pages: string[];
-}
 
 interface AIGenerationWizardProps {
   projectId: string;
@@ -137,16 +123,16 @@ export default function AIGenerationWizard({
 
     switch (type) {
       case 'first':
-        newSelection = allTitles.slice(0, value);
+        newSelection = allTitles.slice(0, value as number);
         break;
       case 'random':
         const shuffled = [...allTitles].sort(() => Math.random() - 0.5);
-        newSelection = shuffled.slice(0, value);
+        newSelection = shuffled.slice(0, value as number);
         break;
       case 'pattern':
-        if (value?.variable && value?.values) {
+        if ((value as any)?.variable && (value as any)?.values) {
           newSelection = allTitles.filter(title => 
-            value.values.some((val: string) => title.includes(val))
+            (value as any).values.some((val: string) => title.includes(val))
           );
         }
         break;
@@ -253,7 +239,12 @@ export default function AIGenerationWizard({
             templatePattern={selectedTemplate.pattern}
             projectId={projectId}
             templateId={selectedTemplate.id}
-            businessContext={businessContext}
+            businessContext={businessContext as {
+              name: string;
+              description: string;
+              target_audience: string;
+              industry?: string;
+            }}
             onVariablesGenerated={handleVariablesGenerated}
           />
         ) : null;

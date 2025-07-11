@@ -152,7 +152,7 @@ export function GenerationWizard({
                   <CardContent>
                     <div className="space-y-2">
                       <div className="text-sm text-gray-600">
-                        Variables: {template.variables.map(v => v.name).join(', ')}
+                        Variables: {template.variables.join(', ')}
                       </div>
                       <div className="text-sm text-gray-500">
                         Created: {new Date(template.created_at).toLocaleDateString()}

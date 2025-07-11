@@ -45,20 +45,20 @@ export function PagePreview({ template, dataset }: PagePreviewProps) {
   const generatePageFromTemplate = useCallback((template: Template, data: Record<string, unknown>): PreviewPage => {
     // Simple template variable replacement
     let content = template.template_html;
-    let seoTitle = template.seo_settings.meta_title || '';
-    let seoDescription = template.seo_settings.meta_description || '';
+    let seoTitle = template.seo_settings?.meta_title || '';
+    let seoDescription = template.seo_settings?.meta_description || '';
     
     // Replace variables in content
     template.variables.forEach(variable => {
-      const value = String(data[variable.name] || variable.example || `{${variable.name}}`);
-      const regex = new RegExp(`\\{\\{${variable.name}\\}\\}`, 'g');
-      content = content.replace(regex, value);
+      const value = String(data[variable] || `{${variable}}`);
+      const regex = new RegExp(`\\{\\{${variable}\\}\\}`, 'g');
+      content = content?.replace(regex, value) || '';
       seoTitle = seoTitle.replace(regex, value);
       seoDescription = seoDescription.replace(regex, value);
     });
 
     // Generate title from first heading or use template name
-    const titleMatch = content.match(/<h1[^>]*>([^<]+)<\/h1>/);
+    const titleMatch = content?.match(/<h1[^>]*>([^<]+)<\/h1>/);
     const title = titleMatch ? titleMatch[1] : template.name;
 
     // Generate slug from title
@@ -84,14 +84,14 @@ export function PagePreview({ template, dataset }: PagePreviewProps) {
       return description.length > 160 ? description.substring(0, 157) + '...' : description;
     };
 
-    const keywords = extractKeywords(content);
+    const keywords = extractKeywords(content || '');
 
     return {
       title,
       slug,
-      content,
+      content: content || '',
       seo_title: seoTitle || title,
-      seo_description: seoDescription || extractDescription(content),
+      seo_description: seoDescription || extractDescription(content || ''),
       seo_keywords: keywords,
       variables: data
     };
