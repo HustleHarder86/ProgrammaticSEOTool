@@ -630,7 +630,7 @@ class ExportManagerAgent:
                 frontmatter = self._generate_frontmatter(item)
                 full_content = f"{frontmatter}\n\n# {item['title']}\n\n{md_content}"
                 
-                filename = f"{item.get('slug', f'page-{item["id"]}')}.md"
+                filename = f"{item.get('slug', f'page-{item.get("id", "unknown")}')}.md"
                 filepath = os.path.join(export_dir, filename)
                 
                 with open(filepath, 'w', encoding='utf-8') as f:
