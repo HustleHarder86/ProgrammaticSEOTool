@@ -29,17 +29,31 @@ def startup_event():
     init_db()
 
 # Configure CORS
-# For production, use specific origins
+# For production, use specific origins with regex support
 origins = [
     "http://localhost:3000",  # Local development
     "http://localhost:3001",  # Local development (alternate port)
     "http://localhost:3002",  # Local development (alternate port)
+    "http://localhost:3003",  # Local development (alternate port)
     "https://programmatic-seo-tool.vercel.app",  # Production Vercel
-    "https://programmatic-seo-tool-*.vercel.app",  # Preview deployments
+    "https://programmaticseotool.vercel.app",  # Production Vercel (no dash)
 ]
+
+# Function to check if origin should be allowed
+def is_allowed_origin(origin: str) -> bool:
+    # Allow exact matches
+    if origin in origins:
+        return True
+    # Allow Vercel preview deployments
+    if origin and origin.startswith("https://programmatic-seo-tool-") and origin.endswith(".vercel.app"):
+        return True
+    if origin and origin.startswith("https://programmaticseotool-") and origin.endswith(".vercel.app"):
+        return True
+    return False
 
 app.add_middleware(
     CORSMiddleware,
+    allow_origin_regex="https://(programmatic-seo-tool|programmaticseotool)(-[a-z0-9]+)?\.vercel\.app",
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
