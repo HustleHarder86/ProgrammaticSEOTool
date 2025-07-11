@@ -55,9 +55,9 @@ export default function NewProjectPage() {
       const result = response.data;
       setAnalysisResults(result);
       setWizardStep('results');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Analysis error:', err);
-      const errorMessage = err.response?.data?.detail || err.message || 'Failed to analyze business. Please try again.';
+      const errorMessage = (err as Error)?.message || 'Failed to analyze business. Please try again.';
       setError(errorMessage);
       setWizardStep('input');
     }
@@ -75,7 +75,7 @@ export default function NewProjectPage() {
       console.log('Creating template:', template);
       
       // Extract variables from template pattern (e.g., {Service} in {City} -> [Service, City])
-      const variables = template.template_pattern.match(/\{([^}]+)\}/g)?.map(v => v.slice(1, -1)) || [];
+      // const variables = template.template_pattern.match(/\{([^}]+)\}/g)?.map(v => v.slice(1, -1)) || [];
       
       // Create more dynamic content based on the template pattern
       const cleanPattern = template.template_pattern.toLowerCase().replace(/[{}]/g, '');

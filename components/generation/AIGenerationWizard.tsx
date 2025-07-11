@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -29,11 +29,19 @@ interface Template {
   created_at: string;
 }
 
+interface GenerationResult {
+  status: string;
+  total_pages: number;
+  generated_pages: number;
+  failed_pages: number;
+  preview_pages: string[];
+}
+
 interface AIGenerationWizardProps {
   projectId: string;
   templates: Template[];
-  businessContext: any;
-  onGenerationComplete: (result: any) => void;
+  businessContext: Record<string, unknown>;
+  onGenerationComplete: (result: GenerationResult) => void;
 }
 
 interface GeneratedVariablesData {
@@ -121,7 +129,7 @@ export default function AIGenerationWizard({
     setSelectedTitles(selected);
   };
 
-  const handleQuickSelect = (type: string, value?: any) => {
+  const handleQuickSelect = (type: string, value?: unknown) => {
     if (!generatedVariables) return;
     
     const allTitles = generatedVariables.titles;
@@ -320,7 +328,7 @@ export default function AIGenerationWizard({
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold mb-2">Ready to Generate!</h3>
                 <p className="text-gray-600">
-                  Click "Generate Pages" in the previous step to create your {selectedTitles.length} pages.
+                  Click &ldquo;Generate Pages&rdquo; in the previous step to create your {selectedTitles.length} pages.
                 </p>
               </div>
             )}

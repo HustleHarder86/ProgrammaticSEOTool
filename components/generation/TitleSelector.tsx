@@ -10,7 +10,7 @@ interface TitleSelectorProps {
   variableData: Record<string, string[]>;
   selectedCount: number;
   totalCount: number;
-  onQuickSelect: (type: 'random' | 'first' | 'last' | 'pattern', value?: any) => void;
+  onQuickSelect: (type: 'random' | 'first' | 'last' | 'pattern', value?: unknown) => void;
 }
 
 export default function TitleSelector({

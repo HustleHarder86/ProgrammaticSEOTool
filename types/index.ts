@@ -25,10 +25,11 @@ export interface Template {
   id: string;
   project_id: string;
   name: string;
-  template_type: string;
-  template_html: string;
-  variables: TemplateVariable[];
-  seo_settings: SeoSettings;
+  pattern: string;
+  template_type?: string;
+  template_html?: string;
+  variables: string[];
+  seo_settings?: SeoSettings;
   created_at: string;
   updated_at?: string;
 }

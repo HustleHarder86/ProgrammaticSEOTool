@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { apiClient } from '@/lib/api/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Sparkles, AlertCircle, CheckCircle, Clock, Download } from 'lucide-react';
+import { ArrowLeft, Sparkles, CheckCircle, Clock, Download } from 'lucide-react';
 import { AIGenerationWizard } from '@/components/generation';
 import { 
   Project, 
@@ -22,7 +22,7 @@ export default function GeneratePagesPage() {
 
   const [project, setProject] = useState<Project | null>(null);
   const [templates, setTemplates] = useState<Template[]>([]);
-  const [datasets, setDatasets] = useState<Dataset[]>([]);
+  const [, setDatasets] = useState<Dataset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [generationResult, setGenerationResult] = useState<GenerationResult | null>(null);
