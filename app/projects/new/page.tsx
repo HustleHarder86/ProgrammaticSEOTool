@@ -64,6 +64,9 @@ export default function NewProjectPage() {
   };
 
   const handleSelectTemplate = async (template: TemplateResult) => {
+    console.log('handleSelectTemplate called with:', template);
+    console.log('Project ID:', analysisResults?.project_id);
+    
     if (!analysisResults?.project_id) {
       alert('Error: No project found');
       return;
@@ -73,6 +76,7 @@ export default function NewProjectPage() {
       setWizardStep('loading');
       setLoadingAction('creating-template');
       console.log('Creating template:', template);
+      console.log('API URL:', `/api/projects/${analysisResults.project_id}/templates`);
       
       // Extract variables from template pattern (e.g., {Service} in {City} -> [Service, City])
       // const variables = template.template_pattern.match(/\{([^}]+)\}/g)?.map(v => v.slice(1, -1)) || [];
@@ -108,17 +112,24 @@ export default function NewProjectPage() {
         ]
       });
 
+      console.log('Template creation response:', response);
+      console.log('Response status:', response.status);
+      console.log('Response data:', response.data);
+
       if (response.status === 200 || response.status === 201) {
         // Template created successfully, redirect to the project's generate page
+        console.log('Template created successfully, redirecting to:', `/projects/${analysisResults.project_id}/generate`);
         setTimeout(() => {
           window.location.href = `/projects/${analysisResults.project_id}/generate`;
         }, 1000);
       } else {
         throw new Error('Failed to create template');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating template:', error);
-      setError('Failed to create template. Please try again.');
+      console.error('Error response:', error.response?.data);
+      const errorMessage = error.response?.data?.detail || error.message || 'Failed to create template. Please try again.';
+      setError(errorMessage);
       setWizardStep('results');
     }
   };
