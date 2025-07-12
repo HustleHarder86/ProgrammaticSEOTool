@@ -142,7 +142,14 @@ export default function AIGenerationWizard({
   };
 
   const handleGeneratePages = async (titles: string[]) => {
-    if (!selectedTemplate || !generatedVariables) return;
+    console.log('handleGeneratePages called with titles:', titles.length);
+    console.log('selectedTemplate:', selectedTemplate);
+    console.log('generatedVariables:', generatedVariables);
+    
+    if (!selectedTemplate || !generatedVariables) {
+      console.error('Missing template or variables');
+      return;
+    }
 
     setIsGenerating(true);
     setGenerationError(null);
@@ -165,6 +172,13 @@ export default function AIGenerationWizard({
         selectedVariablesData[varName] = Array.from(uniqueValues);
       });
 
+      console.log('Calling generate endpoint with:', {
+        url: `/api/projects/${projectId}/templates/${selectedTemplate.id}/generate`,
+        batch_size: 100,
+        selected_titles_count: titles.length,
+        variables_data: selectedVariablesData
+      });
+
       // Call the generate endpoint with selected data
       const response = await apiClient.post(
         `/api/projects/${projectId}/templates/${selectedTemplate.id}/generate`,
@@ -175,6 +189,8 @@ export default function AIGenerationWizard({
         }
       );
 
+      console.log('Generate response:', response.data);
+      
       setGenerationProgress(100);
       onGenerationComplete({
         ...response.data,
@@ -183,6 +199,7 @@ export default function AIGenerationWizard({
       });
 
     } catch (error) {
+      console.error('Generate pages error:', error);
       setGenerationError(error instanceof Error ? error.message : 'Failed to generate pages');
     } finally {
       setIsGenerating(false);
@@ -261,9 +278,9 @@ export default function AIGenerationWizard({
             <TitlePreview
               titles={generatedVariables.titles}
               onSelectionChange={handleSelectionChange}
-              onGeneratePages={(titles) => {
-                handleGeneratePages(titles);
-                handleNext();
+              onGeneratePages={async (titles) => {
+                handleNext(); // Move to generation step first
+                await handleGeneratePages(titles); // Then generate
               }}
             />
           </div>
