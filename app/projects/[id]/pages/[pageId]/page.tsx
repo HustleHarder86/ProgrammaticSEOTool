@@ -259,52 +259,53 @@ export default function PageDetailPage() {
         <TabsContent value="preview" className="mt-6">
           <Card>
             <CardContent className="prose prose-gray max-w-none p-8">
-              <h1>{page.content.title}</h1>
-              
-              {page.content.content_sections.intro && (
-                <p className="lead">{page.content.content_sections.intro}</p>
-              )}
-              
-              {page.content.content_sections.main_content && (
-                <div dangerouslySetInnerHTML={{ __html: page.content.content_sections.main_content }} />
-              )}
-              
-              {page.content.content_sections.features && page.content.content_sections.features.length > 0 && (
+              {/* Render HTML content if available, otherwise render sections */}
+              {page.content.content_html ? (
+                <div dangerouslySetInnerHTML={{ __html: page.content.content_html }} />
+              ) : Array.isArray(page.content.content_sections) ? (
+                // New format: array of sections
                 <>
-                  <h2>Features</h2>
-                  <ul>
-                    {page.content.content_sections.features.map((feature, index) => (
-                      <li key={index}>{feature}</li>
-                    ))}
-                  </ul>
+                  <h1>{page.content.h1 || page.title}</h1>
+                  {page.content.content_sections.map((section: any, index: number) => {
+                    const sectionType = section.type || '';
+                    const content = section.content || '';
+                    const heading = section.heading || '';
+                    
+                    if (sectionType === 'introduction') {
+                      return <p key={index} className="lead">{content}</p>;
+                    } else if (sectionType === 'faq') {
+                      return (
+                        <div key={index}>
+                          <h2>{heading}</h2>
+                          <div dangerouslySetInnerHTML={{ __html: content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n\n/g, '<br><br>') }} />
+                        </div>
+                      );
+                    } else if (sectionType === 'statistics') {
+                      return (
+                        <div key={index}>
+                          <h2>{heading}</h2>
+                          <div className="statistics" dangerouslySetInnerHTML={{ __html: content.replace(/\n/g, '<br>') }} />
+                        </div>
+                      );
+                    } else if (sectionType === 'conclusion') {
+                      return <p key={index} className="conclusion">{content}</p>;
+                    } else {
+                      // Regular content section
+                      return (
+                        <div key={index}>
+                          {heading && <h2>{heading}</h2>}
+                          <p>{content}</p>
+                        </div>
+                      );
+                    }
+                  })}
                 </>
-              )}
-              
-              {page.content.content_sections.benefits && page.content.content_sections.benefits.length > 0 && (
-                <>
-                  <h2>Benefits</h2>
-                  <ul>
-                    {page.content.content_sections.benefits.map((benefit, index) => (
-                      <li key={index}>{benefit}</li>
-                    ))}
-                  </ul>
-                </>
-              )}
-              
-              {page.content.content_sections.conclusion && (
-                <p>{page.content.content_sections.conclusion}</p>
-              )}
-              
-              {page.content.content_sections.faq && page.content.content_sections.faq.length > 0 && (
-                <>
-                  <h2>Frequently Asked Questions</h2>
-                  {page.content.content_sections.faq.map((item, index) => (
-                    <div key={index} className="mb-4">
-                      <h3>{item.question}</h3>
-                      <p>{item.answer}</p>
-                    </div>
-                  ))}
-                </>
+              ) : (
+                // Fallback: display raw content
+                <div>
+                  <h1>{page.title}</h1>
+                  <pre>{JSON.stringify(page.content, null, 2)}</pre>
+                </div>
               )}
             </CardContent>
           </Card>

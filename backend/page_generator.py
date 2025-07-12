@@ -131,6 +131,10 @@ class PageGenerator:
             # Replace variations like {Variable} or {{Variable}}
             result = result.replace(f'{{{var_name}}}', value)
             result = result.replace(f'{{{{{var_name}}}}}', value)
+            
+            # Also replace case-insensitive {variable} format
+            result = result.replace(f'{{{var_name.lower()}}}', value)
+            result = result.replace(f'{{{var_name.upper()}}}', value)
         
         return result
     
@@ -249,6 +253,9 @@ class PageGenerator:
         # Generate URL slug
         slug = self._generate_url_slug(keyword)
         
+        # Convert content sections array to HTML format
+        content_html = self._convert_sections_to_html(generated_sections, h1)
+        
         return {
             'title': title,
             'meta_description': meta_description,
@@ -256,6 +263,7 @@ class PageGenerator:
             'keyword': keyword,
             'slug': slug,
             'content_sections': generated_sections,
+            'content_html': content_html,
             'unique_elements': unique_elements,
             'variation_index': page_index,
             'total_variations': total_pages
@@ -311,6 +319,39 @@ class PageGenerator:
         slug = slug.strip('-')  # Remove leading/trailing hyphens
         
         return slug
+    
+    def _convert_sections_to_html(self, sections: List[Dict[str, Any]], h1_text: str) -> str:
+        """Convert content sections array to HTML string"""
+        html_parts = [f'<h1>{h1_text}</h1>\n']
+        
+        for section in sections:
+            section_type = section.get('type', '')
+            content = section.get('content', '')
+            heading = section.get('heading', '')
+            
+            if section_type == 'introduction':
+                html_parts.append(f'<p class="lead">{content}</p>\n')
+            elif section_type == 'faq':
+                html_parts.append(f'<h2>{heading}</h2>\n')
+                # Parse FAQ content (formatted as **Question**\n\nAnswer\n\n)
+                faq_items = content.split('\n\n')
+                for i in range(0, len(faq_items) - 1, 2):
+                    if i < len(faq_items) - 1:
+                        question = faq_items[i].replace('**', '')
+                        answer = faq_items[i + 1]
+                        html_parts.append(f'<div class="faq-item">\n<h3>{question}</h3>\n<p>{answer}</p>\n</div>\n')
+            elif section_type == 'statistics':
+                html_parts.append(f'<h2>{heading}</h2>\n')
+                html_parts.append(f'<div class="statistics">{content}</div>\n')
+            elif section_type == 'conclusion':
+                html_parts.append(f'<p class="conclusion">{content}</p>\n')
+            else:
+                # Regular content section
+                if heading:
+                    html_parts.append(f'<h2>{heading}</h2>\n')
+                html_parts.append(f'<p>{content}</p>\n')
+        
+        return ''.join(html_parts)
     
     def generate_preview_pages(self, project_id: str, template_id: str, 
                              db: Session, limit: int = 5) -> List[Dict[str, Any]]:
