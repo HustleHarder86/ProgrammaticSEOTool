@@ -431,12 +431,18 @@ class PageGenerator:
         
         # Filter combinations if specific titles are selected
         if selected_titles:
+            print(f"DEBUG: Filtering combinations for {len(selected_titles)} selected titles")
+            print(f"DEBUG: Template pattern: {template.pattern}")
+            print(f"DEBUG: First 5 selected titles: {selected_titles[:5]}")
+            
             filtered_combinations = []
             for combo in all_combinations:
                 # Generate title from combination
                 title = self._generate_title_from_combo(template.pattern, combo)
                 if title in selected_titles:
                     filtered_combinations.append(combo)
+            
+            print(f"DEBUG: Filtered to {len(filtered_combinations)} combinations from {len(all_combinations)}")
             all_combinations = filtered_combinations
         
         total_combinations = len(all_combinations)

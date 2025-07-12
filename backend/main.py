@@ -922,6 +922,9 @@ def generate_all_pages(
     db: Session = Depends(get_db)
 ):
     """Generate all pages from template and data"""
+    print(f"DEBUG: Generate pages called for project={project_id}, template={template_id}")
+    print(f"DEBUG: Request data: batch_size={request.batch_size}, selected_titles={len(request.selected_titles) if request.selected_titles else 0}, has_variables={bool(request.variables_data)}")
+    
     try:
         # Check if project and template exist
         project = db.query(Project).filter(Project.id == project_id).first()
@@ -938,12 +941,17 @@ def generate_all_pages(
         # Generate pages
         if request.selected_titles and request.variables_data:
             # Use AI-generated variables and selected titles
+            print(f"DEBUG: Using AI-generated variables: {list(request.variables_data.keys())}")
+            print(f"DEBUG: Number of selected titles: {len(request.selected_titles)}")
+            
             total_generated, page_ids = page_generator.generate_pages_from_variables(
                 project_id, template_id, 
                 request.variables_data,
                 request.selected_titles,
                 db, batch_size=request.batch_size
             )
+            
+            print(f"DEBUG: Generated {total_generated} pages with IDs: {page_ids[:5]}...")
         else:
             # Use traditional CSV data
             total_generated, page_ids = page_generator.generate_all_pages(
