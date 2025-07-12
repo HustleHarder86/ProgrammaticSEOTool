@@ -449,6 +449,8 @@ class PageGenerator:
         if total_combinations == 0:
             return 0, []
         
+        skipped_count = 0  # Track how many were skipped due to duplicates
+        
         # Process pages (same as generate_all_pages from here)
         generated_page_ids = []
         
@@ -494,10 +496,14 @@ class PageGenerator:
                     db.add(generated_page)
                     db.flush()  # Flush to get the ID
                     generated_page_ids.append(generated_page.id)
+                else:
+                    skipped_count += 1
+                    print(f"DEBUG: Skipped duplicate page: {page_content['title']}")
             
             # Commit batch
             db.commit()
         
+        print(f"DEBUG: Page generation complete - Generated: {len(generated_page_ids)}, Skipped (duplicates): {skipped_count}")
         return len(generated_page_ids), generated_page_ids
     
     def _generate_title_from_combo(self, pattern: str, combination: Dict[str, Any]) -> str:
