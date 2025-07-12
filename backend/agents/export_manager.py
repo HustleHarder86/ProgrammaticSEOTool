@@ -534,7 +534,7 @@ class ExportManagerAgent:
         elif format == 'json':
             # Export as JSON
             filename = f"{project_name}_{timestamp}.json"
-            filepath = os.path.join(settings.exports_dir, filename)
+            filepath = os.path.join(settings.EXPORTS_DIR, filename)
             
             export_data = {
                 'project': project_name,
@@ -569,7 +569,7 @@ class ExportManagerAgent:
         elif format == 'html':
             # Export as HTML files
             export_dir = os.path.join(
-                settings.exports_dir,
+                settings.EXPORTS_DIR,
                 f"{project_name}_html_{timestamp}"
             )
             os.makedirs(export_dir, exist_ok=True)
@@ -613,7 +613,7 @@ class ExportManagerAgent:
         elif format == 'markdown':
             # Export as Markdown files
             export_dir = os.path.join(
-                settings.exports_dir,
+                settings.EXPORTS_DIR,
                 f"{project_name}_markdown_{timestamp}"
             )
             os.makedirs(export_dir, exist_ok=True)
@@ -881,7 +881,7 @@ class ExportManagerAgent:
         """Compress all export files into a single archive"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         archive_name = f"{project_name}_export_{timestamp}.zip"
-        archive_path = os.path.join(settings.exports_dir, archive_name)
+        archive_path = os.path.join(settings.EXPORTS_DIR, archive_name)
         
         with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
             for format, result in export_results.items():
@@ -894,7 +894,7 @@ class ExportManagerAgent:
                     for root, dirs, files in os.walk(result['directory']):
                         for file in files:
                             file_path = os.path.join(root, file)
-                            arcname = os.path.relpath(file_path, settings.exports_dir)
+                            arcname = os.path.relpath(file_path, settings.EXPORTS_DIR)
                             zipf.write(file_path, arcname)
         
         logger.info(f"Created archive: {archive_path}")
@@ -1071,7 +1071,7 @@ For additional help with deployment:
         """Save deployment guide to file"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"{project_name}_deployment_guide_{timestamp}.md"
-        filepath = os.path.join(settings.exports_dir, filename)
+        filepath = os.path.join(settings.EXPORTS_DIR, filename)
         
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(guide)
@@ -1085,7 +1085,7 @@ For additional help with deployment:
     ) -> str:
         """Create master archive for bulk export"""
         archive_name = f"bulk_export_{bulk_export_id}.zip"
-        archive_path = os.path.join(settings.exports_dir, archive_name)
+        archive_path = os.path.join(settings.EXPORTS_DIR, archive_name)
         
         with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
             for project_id, result in project_results.items():

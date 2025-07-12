@@ -398,7 +398,7 @@ async def export_content(format: str = "csv", content: List[Dict] = None):
             filepath = exporter.export_content(content or [], "seo_content")
         else:  # json
             import json
-            filepath = os.path.join(settings.exports_dir, f"seo_content_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+            filepath = os.path.join(settings.EXPORTS_DIR, f"seo_content_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
             with open(filepath, 'w') as f:
                 json.dump(content or [], f, indent=2)
         

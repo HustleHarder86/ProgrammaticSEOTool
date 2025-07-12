@@ -356,7 +356,7 @@ class APIIntegration:
             export_result = await self.export_manager.export_pages(
                 pages=pages,
                 export_config=export_config,
-                output_dir=settings.exports_dir
+                output_dir=settings.EXPORTS_DIR
             )
             
             return {

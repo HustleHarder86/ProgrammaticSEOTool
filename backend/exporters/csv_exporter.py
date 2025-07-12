@@ -15,10 +15,10 @@ class CSVExporter:
         """Export content list to CSV file."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"{project_name}_{timestamp}.csv"
-        filepath = os.path.join(settings.exports_dir, filename)
+        filepath = os.path.join(settings.EXPORTS_DIR, filename)
         
         # Ensure exports directory exists
-        os.makedirs(settings.exports_dir, exist_ok=True)
+        os.makedirs(settings.EXPORTS_DIR, exist_ok=True)
         
         # Define CSV columns
         fieldnames = [
@@ -65,10 +65,10 @@ class CSVExporter:
         """Export keywords to CSV file."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"{project_name}_keywords_{timestamp}.csv"
-        filepath = os.path.join(settings.exports_dir, filename)
+        filepath = os.path.join(settings.EXPORTS_DIR, filename)
         
         # Ensure exports directory exists
-        os.makedirs(settings.exports_dir, exist_ok=True)
+        os.makedirs(settings.EXPORTS_DIR, exist_ok=True)
         
         # Define CSV columns
         fieldnames = [

@@ -16,10 +16,10 @@ class WordPressExporter:
         """Export content list to WordPress XML file."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"{project_name}_wordpress_{timestamp}.xml"
-        filepath = os.path.join(settings.exports_dir, filename)
+        filepath = os.path.join(settings.EXPORTS_DIR, filename)
         
         # Ensure exports directory exists
-        os.makedirs(settings.exports_dir, exist_ok=True)
+        os.makedirs(settings.EXPORTS_DIR, exist_ok=True)
         
         # Create root RSS element
         rss = ET.Element('rss', {
