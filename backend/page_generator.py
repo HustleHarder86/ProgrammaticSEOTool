@@ -471,7 +471,7 @@ class PageGenerator:
                 existing_page = db.query(GeneratedPage).filter(
                     GeneratedPage.project_id == project_id,
                     GeneratedPage.template_id == template_id,
-                    GeneratedPage.content_hash == content_hash
+                    GeneratedPage.title == page_content['title']
                 ).first()
                 
                 if not existing_page:
@@ -481,12 +481,12 @@ class PageGenerator:
                         template_id=template_id,
                         title=page_content['title'],
                         content=page_content,
-                        content_hash=content_hash,
                         meta_data={
                             'keyword': page_content.get('keyword', ''),
                             'slug': page_content.get('slug', ''),
                             'variables': combination,
                             'seo_score': page_content.get('seo_score', 0),
+                            'content_hash': content_hash,
                             'quality_score': page_content.get('quality_metrics', {}).get('quality_score', 0)
                         }
                     )
