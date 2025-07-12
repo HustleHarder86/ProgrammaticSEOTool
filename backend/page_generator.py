@@ -492,6 +492,7 @@ class PageGenerator:
                     )
                     
                     db.add(generated_page)
+                    db.flush()  # Flush to get the ID
                     generated_page_ids.append(generated_page.id)
             
             # Commit batch
@@ -587,6 +588,7 @@ class PageGenerator:
                     )
                     
                     db.add(generated_page)
+                    db.flush()  # Flush to get the ID
                     generated_page_ids.append(generated_page.id)
             
             # Commit batch

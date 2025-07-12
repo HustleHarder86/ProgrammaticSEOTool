@@ -958,9 +958,14 @@ def generate_all_pages(
                 project_id, template_id, db, batch_size=request.batch_size
             )
         
+        # Filter out any None IDs (shouldn't happen with flush, but just in case)
+        valid_page_ids = [pid for pid in page_ids if pid is not None]
+        
+        print(f"DEBUG: Total generated: {total_generated}, Valid page IDs: {len(valid_page_ids)}")
+        
         return GeneratePagesResponse(
             total_generated=total_generated,
-            page_ids=page_ids,
+            page_ids=valid_page_ids,
             status="completed" if total_generated > 0 else "no_pages_generated"
         )
         
