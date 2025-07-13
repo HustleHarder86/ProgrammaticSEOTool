@@ -105,41 +105,73 @@ export default function PageDetailPage() {
 
   const generateHTMLContent = (page: GeneratedPageDetail): string => {
     const { content } = page;
+    
+    // If pre-rendered HTML is available, return it
+    if (content.content_html) {
+      return content.content_html;
+    }
+    
     let html = `<h1>${content.title}</h1>\n\n`;
     
-    if (content.content_sections.intro) {
-      html += `<p>${content.content_sections.intro}</p>\n\n`;
-    }
-    
-    if (content.content_sections.main_content) {
-      html += `${content.content_sections.main_content}\n\n`;
-    }
-    
-    if (content.content_sections.features && content.content_sections.features.length > 0) {
-      html += `<h2>Features</h2>\n<ul>\n`;
-      content.content_sections.features.forEach(feature => {
-        html += `  <li>${feature}</li>\n`;
+    // Check if content_sections is an array (new format) or object (old format)
+    if (Array.isArray(content.content_sections)) {
+      // New format: array of sections
+      content.content_sections.forEach((section: any) => {
+        if (section.type === 'introduction' && section.content) {
+          html += `<p>${section.content}</p>\n\n`;
+        } else if (section.type === 'faq' && section.content) {
+          html += `<h2>${section.heading || 'FAQ'}</h2>\n`;
+          html += `${section.content}\n\n`;
+        } else if (section.type === 'statistics' && section.content) {
+          html += `<h2>${section.heading || 'Statistics'}</h2>\n`;
+          html += `${section.content}\n\n`;
+        } else if (section.type === 'conclusion' && section.content) {
+          html += `<p>${section.content}</p>\n\n`;
+        } else if (section.content) {
+          if (section.heading) {
+            html += `<h2>${section.heading}</h2>\n`;
+          }
+          html += `<p>${section.content}</p>\n\n`;
+        }
       });
-      html += `</ul>\n\n`;
-    }
-    
-    if (content.content_sections.benefits && content.content_sections.benefits.length > 0) {
-      html += `<h2>Benefits</h2>\n<ul>\n`;
-      content.content_sections.benefits.forEach(benefit => {
-        html += `  <li>${benefit}</li>\n`;
-      });
-      html += `</ul>\n\n`;
-    }
-    
-    if (content.content_sections.conclusion) {
-      html += `<p>${content.content_sections.conclusion}</p>\n\n`;
-    }
-    
-    if (content.content_sections.faq && content.content_sections.faq.length > 0) {
-      html += `<h2>Frequently Asked Questions</h2>\n`;
-      content.content_sections.faq.forEach(item => {
-        html += `<h3>${item.question}</h3>\n<p>${item.answer}</p>\n\n`;
-      });
+    } else if (typeof content.content_sections === 'object') {
+      // Old format: object with properties
+      const sections = content.content_sections as any;
+      
+      if (sections.intro) {
+        html += `<p>${sections.intro}</p>\n\n`;
+      }
+      
+      if (sections.main_content) {
+        html += `${sections.main_content}\n\n`;
+      }
+      
+      if (sections.features && sections.features.length > 0) {
+        html += `<h2>Features</h2>\n<ul>\n`;
+        sections.features.forEach((feature: string) => {
+          html += `  <li>${feature}</li>\n`;
+        });
+        html += `</ul>\n\n`;
+      }
+      
+      if (sections.benefits && sections.benefits.length > 0) {
+        html += `<h2>Benefits</h2>\n<ul>\n`;
+        sections.benefits.forEach((benefit: string) => {
+          html += `  <li>${benefit}</li>\n`;
+        });
+        html += `</ul>\n\n`;
+      }
+      
+      if (sections.conclusion) {
+        html += `<p>${sections.conclusion}</p>\n\n`;
+      }
+      
+      if (sections.faq && sections.faq.length > 0) {
+        html += `<h2>Frequently Asked Questions</h2>\n`;
+        sections.faq.forEach((item: { question: string; answer: string }) => {
+          html += `<h3>${item.question}</h3>\n<p>${item.answer}</p>\n\n`;
+        });
+      }
     }
     
     return html;
