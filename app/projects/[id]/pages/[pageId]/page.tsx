@@ -21,7 +21,11 @@ interface PageContent {
     benefits?: string[];
     conclusion?: string;
     faq?: Array<{ question: string; answer: string }>;
-  };
+  } | Array<any>;  // Also support array format
+  content_html?: string;  // New field for pre-rendered HTML
+  h1?: string;  // H1 heading
+  keyword?: string;  // Main keyword
+  slug?: string;  // URL slug
   schema_markup?: Record<string, unknown>;
   quality_metrics?: {
     word_count: number;
@@ -266,7 +270,7 @@ export default function PageDetailPage() {
                 // New format: array of sections
                 <>
                   <h1>{page.content.h1 || page.title}</h1>
-                  {page.content.content_sections.map((section: any, index: number) => {
+                  {page.content.content_sections.map((section: { type?: string; content?: string; heading?: string }, index: number) => {
                     const sectionType = section.type || '';
                     const content = section.content || '';
                     const heading = section.heading || '';

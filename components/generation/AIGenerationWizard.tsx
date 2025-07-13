@@ -130,9 +130,10 @@ export default function AIGenerationWizard({
         newSelection = shuffled.slice(0, value as number);
         break;
       case 'pattern':
-        if ((value as any)?.variable && (value as any)?.values) {
+        const patternValue = value as { variable?: string; values?: string[] };
+        if (patternValue?.variable && patternValue?.values) {
           newSelection = allTitles.filter(title => 
-            (value as any).values.some((val: string) => title.includes(val))
+            patternValue.values?.some((val: string) => title.includes(val)) || false
           );
         }
         break;

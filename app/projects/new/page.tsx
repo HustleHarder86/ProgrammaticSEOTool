@@ -125,10 +125,11 @@ export default function NewProjectPage() {
       } else {
         throw new Error('Failed to create template');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating template:', error);
-      console.error('Error response:', error.response?.data);
-      const errorMessage = error.response?.data?.detail || error.message || 'Failed to create template. Please try again.';
+      const err = error as any;
+      console.error('Error response:', err.response?.data);
+      const errorMessage = err.response?.data?.detail || err.message || 'Failed to create template. Please try again.';
       setError(errorMessage);
       setWizardStep('results');
     }
