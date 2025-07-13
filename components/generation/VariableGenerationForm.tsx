@@ -7,6 +7,14 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Sparkles, AlertCircle } from 'lucide-react';
 
+export interface GeneratedVariablesData {
+  variables: Record<string, string[]>;
+  titles: string[];
+  total_count: number;
+  template_pattern: string;
+  variable_types: Record<string, string>;
+}
+
 interface VariableGenerationFormProps {
   templatePattern: string;
   projectId: string;
@@ -17,14 +25,7 @@ interface VariableGenerationFormProps {
     target_audience: string;
     industry?: string;
   };
-  onVariablesGenerated: (data: { 
-    variables: Record<string, string[]>; 
-    count?: number;
-    titles?: string[];
-    total_count?: number;
-    template_pattern?: string;
-    variable_types?: Record<string, string>;
-  }) => void;
+  onVariablesGenerated: (data: GeneratedVariablesData) => void;
 }
 
 export default function VariableGenerationForm({

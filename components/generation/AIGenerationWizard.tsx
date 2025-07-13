@@ -17,7 +17,7 @@ import {
   AlertCircle,
   Loader2
 } from 'lucide-react';
-import VariableGenerationForm from './VariableGenerationForm';
+import VariableGenerationForm, { GeneratedVariablesData } from './VariableGenerationForm';
 import TitlePreview from './TitlePreview';
 import TitleSelector from './TitleSelector';
 import { apiClient } from '@/lib/api/client';
@@ -28,14 +28,6 @@ interface AIGenerationWizardProps {
   templates: Template[];
   businessContext: Record<string, unknown>;
   onGenerationComplete: (result: GenerationResult) => void;
-}
-
-interface GeneratedVariablesData {
-  variables: Record<string, string[]>;
-  titles: string[];
-  total_count: number;
-  template_pattern: string;
-  variable_types: Record<string, string>;
 }
 
 export default function AIGenerationWizard({
