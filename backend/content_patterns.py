@@ -11,6 +11,20 @@ class ContentPatterns:
     def __init__(self):
         # Introduction patterns for different business types
         self.intro_patterns = {
+            "evaluation_question": [
+                "Yes, {property_type} can be a {profitability} short-term rental in {city}. Average occupancy: {occupancy_rate}%, typical nightly rate: ${average_nightly_rate}.",
+                "{property_type} properties in {city} show {performance} potential for short-term rentals. ROI averages {roi_percentage}% with {market_strength} demand.",
+                "Short-term rental data for {property_type} in {city}: {occupancy_rate}% occupancy, ${monthly_revenue} average monthly revenue, {regulation_status} regulations.",
+                "{city}'s {property_type} rental market offers {market_strength} returns. Expect ${average_nightly_rate}/night rates with {occupancy_rate}% occupancy.",
+                "Analysis shows {property_type} in {city} ranks {ranking} for short-term rentals. Key metrics: ${average_nightly_rate}/night, {occupancy_rate}% occupancy."
+            ],
+            "general_question": [
+                "The answer is {answer}. In {city}, {supporting_fact} with {data_point}.",
+                "{answer_intro}. Data shows {statistic} in {city} for {topic}.",
+                "Based on {city} data: {answer}. Key factor: {main_reason}.",
+                "For {topic} in {city}: {answer}. {percentage}% of cases show {trend}.",
+                "{answer}. {city} statistics indicate {supporting_data}."
+            ],
             "location_service": [
                 "Find {count} {service} providers in {city} with average rating of {avg_rating} stars. Prices start from ${min_price}.",
                 "Compare {count} {service} options in {city}. Most popular: {top_provider} with {top_rating} rating.",

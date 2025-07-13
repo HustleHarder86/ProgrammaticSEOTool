@@ -58,17 +58,26 @@ class EfficientPageGenerator:
         """Detect the type of content based on template and data"""
         pattern = template.get("pattern", "").lower()
         
-        if any(word in pattern for word in ["vs", "versus", "compare"]):
+        # Check if it's a question
+        if pattern.startswith("is ") or pattern.startswith("are ") or \
+           pattern.startswith("can ") or pattern.startswith("should ") or \
+           "?" in pattern:
+            # Determine question type
+            if "good" in pattern or "worth" in pattern or "best" in pattern:
+                return "evaluation_question"
+            else:
+                return "general_question"
+        elif any(word in pattern for word in ["vs", "versus", "compare"]):
             return "comparison"
-        elif any(word in pattern for word in ["in", "near", "at"]) and \
-             any(key in data for key in ["location", "city", "area"]):
-            return "location_service"
         elif any(word in pattern for word in ["course", "learn", "study"]):
             return "educational"
         elif any(word in pattern for word in ["buy", "shop", "product"]):
             return "product_location"
+        elif any(word in pattern for word in ["in", "near", "at"]) and \
+             any(key in data for key in ["location", "city", "area"]):
+            return "location_service"
         else:
-            return "location_service"  # Default
+            return "general"  # Default
     
     def _fill_template(self, template: str, data: Dict[str, Any]) -> str:
         """Fill template with data values"""

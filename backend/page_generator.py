@@ -10,12 +10,17 @@ from sqlalchemy.orm import Session
 from models import Template, DataSet, GeneratedPage, Project
 from content_variation import ContentVariationEngine, enhance_content_quality, ensure_minimum_quality
 from efficient_page_generator import EfficientPageGenerator
+from smart_page_generator import SmartPageGenerator
 
 
 class PageGenerator:
-    def __init__(self):
+    def __init__(self, use_ai=True):
         self.variation_engine = ContentVariationEngine()
-        self.efficient_generator = EfficientPageGenerator()
+        # Use SmartPageGenerator by default for better content
+        if use_ai:
+            self.efficient_generator = SmartPageGenerator()
+        else:
+            self.efficient_generator = EfficientPageGenerator()
         
     def extract_variables_from_template(self, pattern: str) -> List[str]:
         """Extract variable names from a template pattern
