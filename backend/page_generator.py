@@ -9,11 +9,13 @@ from sqlalchemy.orm import Session
 
 from models import Template, DataSet, GeneratedPage, Project
 from content_variation import ContentVariationEngine, enhance_content_quality, ensure_minimum_quality
+from efficient_page_generator import EfficientPageGenerator
 
 
 class PageGenerator:
     def __init__(self):
         self.variation_engine = ContentVariationEngine()
+        self.efficient_generator = EfficientPageGenerator()
         
     def extract_variables_from_template(self, pattern: str) -> List[str]:
         """Extract variable names from a template pattern
@@ -140,7 +142,7 @@ class PageGenerator:
     
     def generate_unique_content(self, template: Template, variables: Dict[str, Any], 
                               page_index: int, total_pages: int) -> Dict[str, Any]:
-        """Generate unique content for a specific page
+        """Generate unique content for a specific page using efficient approach
         
         Args:
             template: Template object
@@ -151,123 +153,45 @@ class PageGenerator:
         Returns:
             Dict with title, meta_description, content sections, etc.
         """
-        # Get template sections
-        template_sections = template.template_sections or {}
-        seo_structure = template_sections.get('seo_structure', {})
-        content_sections = template_sections.get('content_sections', [])
+        # Convert template to dict format for efficient generator
+        template_dict = {
+            "pattern": template.pattern,
+            "title_pattern": template.template_sections.get('seo_structure', {}).get('title_template', template.pattern),
+            "h1_pattern": template.template_sections.get('seo_structure', {}).get('h1_template', template.pattern),
+            "variables": template.variables,
+            "template_sections": template.template_sections
+        }
         
-        # Create keyword from pattern
+        # Convert variables to simple dict format
+        data_row = {}
+        for var_name, var_data in variables.items():
+            if isinstance(var_data, dict):
+                data_row[var_name] = var_data.get('value', '')
+                # Also add lowercase version for compatibility
+                data_row[var_name.lower()] = var_data.get('value', '')
+            else:
+                data_row[var_name] = var_data
+                data_row[var_name.lower()] = var_data
+        
+        # Use efficient generator for programmatic SEO approach
+        generated_content = self.efficient_generator.generate_page(
+            template_dict, data_row, page_index
+        )
+        
+        # Extract keyword for compatibility
         keyword = self.replace_variables_in_content(template.pattern, variables)
         
-        # Generate unique structure for this page
-        unique_structure = self.variation_engine.generate_unique_structure(
-            keyword, 
-            'general'  # Could be enhanced to detect content type
-        )
+        # Add additional fields for compatibility
+        generated_content['keyword'] = keyword
+        generated_content['variation_index'] = page_index
+        generated_content['total_variations'] = total_pages
         
-        # Generate base content sections
-        generated_sections = []
+        # Ensure content_sections exists for backward compatibility
+        if 'content_sections' not in generated_content:
+            generated_content['content_sections'] = []
         
-        # Add introduction with variation
-        intro_variation = self.variation_engine.intro_variations[
-            page_index % len(self.variation_engine.intro_variations)
-        ]
-        intro = intro_variation.format(keyword=keyword)
-        generated_sections.append({
-            'type': 'introduction',
-            'content': intro
-        })
-        
-        # Process template content sections
-        for i, section in enumerate(content_sections):
-            section_content = self.replace_variables_in_content(
-                section.get('content', ''),
-                variables
-            )
-            
-            # Add variation to section content
-            if i == 0:  # First main section
-                section_content = self.variation_engine.add_contextual_content(
-                    section_content, keyword
-                )
-            
-            generated_sections.append({
-                'type': 'content',
-                'heading': self.replace_variables_in_content(
-                    section.get('heading', f'Section {i+1}'),
-                    variables
-                ),
-                'content': section_content
-            })
-        
-        # Add unique elements based on page index
-        unique_elements = unique_structure['unique_elements']
-        if 'faq' in unique_elements or page_index % 3 == 0:
-            faq_content = self._generate_faq_section(keyword, variables)
-            generated_sections.append({
-                'type': 'faq',
-                'heading': f'Frequently Asked Questions about {keyword}',
-                'content': faq_content
-            })
-        
-        if 'statistics_section' in unique_elements or page_index % 4 == 1:
-            stats_content = self._generate_statistics_section(keyword, variables)
-            generated_sections.append({
-                'type': 'statistics',
-                'heading': f'{keyword} by the Numbers',
-                'content': stats_content
-            })
-        
-        # Add conclusion with variation
-        conclusion_variation = self.variation_engine.conclusion_variations[
-            page_index % len(self.variation_engine.conclusion_variations)
-        ]
-        conclusion = conclusion_variation.format(
-            keyword=keyword,
-            benefit='business growth',
-            action='implement these strategies',
-            main_point='understanding the fundamentals'
-        )
-        generated_sections.append({
-            'type': 'conclusion',
-            'content': conclusion
-        })
-        
-        # Generate SEO elements
-        title = self.replace_variables_in_content(
-            seo_structure.get('title_template', f'{template.pattern} | Professional Guide'),
-            variables
-        )
-        
-        meta_description = self.replace_variables_in_content(
-            seo_structure.get('meta_description_template', 
-                            f'Complete guide to {template.pattern}. Expert insights and practical tips.'),
-            variables
-        )
-        
-        h1 = self.replace_variables_in_content(
-            seo_structure.get('h1_template', template.pattern),
-            variables
-        )
-        
-        # Generate URL slug
-        slug = self._generate_url_slug(keyword)
-        
-        # Convert content sections array to HTML format
-        content_html = self._convert_sections_to_html(generated_sections, h1)
-        
-        return {
-            'title': title,
-            'meta_description': meta_description,
-            'h1': h1,
-            'keyword': keyword,
-            'slug': slug,
-            'content_sections': generated_sections,
-            'content_html': content_html,
-            'unique_elements': unique_elements,
-            'variation_index': page_index,
-            'total_variations': total_pages
-        }
+        # Return the efficiently generated content
+        return generated_content
     
     def _generate_faq_section(self, keyword: str, variables: Dict[str, Any]) -> str:
         """Generate FAQ section content"""
