@@ -3,9 +3,9 @@ import json
 import hashlib
 from datetime import datetime
 from typing import Dict, List, Any, Optional
-from .efficient_page_generator import EfficientPageGenerator
-from .data_enricher import DataEnricher
-from .api.ai_handler import AIHandler
+from efficient_page_generator import EfficientPageGenerator
+from data_enricher import DataEnricher
+from api.ai_handler import AIHandler
 
 
 class SmartPageGenerator(EfficientPageGenerator):
@@ -311,14 +311,17 @@ Use only provided data.
         
         return description
     
-    def _calculate_quality_score(self, enriched_data: Dict[str, Any], 
-                               word_count: int) -> int:
+    def _calculate_quality_score(self, content: str, data: Dict[str, Any]) -> int:
         """Calculate quality score based on data completeness and content"""
         
+        # For smart page generator, we'll use a simpler scoring since we don't have enriched_data here
         base_score = 50
         
-        # Data quality contributes 40%
-        data_score = enriched_data["data_quality"] * 40
+        # Word count check
+        word_count = len(content.split())
+        
+        # Data quality contributes 40% (simplified)
+        data_score = 30  # Default good score for AI-generated content
         
         # Word count contributes 20%
         if 300 <= word_count <= 500:
@@ -329,7 +332,7 @@ Use only provided data.
             word_score = 10
         
         # Data points contribute 20%
-        data_points = len(enriched_data.get("primary_data", {}))
+        data_points = len([v for v in data.values() if v])
         if data_points >= 10:
             data_point_score = 20
         elif data_points >= 5:
