@@ -6,13 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, DollarSign, TrendingUp, BarChart3, Info } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+// Select component will be replaced with native HTML select
 
 interface CostSummary {
   project_id: string
@@ -153,17 +147,16 @@ export default function CostsPage() {
           </Link>
           <h1 className="text-3xl font-bold">API Cost Tracking</h1>
         </div>
-        <Select value={days.toString()} onValueChange={(value) => setDays(parseInt(value))}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select period" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="7">Last 7 days</SelectItem>
-            <SelectItem value="30">Last 30 days</SelectItem>
-            <SelectItem value="90">Last 90 days</SelectItem>
-            <SelectItem value="365">Last year</SelectItem>
-          </SelectContent>
-        </Select>
+        <select 
+          value={days.toString()} 
+          onChange={(e) => setDays(parseInt(e.target.value))}
+          className="w-[180px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+        >
+          <option value="7">Last 7 days</option>
+          <option value="30">Last 30 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="365">Last year</option>
+        </select>
       </div>
 
       {/* Overview Cards */}
