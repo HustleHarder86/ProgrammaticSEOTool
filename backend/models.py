@@ -1,13 +1,22 @@
 """Database models for the Programmatic SEO Tool."""
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Integer, JSON
+from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Integer, JSON, Float, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
 import uuid
+import enum
 
 # Helper to generate UUIDs
 def generate_uuid():
     return str(uuid.uuid4())
+
+class OperationType(enum.Enum):
+    """Types of operations that incur API costs."""
+    BUSINESS_ANALYSIS = "business_analysis"
+    TEMPLATE_GENERATION = "template_generation" 
+    VARIABLE_GENERATION = "variable_generation"
+    PAGE_GENERATION = "page_generation"
+    CONTENT_ENRICHMENT = "content_enrichment"
 
 class Project(Base):
     """A programmatic SEO project containing templates and data."""
@@ -24,6 +33,7 @@ class Project(Base):
     templates = relationship("Template", back_populates="project", cascade="all, delete-orphan")
     data_sets = relationship("DataSet", back_populates="project", cascade="all, delete-orphan")
     generated_pages = relationship("GeneratedPage", back_populates="project", cascade="all, delete-orphan")
+    api_costs = relationship("ApiCost", back_populates="project", cascade="all, delete-orphan")
 
 class Template(Base):
     """Page template with variable placeholders."""
@@ -71,3 +81,22 @@ class GeneratedPage(Base):
     # Relationships
     project = relationship("Project", back_populates="generated_pages")
     template = relationship("Template", back_populates="generated_pages")
+
+class ApiCost(Base):
+    """Track API costs per operation."""
+    __tablename__ = "api_costs"
+    
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    project_id = Column(String(36), ForeignKey("projects.id"), nullable=False)
+    operation_type = Column(Enum(OperationType), nullable=False)
+    provider = Column(String(50), nullable=False)  # 'perplexity', 'openai', 'anthropic'
+    model = Column(String(100))  # Model name used
+    input_tokens = Column(Integer, default=0)
+    output_tokens = Column(Integer, default=0)
+    total_tokens = Column(Integer, default=0)
+    cost = Column(Float, default=0.0)  # Cost in USD
+    details = Column(JSON)  # Additional details about the operation
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    project = relationship("Project", back_populates="api_costs")

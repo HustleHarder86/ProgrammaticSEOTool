@@ -1,7 +1,7 @@
 """Simple AI client for Perplexity API"""
 import os
 import requests
-from typing import Dict, Any
+from typing import Dict, Any, Optional, Tuple
 from dotenv import load_dotenv
 from urllib.parse import urlparse
 
@@ -12,7 +12,7 @@ class AIClient:
         self.api_key = os.getenv('PERPLEXITY_API_KEY')
         self.base_url = "https://api.perplexity.ai"
         
-    def analyze_business(self, business_input: str) -> Dict[str, Any]:
+    def analyze_business(self, business_input: str) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         """Use Perplexity to analyze a business for programmatic SEO opportunities"""
         
         print(f"Analyzing business: {business_input[:50]}...")
@@ -30,7 +30,7 @@ class AIClient:
         if not self.api_key:
             # Return enhanced mock data if no API key
             print("No API key, using mock data")
-            return self._get_mock_analysis(business_input)
+            return self._get_mock_analysis(business_input), {"tokens": {"input": 0, "output": 0}}
         
         if is_url and url_content:
             prompt = f"""
@@ -88,16 +88,32 @@ class AIClient:
                 # Parse and return the response
                 result = response.json()
                 print(f"API Response: {result}")
+                
+                # Extract token usage if available
+                usage = result.get('usage', {})
+                token_info = {
+                    "tokens": {
+                        "input": usage.get('prompt_tokens', len(prompt) // 4),
+                        "output": usage.get('completion_tokens', 0)
+                    }
+                }
+                
                 # Extract the actual content from Perplexity response
-                # This will need adjustment based on actual Perplexity response format
-                return self._parse_ai_response(result)
+                parsed_response = self._parse_ai_response(result)
+                
+                # Update output tokens if not provided
+                if token_info["tokens"]["output"] == 0:
+                    output_text = str(parsed_response)
+                    token_info["tokens"]["output"] = len(output_text) // 4
+                
+                return parsed_response, token_info
             else:
                 print(f"API Error: {response.status_code} - {response.text}")
-                return self._get_mock_analysis(business_input)
+                return self._get_mock_analysis(business_input), {"tokens": {"input": 0, "output": 0}}
                 
         except Exception as e:
             print(f"AI API error: {e}")
-            return self._get_mock_analysis(business_input)
+            return self._get_mock_analysis(business_input), {"tokens": {"input": 0, "output": 0}}
     
     def _fetch_url_content(self, url: str) -> str:
         """Fetch and extract text content from a URL"""
@@ -195,7 +211,7 @@ class AIClient:
             traceback.print_exc()
             return self._get_mock_analysis("AI parsing failed")
     
-    async def generate(self, prompt: str, temperature: float = 0.7, max_tokens: int = 1000) -> str:
+    async def generate(self, prompt: str, temperature: float = 0.7, max_tokens: int = 1000) -> Tuple[str, Dict[str, Any]]:
         """Generate text using Perplexity AI for variable generation and other tasks"""
         
         print(f"Generating with prompt: {prompt[:100]}...")
@@ -204,7 +220,7 @@ class AIClient:
         if not self.api_key:
             # Return mock data if no API key
             print("No API key, using mock data")
-            return self._get_mock_generation(prompt)
+            return self._get_mock_generation(prompt), {"tokens": {"input": 0, "output": 0}}
         
         try:
             response = requests.post(
@@ -224,16 +240,31 @@ class AIClient:
             if response.status_code == 200:
                 result = response.json()
                 print(f"API Response: {result}")
+                
+                # Extract token usage
+                usage = result.get('usage', {})
+                token_info = {
+                    "tokens": {
+                        "input": usage.get('prompt_tokens', len(prompt) // 4),
+                        "output": usage.get('completion_tokens', 0)
+                    }
+                }
+                
                 # Extract the actual content from Perplexity response
                 content = result.get('choices', [{}])[0].get('message', {}).get('content', '')
-                return content
+                
+                # Update output tokens if not provided
+                if token_info["tokens"]["output"] == 0:
+                    token_info["tokens"]["output"] = len(content) // 4
+                
+                return content, token_info
             else:
                 print(f"API Error: {response.status_code} - {response.text}")
-                return self._get_mock_generation(prompt)
+                return self._get_mock_generation(prompt), {"tokens": {"input": 0, "output": 0}}
                 
         except Exception as e:
             print(f"AI API error: {e}")
-            return self._get_mock_generation(prompt)
+            return self._get_mock_generation(prompt), {"tokens": {"input": 0, "output": 0}}
     
     def _get_mock_generation(self, prompt: str) -> str:
         """Return mock generation for testing"""

@@ -15,6 +15,8 @@ from data_processor import DataProcessor
 from page_generator import PageGenerator
 from export_manager import export_manager, ExportFormat
 from agents.variable_generator import VariableGeneratorAgent
+from api_routes import router as cost_router
+from cost_tracker import CostTracker, OperationType
 
 app = FastAPI(title="Programmatic SEO Tool API")
 ai_client = AIClient()
@@ -37,6 +39,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include cost tracking router
+app.include_router(cost_router)
 
 @app.get("/")
 def root():
@@ -185,7 +190,7 @@ async def analyze_business(request: BusinessAnalysisRequest, db: Session = Depen
     
     try:
         # Use AI client to analyze the business
-        analysis = ai_client.analyze_business(request.business_input)
+        analysis, token_info = ai_client.analyze_business(request.business_input)
         
         # Validate the analysis has required fields
         required_fields = ["business_name", "business_description", "target_audience", "core_offerings", "template_opportunities"]
@@ -218,6 +223,21 @@ async def analyze_business(request: BusinessAnalysisRequest, db: Session = Depen
         db.add(db_project)
         db.commit()
         db.refresh(db_project)
+        
+        # Track API cost
+        if token_info.get("tokens", {}).get("input", 0) > 0:
+            CostTracker.track_api_call(
+                db=db,
+                project_id=db_project.id,
+                operation_type=OperationType.BUSINESS_ANALYSIS,
+                provider="perplexity",
+                model="sonar",
+                input_text=request.business_input,
+                output_text=str(analysis),
+                input_tokens=token_info["tokens"]["input"],
+                output_tokens=token_info["tokens"]["output"],
+                details={"business_name": analysis.get("business_name")}
+            )
         
         response = BusinessAnalysisResponse(
             project_id=db_project.id,
@@ -903,6 +923,25 @@ async def generate_variables(
             raise HTTPException(
                 status_code=400,
                 detail={"errors": validation["errors"], "warnings": validation["warnings"]}
+            )
+        
+        # Track API cost
+        token_usage = variable_generator.get_token_usage()
+        if token_usage.get("input", 0) > 0:
+            CostTracker.track_api_call(
+                db=db,
+                project_id=project_id,
+                operation_type=OperationType.VARIABLE_GENERATION,
+                provider="perplexity",
+                model="sonar",
+                input_tokens=token_usage["input"],
+                output_tokens=token_usage["output"],
+                details={
+                    "template_id": template_id,
+                    "template_pattern": template.pattern,
+                    "variables_generated": len(result["variables"]),
+                    "total_combinations": result["total_count"]
+                }
             )
         
         return GenerateVariablesResponse(**result)

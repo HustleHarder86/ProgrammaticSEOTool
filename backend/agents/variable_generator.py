@@ -30,6 +30,14 @@ class VariableGeneratorAgent:
             'time': ['year', 'season', 'month', 'period', 'timeline']
         }
     
+    def _reset_token_usage(self):
+        """Reset token usage tracking"""
+        self._token_usage = {"input": 0, "output": 0}
+    
+    def get_token_usage(self):
+        """Get accumulated token usage"""
+        return getattr(self, '_token_usage', {"input": 0, "output": 0})
+    
     async def generate_variables(
         self,
         template_pattern: str,
@@ -50,6 +58,9 @@ class VariableGeneratorAgent:
             Dictionary containing generated variables and titles
         """
         try:
+            # Reset token usage tracking for this generation
+            self._reset_token_usage()
+            
             # Extract variables from template pattern
             variables = self._extract_variables(template_pattern)
             
@@ -135,7 +146,7 @@ class VariableGeneratorAgent:
         )
         
         # Generate values using AI
-        response = await self.ai_client.generate(
+        response, token_info = await self.ai_client.generate(
             prompt,
             temperature=0.7,
             max_tokens=1000
@@ -143,6 +154,12 @@ class VariableGeneratorAgent:
         
         # Parse and validate values
         values = self._parse_ai_response(response, variable_name)
+        
+        # Store token info for cost tracking
+        if not hasattr(self, '_token_usage'):
+            self._token_usage = {"input": 0, "output": 0}
+        self._token_usage["input"] += token_info.get("tokens", {}).get("input", 0)
+        self._token_usage["output"] += token_info.get("tokens", {}).get("output", 0)
         
         # Ensure we have the right amount
         if len(values) < target_count:
@@ -304,7 +321,14 @@ Generate {needed_count} additional DIFFERENT values following the same pattern.
 Return as JSON array.
 """
         
-        response = await self.ai_client.generate(prompt, temperature=0.8)
+        response, token_info = await self.ai_client.generate(prompt, temperature=0.8)
+        
+        # Update token usage
+        if not hasattr(self, '_token_usage'):
+            self._token_usage = {"input": 0, "output": 0}
+        self._token_usage["input"] += token_info.get("tokens", {}).get("input", 0)
+        self._token_usage["output"] += token_info.get("tokens", {}).get("output", 0)
+        
         return self._parse_ai_response(response, variable_name)
     
     def _generate_all_titles(

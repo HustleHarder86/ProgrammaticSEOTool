@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { 
   ArrowRight, Zap, Upload, Globe, Sparkles, Download, 
   FolderOpen, Plus, FileText,
-  LayoutTemplate, FileSearch, Activity
+  LayoutTemplate, FileSearch, Activity, DollarSign
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -118,6 +118,12 @@ export default function Home() {
             title="Export"
             description="Export pages as CSV, WordPress, or JSON"
             href="/export"
+          />
+          <ActionCard
+            icon={<DollarSign className="w-8 h-8 text-purple-600" />}
+            title="Cost Tracking"
+            description="Monitor your API usage and costs"
+            href="/costs"
           />
         </div>
       </section>
