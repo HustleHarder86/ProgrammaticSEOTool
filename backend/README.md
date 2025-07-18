@@ -47,9 +47,46 @@ pip install -r requirements.txt
 cp .env.example .env
 # Edit .env with your keys
 
+# Initialize database
+python init_db.py
+
 # Run locally
 uvicorn main:app --reload
 ```
+
+## Testing Requirements
+
+**CRITICAL**: Before pushing any code changes, you MUST run comprehensive tests.
+
+See [TESTING_PROTOCOL.md](../TESTING_PROTOCOL.md) for complete testing requirements.
+
+### Quick Test Commands
+
+```bash
+# Test content generation (most important)
+python test_content_generation_comprehensive.py
+
+# Test API endpoints
+python test_api_integration.py
+
+# Test with real user scenarios
+python test_user_workflows.py
+
+# Performance testing
+python test_performance_benchmarks.py
+```
+
+### Pre-Push Checklist
+
+Before pushing ANY code:
+- [ ] Content generation produces quality output (no "various options")
+- [ ] All API endpoints return proper responses
+- [ ] Error handling works for edge cases
+- [ ] Performance is acceptable for bulk operations
+- [ ] No regression in existing functionality
+- [ ] Comprehensive test suite passes
+
+**NO CODE SHOULD BE PUSHED WITHOUT COMPLETING THESE TESTS**
 
 ## API Endpoints
 

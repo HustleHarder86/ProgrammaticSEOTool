@@ -53,19 +53,56 @@ python init_db.py
 
 6. Run the backend:
 ```bash
-python -m uvicorn app.main:app --reload
+cd backend
+python -m uvicorn main:app --reload
 ```
 
 The API will be available at http://localhost:8000
 
 7. Run the frontend (in a new terminal):
 ```bash
-cd frontend
 npm install
 npm run dev
 ```
 
 The UI will be available at http://localhost:3000
+
+## ⚠️ CRITICAL: Testing Requirements
+
+**Before pushing ANY code changes, you MUST run comprehensive tests.**
+
+This project has a mandatory testing protocol to ensure code quality and minimize manual testing.
+
+### Pre-Push Testing Checklist
+
+Before committing any changes:
+
+```bash
+# 1. Test content generation quality
+python backend/test_content_generation_comprehensive.py
+
+# 2. Test API integration
+python backend/test_api_integration.py
+
+# 3. Test user workflows
+python backend/test_user_workflows.py
+
+# 4. Performance testing
+python backend/test_performance_benchmarks.py
+```
+
+### Quality Standards
+
+All generated content must meet these criteria:
+- ✅ No placeholder text ("various options", "${variable}")
+- ✅ 300-400 word count for main content
+- ✅ Proper grammar and sentence structure
+- ✅ Relevant and accurate information
+- ✅ SEO-optimized titles and meta descriptions
+
+See [TESTING_PROTOCOL.md](TESTING_PROTOCOL.md) for complete testing requirements.
+
+**NO CODE SHOULD BE PUSHED WITHOUT PASSING ALL TESTS**
 
 ## API Documentation
 

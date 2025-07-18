@@ -115,6 +115,88 @@ When implementing features:
 5. **SEO Built-in**: Every page must be SEO-optimized by default
 6. **Scale Testing**: Test with hundreds of combinations to ensure performance
 
+## CRITICAL: Testing & Quality Assurance Protocol
+
+**MANDATORY TESTING BEFORE ANY CODE PUSH:**
+
+When debugging or fixing any issue, you MUST follow this comprehensive testing protocol:
+
+### 1. Pre-Push Testing Requirements
+Before pushing ANY code changes, you MUST:
+
+1. **Create comprehensive tests** that validate the specific functionality being fixed
+2. **Test edge cases and error scenarios** - don't just test the happy path
+3. **Run integration tests** to ensure the fix doesn't break other parts
+4. **Validate end-to-end workflows** from user input to final output
+5. **Test with real data scenarios** that match production usage
+6. **Verify error handling and fallback mechanisms** work properly
+
+### 2. Content Generation Testing Protocol
+For any content generation fixes, you MUST:
+
+1. **Test all content types** (evaluation_question, location_service, comparison, generic)
+2. **Validate variable substitution** - ensure no "various options" or placeholder text
+3. **Check content quality** - verify 300-400 word count, proper grammar, coherent structure
+4. **Test AI provider scenarios** - both with and without AI providers configured
+5. **Verify data flow** - ensure DataEnricher data reaches ContentPatterns properly
+6. **Quality score validation** - ensure scoring reflects actual content quality
+
+### 3. Test Creation Guidelines
+When creating tests:
+
+1. **Write test scripts** that can be run automatically to validate fixes
+2. **Include both unit tests** (individual components) and **integration tests** (full workflows)
+3. **Test with multiple business types** to ensure universal compatibility
+4. **Create test data** that represents real user scenarios
+5. **Document test results** with clear pass/fail criteria
+
+### 4. Deployment Testing
+Before deploying to Railway/Vercel:
+
+1. **Test locally first** - ensure all functionality works in local environment
+2. **Run test suite** - execute all relevant tests and document results
+3. **Test API endpoints** - verify all endpoints respond correctly
+4. **Check logs** - ensure no errors or warnings in application logs
+5. **Performance testing** - validate generation speed and memory usage
+
+### 5. Bug Discovery Protocol
+When testing reveals additional bugs:
+
+1. **Document all bugs found** - create comprehensive list with reproduction steps
+2. **Fix all related issues** - don't just fix the original problem
+3. **Re-test after each fix** - verify fixes don't introduce new problems
+4. **Update test suite** - add tests for newly discovered edge cases
+
+### 6. User Acceptance Validation
+For major fixes, include:
+
+1. **Test the exact user scenario** that revealed the original problem
+2. **Validate output quality** meets user expectations
+3. **Check for regressions** - ensure previously working features still work
+4. **Performance benchmarks** - ensure changes don't slow down the system
+
+### Example Testing Workflow:
+```bash
+# 1. Create test for the specific issue
+python test_content_generation_fix.py
+
+# 2. Run comprehensive test suite
+python test_full_system.py
+
+# 3. Test API endpoints
+python test_api_integration.py
+
+# 4. Validate with real scenarios
+python test_user_scenarios.py
+
+# 5. Check performance
+python test_performance_benchmarks.py
+```
+
+**NO CODE SHOULD BE PUSHED WITHOUT COMPLETING THIS TESTING PROTOCOL**
+
+This ensures that manual testing by the user is minimized and issues are caught before deployment.
+
 ## Deployment Configuration (CRITICAL)
 
 **This project uses a separated architecture: Frontend on Vercel, Backend on Railway**
