@@ -55,7 +55,9 @@ class AIHandler:
                 result = json.loads(response.read().decode())
                 return result['choices'][0]['message']['content']
         except Exception as e:
-            print(f"OpenAI error: {e}")
+            print(f"OpenAI API error: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return None
     
     def generate_with_anthropic(self, prompt, max_tokens=500):
@@ -85,7 +87,9 @@ class AIHandler:
                 result = json.loads(response.read().decode())
                 return result['content'][0]['text']
         except Exception as e:
-            print(f"Anthropic error: {e}")
+            print(f"Anthropic API error: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return None
     
     def generate_with_perplexity(self, prompt, max_tokens=500):
@@ -121,7 +125,9 @@ class AIHandler:
             print(f"Perplexity URL error: {e}")
             return None
         except Exception as e:
-            print(f"Perplexity error: {e}")
+            print(f"Perplexity API error: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return None
     
     def generate(self, prompt, max_tokens=500):

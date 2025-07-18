@@ -118,6 +118,7 @@ Use only provided data.
         
         # If AI generation fails, fall back to enhanced pattern-based generation
         if not content_html:
+            print("🔄 Falling back to enhanced pattern-based generation")
             # Use enhanced content generation with enriched data
             content_html = self._generate_content_html_with_enriched_data(
                 template, data_row, enriched_data, content_type, h1
@@ -154,7 +155,10 @@ Use only provided data.
         try:
             # Check if AI is available
             if not self.ai_handler.has_ai_provider():
-                print("No AI provider configured")
+                print("❌ No AI provider configured")
+                print(f"   OpenAI key: {'✅' if self.ai_handler.openai_key else '❌'}")
+                print(f"   Anthropic key: {'✅' if self.ai_handler.anthropic_key else '❌'}")
+                print(f"   Perplexity key: {'✅' if self.ai_handler.perplexity_key else '❌'}")
                 return None
             
             # Prepare data summary for AI
@@ -172,25 +176,40 @@ Use only provided data.
             # Generate content with AI (try providers in order)
             content = None
             
+            print(f"🤖 Generating AI content for: {title[:50]}...")
+            
             # Try Perplexity first (good for factual content)
             if self.ai_handler.perplexity_key:
+                print("🔵 Trying Perplexity API...")
                 response = self.ai_handler.generate_with_perplexity(prompt, max_tokens=800)
                 if response:
+                    print("✅ Perplexity API successful")
                     content = response
+                else:
+                    print("❌ Perplexity API failed")
             
             # Try OpenAI if Perplexity fails
             if not content and self.ai_handler.openai_key:
+                print("🟢 Trying OpenAI API...")
                 response = self.ai_handler.generate_with_openai(prompt, max_tokens=800)
                 if response:
+                    print("✅ OpenAI API successful")
                     content = response
+                else:
+                    print("❌ OpenAI API failed")
             
             # Try Anthropic if others fail
             if not content and self.ai_handler.anthropic_key:
+                print("🟠 Trying Anthropic API...")
                 response = self.ai_handler.generate_with_anthropic(prompt, max_tokens=800)
                 if response:
+                    print("✅ Anthropic API successful")
                     content = response
+                else:
+                    print("❌ Anthropic API failed")
             
             if not content:
+                print("❌ All AI providers failed or unavailable")
                 return None
             
             # Wrap in proper HTML

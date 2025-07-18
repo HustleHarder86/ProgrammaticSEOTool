@@ -68,6 +68,105 @@ def health_check(db: Session = Depends(get_db)):
 def test_endpoint():
     return {"message": "API is working!", "timestamp": "2025-01-06"}
 
+@app.get("/api/test/ai-providers")
+def test_ai_providers():
+    """Test endpoint to check AI provider configuration"""
+    from api.ai_handler import AIHandler
+    import os
+    
+    ai_handler = AIHandler()
+    
+    return {
+        "ai_providers": {
+            "openai": {
+                "configured": bool(ai_handler.openai_key),
+                "key_preview": f"{ai_handler.openai_key[:10]}...{ai_handler.openai_key[-4:]}" if ai_handler.openai_key else None
+            },
+            "anthropic": {
+                "configured": bool(ai_handler.anthropic_key),
+                "key_preview": f"{ai_handler.anthropic_key[:10]}...{ai_handler.anthropic_key[-4:]}" if ai_handler.anthropic_key else None
+            },
+            "perplexity": {
+                "configured": bool(ai_handler.perplexity_key),
+                "key_preview": f"{ai_handler.perplexity_key[:10]}...{ai_handler.perplexity_key[-4:]}" if ai_handler.perplexity_key else None
+            }
+        },
+        "has_any_provider": ai_handler.has_ai_provider(),
+        "environment_variables": {
+            "OPENAI_API_KEY": "SET" if os.environ.get('OPENAI_API_KEY') else "NOT_SET",
+            "ANTHROPIC_API_KEY": "SET" if os.environ.get('ANTHROPIC_API_KEY') else "NOT_SET", 
+            "PERPLEXITY_API_KEY": "SET" if os.environ.get('PERPLEXITY_API_KEY') else "NOT_SET"
+        },
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.post("/api/test/ai-generation")
+def test_ai_generation(request: dict):
+    """Test endpoint to verify AI content generation"""
+    from api.ai_handler import AIHandler
+    
+    ai_handler = AIHandler()
+    prompt = request.get("prompt", "Write a 100-word summary about real estate investment.")
+    
+    result = {
+        "ai_providers_status": {
+            "openai": bool(ai_handler.openai_key),
+            "anthropic": bool(ai_handler.anthropic_key), 
+            "perplexity": bool(ai_handler.perplexity_key)
+        },
+        "has_any_provider": ai_handler.has_ai_provider(),
+        "generation_results": {}
+    }
+    
+    if not ai_handler.has_ai_provider():
+        result["error"] = "No AI providers configured"
+        return result
+    
+    # Test each available provider
+    if ai_handler.perplexity_key:
+        try:
+            content = ai_handler.generate_with_perplexity(prompt, max_tokens=200)
+            result["generation_results"]["perplexity"] = {
+                "success": bool(content),
+                "content_preview": content[:100] + "..." if content else None,
+                "content_length": len(content) if content else 0
+            }
+        except Exception as e:
+            result["generation_results"]["perplexity"] = {
+                "success": False,
+                "error": str(e)
+            }
+    
+    if ai_handler.openai_key:
+        try:
+            content = ai_handler.generate_with_openai(prompt, max_tokens=200)
+            result["generation_results"]["openai"] = {
+                "success": bool(content),
+                "content_preview": content[:100] + "..." if content else None,
+                "content_length": len(content) if content else 0
+            }
+        except Exception as e:
+            result["generation_results"]["openai"] = {
+                "success": False,
+                "error": str(e)
+            }
+    
+    if ai_handler.anthropic_key:
+        try:
+            content = ai_handler.generate_with_anthropic(prompt, max_tokens=200)
+            result["generation_results"]["anthropic"] = {
+                "success": bool(content),
+                "content_preview": content[:100] + "..." if content else None,
+                "content_length": len(content) if content else 0
+            }
+        except Exception as e:
+            result["generation_results"]["anthropic"] = {
+                "success": False,
+                "error": str(e)
+            }
+    
+    return result
+
 @app.get("/debug/templates")
 def debug_all_templates(db: Session = Depends(get_db)):
     """Debug endpoint to see all templates in database"""
