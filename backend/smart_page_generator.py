@@ -332,7 +332,7 @@ Use only provided data.
             word_score = 10
         
         # Data points contribute 20%
-        data_points = len([v for v in data.values() if v])
+        data_points = len([v for v in enriched_data.values() if v])
         if data_points >= 10:
             data_point_score = 20
         elif data_points >= 5:
