@@ -127,7 +127,7 @@ Use only provided data.
         
         # Calculate quality metrics
         word_count = len(content_html.split())
-        quality_score = self._calculate_quality_score(enriched_data, word_count)
+        quality_score = self._calculate_quality_score(content_html, enriched_data)
         
         return {
             "title": title,
@@ -311,7 +311,7 @@ Use only provided data.
         
         return description
     
-    def _calculate_quality_score(self, content: str, data: Dict[str, Any]) -> int:
+    def _calculate_quality_score(self, content: str, enriched_data: Dict[str, Any]) -> int:
         """Calculate quality score based on data completeness and content"""
         
         # For smart page generator, we'll use a simpler scoring since we don't have enriched_data here
