@@ -23,16 +23,21 @@ class EfficientPageGenerator:
         # 1. Determine content type from template
         content_type = self._detect_content_type(template, data_row)
         
-        # 2. Generate title and H1
+        # 2. Get enriched data for better content
+        from data_enricher import DataEnricher
+        data_enricher = DataEnricher()
+        enriched_data = data_enricher.get_template_data(content_type, data_row)
+        
+        # 3. Generate title and H1
         title = self._fill_template(template.get("title_pattern", ""), data_row)
         h1 = self._fill_template(template.get("h1_pattern", title), data_row)
         
-        # 3. Generate meta description
+        # 4. Generate meta description
         meta_desc = self._generate_meta_description(title, data_row, content_type)
         
-        # 4. Generate content sections
-        content_html = self._generate_content_html(
-            template, data_row, content_type, h1
+        # 5. Generate content sections with enriched data
+        content_html = self._generate_content_html_with_enriched_data(
+            template, data_row, enriched_data, content_type, h1
         )
         
         # 5. Generate URL slug
@@ -58,12 +63,15 @@ class EfficientPageGenerator:
         """Detect the type of content based on template and data"""
         pattern = template.get("pattern", "").lower()
         
-        # Check if it's a question
-        if pattern.startswith("is ") or pattern.startswith("are ") or \
-           pattern.startswith("can ") or pattern.startswith("should ") or \
-           "?" in pattern:
+        # Check if it's a question or evaluation
+        if (pattern.startswith("is ") or pattern.startswith("are ") or 
+            pattern.startswith("can ") or pattern.startswith("should ") or
+            "?" in pattern or
+            "analysis" in pattern or "investment" in pattern or "evaluation" in pattern):
             # Determine question type
-            if "good" in pattern or "worth" in pattern or "best" in pattern:
+            if ("good" in pattern or "worth" in pattern or "best" in pattern or
+                "analysis" in pattern or "investment" in pattern or "evaluation" in pattern or
+                "rental" in pattern or "property" in pattern):
                 return "evaluation_question"
             else:
                 return "general_question"
@@ -173,6 +181,230 @@ class EfficientPageGenerator:
         sections.append(f"<p class='cta'>{cta}</p>")
         
         return "\n\n".join(sections)
+    
+    def _generate_content_html_with_enriched_data(self, template: Dict[str, Any], data: Dict[str, Any],
+                                                 enriched_data: Dict[str, Any], content_type: str, h1: str) -> str:
+        """Generate content HTML using enriched data for better quality"""
+        sections = []
+        
+        # Add H1
+        sections.append(f"<h1>{h1}</h1>")
+        
+        # 1. Introduction with enriched data
+        intro_pattern = self.content_patterns.select_pattern("intro", content_type, data)
+        intro = self.content_patterns.fill_pattern_with_enriched_data(intro_pattern, enriched_data, data)
+        sections.append(f"<p class='intro'>{intro}</p>")
+        
+        # 2. Main value section with enriched data
+        main_content = self._generate_main_value_section_enriched(enriched_data, data, content_type)
+        sections.append(main_content)
+        
+        # 3. Supporting content with enriched data
+        support_content = self._generate_support_content_enriched(enriched_data, data, content_type)
+        sections.extend(support_content)
+        
+        # 4. Additional context section for more content
+        context_content = self._generate_context_section_enriched(enriched_data, data, content_type)
+        if context_content:
+            sections.append(context_content)
+        
+        # 5. Value proposition section
+        value_content = self._generate_value_section_enriched(enriched_data, data, content_type)
+        if value_content:
+            sections.append(value_content)
+        
+        # 6. CTA with enriched data
+        cta_pattern = self.content_patterns.select_pattern("cta", "general", data)
+        cta = self.content_patterns.fill_pattern_with_enriched_data(cta_pattern, enriched_data, data)
+        sections.append(f"<p class='cta'>{cta}</p>")
+        
+        return "\n\n".join(sections)
+    
+    def _generate_main_value_section_enriched(self, enriched_data: Dict[str, Any], 
+                                             template_data: Dict[str, Any], content_type: str) -> str:
+        """Generate main value section using enriched data"""
+        primary_data = enriched_data.get("primary_data", {})
+        
+        if content_type == "evaluation_question":
+            # Create comprehensive data-driven analysis
+            sections = ["<div class='key-metrics'>"]
+            sections.append("<h3>Financial Performance Metrics</h3>")
+            
+            if "average_nightly_rate" in primary_data:
+                sections.append(f"<p><strong>Average Nightly Rate:</strong> ${primary_data['average_nightly_rate']} - This rate positions properties competitively within the local market while maintaining profitability potential.</p>")
+            
+            if "occupancy_rate" in primary_data:
+                sections.append(f"<p><strong>Occupancy Rate:</strong> {primary_data['occupancy_rate']}% - {'Strong performance indicating healthy demand' if primary_data['occupancy_rate'] > 65 else 'Moderate performance with room for optimization'} in the local market.</p>")
+            
+            if "total_listings" in primary_data:
+                sections.append(f"<p><strong>Market Size:</strong> {primary_data['total_listings']} active listings - {'Large market with diverse opportunities' if primary_data['total_listings'] > 200 else 'Focused market with targeted opportunities'} for investment.</p>")
+            
+            if "roi_percentage" in primary_data:
+                sections.append(f"<p><strong>Expected ROI:</strong> {primary_data['roi_percentage']:.1f}% - {'Excellent returns exceeding market averages' if primary_data['roi_percentage'] > 20 else 'Solid returns meeting investment expectations'}.</p>")
+            
+            if "monthly_revenue" in primary_data and "monthly_expenses" in primary_data:
+                profit = primary_data.get("monthly_profit", primary_data["monthly_revenue"] - primary_data["monthly_expenses"])
+                sections.append(f"<p><strong>Monthly Financials:</strong> Revenue ${primary_data['monthly_revenue']:,}, Expenses ${primary_data['monthly_expenses']:,}, Net Profit ${profit:,}.</p>")
+            
+            sections.append("</div>")
+            return "\n".join(sections)
+        
+        elif content_type == "location_service":
+            # Create provider list with realistic data
+            provider_count = primary_data.get("provider_count", template_data.get("count", 25))
+            avg_rating = primary_data.get("average_rating", 4.5)
+            
+            sections = [f"<h3>Top {content_type.replace('_', ' ').title()} Providers</h3>"]
+            sections.append("<ul class='provider-list'>")
+            
+            # Generate realistic provider entries
+            for i in range(min(5, provider_count)):
+                rating = round(avg_rating + random.uniform(-0.3, 0.2), 1)
+                reviews = random.randint(150, 350)
+                response_time = random.choice(["2h", "3h", "4h", "6h"])
+                
+                service_name = template_data.get("Service", "service")
+                city = template_data.get("City", "your area")
+                
+                sections.append(
+                    f"<li><strong>{service_name} Expert #{i+1}</strong> - {rating}★ ({reviews} reviews) - {response_time} response</li>"
+                )
+            
+            sections.append("</ul>")
+            return "\n".join(sections)
+        
+        else:
+            # Default content with enriched data
+            return f"<p>Quality information about {template_data.get('Service', 'services')} based on current market data.</p>"
+    
+    def _generate_support_content_enriched(self, enriched_data: Dict[str, Any], 
+                                          template_data: Dict[str, Any], content_type: str) -> List[str]:
+        """Generate supporting content using enriched data"""
+        primary_data = enriched_data.get("primary_data", {})
+        sections = []
+        
+        if content_type == "evaluation_question":
+            # Market insights paragraph
+            growth_rate = primary_data.get("market_growth", primary_data.get("growth_rate", 10))
+            regulations = primary_data.get("regulations", "standard regulations apply")
+            peak_season = primary_data.get("peak_season", "seasonal periods")
+            
+            market_insight = f"<h3>Market Analysis & Trends</h3>"
+            market_insight += f"<p>Current market analysis reveals {growth_rate}% growth in this sector over the past year. "
+            if growth_rate > 15:
+                market_insight += "This represents exceptional market momentum and indicates highly favorable conditions for new investments. The strong growth trajectory suggests sustained demand and expanding market opportunities. "
+            elif growth_rate > 5:
+                market_insight += "This demonstrates steady market expansion and stable investment conditions. The consistent growth pattern indicates reliable demand and mature market dynamics. "
+            else:
+                market_insight += "Market conditions are stabilizing after recent adjustments, presenting strategic opportunities for well-positioned investments. The current environment favors careful market analysis and selective investment approaches. "
+            
+            market_insight += f"Regulatory environment: {regulations.lower()}. Peak demand typically occurs during {peak_season.lower()}.</p>"
+            sections.append(market_insight)
+            
+            # Detailed risk factors and success strategies
+            city = template_data.get("City", "the area")
+            service = template_data.get("Service", "short-term rentals")
+            
+            sections.append(
+                f"<h3>Investment Considerations for {city}</h3>"
+                f"<p>Success with {service.lower()} in {city} depends on several critical factors. Location selection remains paramount - properties in high-traffic areas, near attractions, or in desirable neighborhoods typically achieve higher occupancy rates and premium pricing. Property condition and presentation significantly impact guest satisfaction and repeat bookings.</p>"
+            )
+            
+            sections.append(
+                f"<p>Operational considerations include effective marketing across multiple platforms, responsive customer service, competitive pricing strategies, and maintaining high cleanliness standards. Local market knowledge helps optimize pricing during peak and off-season periods. Additionally, understanding neighborhood dynamics, parking availability, and noise regulations ensures smooth operations and positive community relations.</p>"
+            )
+        
+        elif content_type == "location_service":
+            service = template_data.get("Service", "services")
+            city = template_data.get("City", "your area")
+            
+            sections.append(
+                f"<p>When selecting {service.lower()} in {city}, consider factors such as experience level, "
+                f"customer reviews, response times, and pricing transparency. Most reputable providers offer "
+                f"free consultations and detailed quotes.</p>"
+            )
+            
+            sections.append(
+                f"<p>Compare multiple providers to ensure you receive competitive pricing and quality service. "
+                f"Ask about guarantees, insurance coverage, and timeline expectations before making your decision.</p>"
+            )
+        
+        return sections
+    
+    def _generate_context_section_enriched(self, enriched_data: Dict[str, Any], 
+                                          template_data: Dict[str, Any], content_type: str) -> str:
+        """Generate additional context section for more comprehensive content"""
+        primary_data = enriched_data.get("primary_data", {})
+        city = template_data.get("City", "the area")
+        service = template_data.get("Service", "services")
+        
+        if content_type == "evaluation_question":
+            peak_season = primary_data.get("peak_season", "peak season")
+            growth_rate = primary_data.get("growth_rate", 10)
+            
+            context = f"<h3>Market Context for {city}</h3>"
+            context += f"<p>The {service.lower()} market in {city} experiences highest demand during {peak_season.lower()}. "
+            
+            if growth_rate > 15:
+                context += f"With {growth_rate}% year-over-year growth, this represents one of the stronger performing markets in the region. "
+            elif growth_rate > 5:
+                context += f"The {growth_rate}% annual growth rate indicates stable market expansion and sustained demand. "
+            else:
+                context += f"Market conditions are stabilizing with {growth_rate}% growth, offering opportunities for strategic positioning. "
+            
+            context += f"Success in this market typically depends on location selection, competitive pricing, and understanding local preferences.</p>"
+            return context
+        
+        elif content_type == "location_service":
+            context = f"<h3>What to Expect from {service} in {city}</h3>"
+            context += f"<p>Professional {service.lower()} providers in {city} typically offer comprehensive consultations, "
+            context += f"detailed quotes, and transparent pricing. Most established providers maintain proper licensing, "
+            context += f"insurance coverage, and positive customer relationships built over years of reliable service.</p>"
+            
+            context += f"<p>When evaluating options, consider response times, service guarantees, customer reviews, "
+            context += f"and pricing transparency. Many providers offer free estimates and same-day service for urgent needs.</p>"
+            return context
+        
+        return ""
+    
+    def _generate_value_section_enriched(self, enriched_data: Dict[str, Any], 
+                                        template_data: Dict[str, Any], content_type: str) -> str:
+        """Generate value proposition section"""
+        primary_data = enriched_data.get("primary_data", {})
+        city = template_data.get("City", "your area")
+        service = template_data.get("Service", "services")
+        
+        if content_type == "evaluation_question":
+            roi_average = primary_data.get("roi_average", 15)
+            monthly_revenue = primary_data.get("monthly_revenue", 2500)
+            
+            value = f"<h3>Key Benefits and Considerations</h3>"
+            value += f"<p><strong>Financial Potential:</strong> Based on current market data, {service.lower()} in {city} "
+            
+            if roi_average >= 18:
+                value += f"offers strong financial returns with {roi_average}% average ROI. "
+            elif roi_average >= 15:
+                value += f"provides solid returns with {roi_average}% average ROI potential. "
+            else:
+                value += f"shows {roi_average}% ROI potential with proper management. "
+            
+            value += f"Successful operators typically see monthly revenues around ${monthly_revenue:,}.</p>"
+            
+            value += f"<p><strong>Risk Factors:</strong> Consider seasonal variations, maintenance costs, regulatory changes, "
+            value += f"and local competition. Success requires active management, quality property presentation, and responsive customer service.</p>"
+            return value
+        
+        elif content_type == "location_service":
+            value = f"<h3>Why Choose Local {service} Providers</h3>"
+            value += f"<p>Local {service.lower()} providers in {city} offer several advantages: familiarity with local regulations, "
+            value += f"established relationships with suppliers, quick response times, and accountability within the community. "
+            value += f"They understand regional preferences, seasonal considerations, and common challenges specific to {city}.</p>"
+            
+            value += f"<p>Additionally, local providers often provide more personalized service, flexible scheduling, "
+            value += f"and ongoing support relationships that national chains may not match.</p>"
+            return value
+        
+        return ""
     
     def _prepare_intro_data(self, data: Dict[str, Any], content_type: str) -> Dict[str, Any]:
         """Prepare data for intro generation with computed values"""

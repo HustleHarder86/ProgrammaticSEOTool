@@ -98,9 +98,9 @@ Use only provided data.
         # Get enriched data
         enriched_data = self.data_enricher.get_template_data(content_type, data_row)
         
-        # Check data quality
-        if enriched_data["data_quality"] < 0.6:
-            # Fall back to pattern-based generation if not enough data
+        # Check data quality (be more lenient since we have better fallback now)
+        if enriched_data["data_quality"] < 0.3:
+            # Only fall back to old method for very poor data quality
             return super().generate_page(template, data_row, page_index)
         
         # Generate title and metadata
@@ -116,9 +116,12 @@ Use only provided data.
             template=template
         )
         
-        # If AI generation fails, fall back to pattern-based
+        # If AI generation fails, fall back to enhanced pattern-based generation
         if not content_html:
-            return super().generate_page(template, data_row, page_index)
+            # Use enhanced content generation with enriched data
+            content_html = self._generate_content_html_with_enriched_data(
+                template, data_row, enriched_data, content_type, h1
+            )
         
         # Generate meta description based on actual content
         meta_description = self._generate_smart_meta_description(

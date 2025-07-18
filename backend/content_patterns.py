@@ -3,6 +3,7 @@ import random
 import hashlib
 import json
 from typing import Dict, List, Any, Optional
+from data_mapper import data_mapper
 
 
 class ContentPatterns:
@@ -12,11 +13,11 @@ class ContentPatterns:
         # Introduction patterns for different business types
         self.intro_patterns = {
             "evaluation_question": [
-                "Yes, {property_type} can be a {profitability} short-term rental in {city}. Average occupancy: {occupancy_rate}%, typical nightly rate: ${average_nightly_rate}.",
-                "{property_type} properties in {city} show {performance} potential for short-term rentals. ROI averages {roi_percentage}% with {market_strength} demand.",
-                "Short-term rental data for {property_type} in {city}: {occupancy_rate}% occupancy, ${monthly_revenue} average monthly revenue, {regulation_status} regulations.",
-                "{city}'s {property_type} rental market offers {market_strength} returns. Expect ${average_nightly_rate}/night rates with {occupancy_rate}% occupancy.",
-                "Analysis shows {property_type} in {city} ranks {ranking} for short-term rentals. Key metrics: ${average_nightly_rate}/night, {occupancy_rate}% occupancy."
+                "{answer}, {Service} can be {profitability} in {City}. Average occupancy: {occupancy_rate}%, typical nightly rate: ${average_nightly_rate}.",
+                "{Service} properties in {City} show {performance} potential. ROI averages {roi_percentage}% with {market_strength} demand.",
+                "Short-term rental data for {Service} in {City}: {occupancy_rate}% occupancy, ${monthly_revenue} average monthly revenue, {regulation_status}.",
+                "{City}'s {Service} rental market offers {market_strength} returns. Expect ${average_nightly_rate}/night rates with {occupancy_rate}% occupancy.",
+                "Analysis shows {Service} in {City} ranks {ranking} for profitability. Key metrics: ${average_nightly_rate}/night, {occupancy_rate}% occupancy."
             ],
             "general_question": [
                 "The answer is {answer}. In {city}, {supporting_fact} with {data_point}.",
@@ -26,11 +27,11 @@ class ContentPatterns:
                 "{answer}. {city} statistics indicate {supporting_data}."
             ],
             "location_service": [
-                "Find {count} {service} providers in {city} with average rating of {avg_rating} stars. Prices start from ${min_price}.",
-                "Compare {count} {service} options in {city}. Most popular: {top_provider} with {top_rating} rating.",
-                "Discover trusted {service} in {city}. {count} verified providers available with prices from ${min_price} to ${max_price}.",
-                "{city} offers {count} {service} providers. Average cost: ${avg_price} with typical response time of {response_time}.",
-                "Looking for {service} in {city}? Browse {count} options with ratings from {min_rating} to {max_rating} stars."
+                "Find {count} {Service} providers in {City} with average rating of {avg_rating} stars. Prices start from ${min_price}.",
+                "Compare {count} {Service} options in {City}. Most popular: {top_provider} with {top_rating} rating.",
+                "Discover trusted {Service} in {City}. {count} verified providers available with prices from ${min_price} to ${max_price}.",
+                "{City} offers {count} {Service} providers. Average cost: ${avg_price} with typical response time of {response_time}.",
+                "Looking for {Service} in {City}? Browse {count} options with ratings from {min_rating} to {max_rating} stars."
             ],
             "comparison": [
                 "{item1} vs {item2}: Quick comparison shows {key_difference}. {item1} costs ${price1} while {item2} is ${price2}.",
@@ -138,6 +139,27 @@ class ContentPatterns:
             safe_data[missing_key] = self._get_default_value(missing_key)
             return pattern.format(**safe_data)
     
+    def fill_pattern_with_enriched_data(self, pattern: str, enriched_data: Dict[str, Any], 
+                                       template_variables: Dict[str, Any]) -> str:
+        """Fill pattern using enriched data with proper variable mapping"""
+        
+        # Transform enriched data to match pattern variables
+        transformed_data = data_mapper.transform_data(enriched_data, template_variables)
+        
+        # Validate mapping
+        missing_vars = data_mapper.validate_mapping(pattern, transformed_data)
+        if missing_vars:
+            # Fill missing variables with safe defaults
+            for var in missing_vars:
+                transformed_data[var] = self._get_default_value(var)
+        
+        # Fill the pattern
+        try:
+            return pattern.format(**transformed_data)
+        except KeyError as e:
+            # Fallback to safe fill
+            return self.fill_pattern(pattern, transformed_data)
+    
     def _get_default_value(self, key: str) -> Any:
         """Get sensible default value based on key name"""
         key_lower = key.lower()
@@ -159,7 +181,7 @@ class ContentPatterns:
         elif "name" in key_lower or "provider" in key_lower:
             return "top providers"
         else:
-            return "various options"
+            return "quality options"
     
     def generate_list_content(self, items: List[Dict[str, Any]], list_type: str) -> str:
         """Generate formatted list content"""

@@ -91,14 +91,26 @@ class DataEnricher:
     def get_template_data(self, template_type: str, variables: Dict[str, Any]) -> Dict[str, Any]:
         """Get enriched data for a specific template and variables"""
         
-        # Extract key variables
-        city = self._normalize_value(variables.get('city', variables.get('location', '')))
-        property_type = self._normalize_value(variables.get('property_type', variables.get('property', '')))
-        service = variables.get('service', '')
+        # Extract key variables (check both uppercase and lowercase)
+        city = self._normalize_value(
+            variables.get('city', variables.get('City', variables.get('location', variables.get('Location', ''))))
+        )
+        property_type = self._normalize_value(
+            variables.get('property_type', variables.get('property', variables.get('Property', '')))
+        )
+        service = variables.get('service', variables.get('Service', ''))
         
-        # Determine content type
-        if "rental" in template_type.lower() or property_type:
-            return self._get_rental_property_data(city, property_type, variables)
+        # Determine content type - be more flexible
+        service_lower = service.lower()
+        
+        if ("rental" in template_type.lower() or 
+            "investment" in service_lower or 
+            "property" in service_lower or
+            "str" in service_lower or
+            "rental" in service_lower or
+            "home" in service_lower or
+            property_type):
+            return self._get_rental_property_data(city, service or property_type, variables)
         elif service:
             return self._get_service_data(city, service, variables)
         else:
