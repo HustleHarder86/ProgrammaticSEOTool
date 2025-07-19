@@ -14,13 +14,47 @@ from smart_page_generator import SmartPageGenerator
 
 
 class PageGenerator:
-    def __init__(self, use_ai=True):
+    def __init__(self, require_ai=True):
+        """Initialize PageGenerator with mandatory AI requirement for programmatic SEO
+        
+        Args:
+            require_ai: If True (default), requires AI providers for content generation.
+                       Only set to False for testing purposes.
+        """
         self.variation_engine = ContentVariationEngine()
-        # Use SmartPageGenerator by default for better content
-        if use_ai:
+        self.require_ai = require_ai
+        
+        # For programmatic SEO at scale, AI is mandatory for quality content
+        if require_ai:
+            # Validate AI availability at initialization
+            from api.ai_handler import AIHandler
+            ai_handler = AIHandler()
+            if not ai_handler.has_ai_provider():
+                raise RuntimeError(
+                    "❌ CRITICAL: AI provider required for Programmatic SEO Tool\n\n"
+                    "This tool generates hundreds/thousands of unique pages that need to:\n"
+                    "• Provide real value to users (not just template-filled content)\n" 
+                    "• Rank in search engines (requires unique, helpful content)\n"
+                    "• Scale without quality degradation\n\n"
+                    "Please configure at least one AI provider:\n"
+                    "- OPENAI_API_KEY=your_openai_key\n"
+                    "- ANTHROPIC_API_KEY=your_anthropic_key  \n"
+                    "- PERPLEXITY_API_KEY=your_perplexity_key\n\n"
+                    "Then restart the application."
+                )
+            
             self.efficient_generator = SmartPageGenerator()
+            print("✅ Programmatic SEO Tool initialized with AI-powered content generation")
         else:
-            self.efficient_generator = EfficientPageGenerator()
+            # Testing mode only - deprecated for production use
+            raise RuntimeError(
+                "❌ DEPRECATED: Pattern-based generation is no longer supported\n\n"
+                "The Programmatic SEO Tool now requires AI for all content generation to ensure:\n"
+                "• High-quality, unique content at scale\n"
+                "• Content that provides real value to users\n"
+                "• Professional SEO performance\n\n"
+                "For testing purposes, use require_ai=True with configured AI providers."
+            )
         
     def extract_variables_from_template(self, pattern: str) -> List[str]:
         """Extract variable names from a template pattern

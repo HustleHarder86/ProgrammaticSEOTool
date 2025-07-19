@@ -1,7 +1,9 @@
-# Smart AI Content Generation
+# AI-Mandatory Content Generation
 
 ## Overview
-The Smart Content Generation system combines AI with real market data to create valuable, data-driven content for programmatic SEO - similar to how Yelp and Zapier provide real value through data.
+The **AI-Mandatory** Content Generation system combines AI with real market data to create valuable, data-driven content for programmatic SEO at scale - similar to how Yelp and Zapier provide real value through data.
+
+**CRITICAL**: This system requires AI providers for all content generation. No fallbacks to pattern-based content.
 
 ## Key Components
 
@@ -24,10 +26,11 @@ Example data:
 ```
 
 ### 2. SmartPageGenerator (`smart_page_generator.py`)
-Extends EfficientPageGenerator with AI capabilities:
+**AI-Only** content generator for programmatic SEO:
+- **Requires AI providers** - no pattern-based fallbacks
 - Uses real data from DataEnricher
-- Generates content that answers queries with facts
-- Falls back to pattern-based generation if AI unavailable
+- Generates unique, valuable content for each page
+- Ensures professional quality at scale
 - 300-400 words of valuable content per page
 
 ## How It Works

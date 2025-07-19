@@ -90,7 +90,15 @@ Use only provided data.
     
     def generate_page(self, template: Dict[str, Any], data_row: Dict[str, Any], 
                       page_index: int = 0) -> Dict[str, Any]:
-        """Generate page with AI-enhanced content using real data"""
+        """Generate page with AI-only content - AI is required for dynamic programmatic SEO"""
+        
+        # CRITICAL: Check AI availability first - this is mandatory for quality content
+        if not self.ai_handler.has_ai_provider():
+            raise RuntimeError(
+                "❌ AI provider required for content generation. "
+                "Programmatic SEO requires dynamic, unique content that only AI can provide. "
+                "Please configure at least one AI provider: OPENAI_API_KEY, ANTHROPIC_API_KEY, or PERPLEXITY_API_KEY"
+            )
         
         # Detect content type
         content_type = self._detect_content_type(template, data_row)
@@ -98,17 +106,12 @@ Use only provided data.
         # Get enriched data
         enriched_data = self.data_enricher.get_template_data(content_type, data_row)
         
-        # Check data quality (be more lenient since we have better fallback now)
-        if enriched_data["data_quality"] < 0.3:
-            # Only fall back to old method for very poor data quality
-            return super().generate_page(template, data_row, page_index)
-        
         # Generate title and metadata
         title = self._fill_template(template.get("pattern", ""), data_row)
         h1 = self._fill_template(template.get("h1_template", title), data_row)
         slug = self._generate_slug(title)
         
-        # Generate AI content with real data
+        # Generate AI content with real data - THIS IS MANDATORY
         content_html = self._generate_ai_content(
             title=title,
             content_type=content_type,
@@ -116,12 +119,12 @@ Use only provided data.
             template=template
         )
         
-        # If AI generation fails, fall back to enhanced pattern-based generation
+        # If AI generation fails, this is a critical error for programmatic SEO
         if not content_html:
-            print("🔄 Falling back to enhanced pattern-based generation")
-            # Use enhanced content generation with enriched data
-            content_html = self._generate_content_html_with_enriched_data(
-                template, data_row, enriched_data, content_type, h1
+            raise RuntimeError(
+                f"❌ AI content generation failed for '{title}'. "
+                "This tool requires AI to generate unique, valuable content at scale. "
+                "Check your AI provider configuration and try again."
             )
         
         # Generate meta description based on actual content

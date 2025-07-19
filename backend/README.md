@@ -1,14 +1,27 @@
 # Programmatic SEO Tool - Backend
 
-This is the FastAPI backend for the Programmatic SEO Tool, designed to be deployed on Railway.
+This is the **AI-powered** FastAPI backend for the Programmatic SEO Tool, designed to generate hundreds/thousands of high-quality pages at scale.
 
-## Features
+## 🚀 Key Features
 
+- **AI-Powered Content Generation**: Creates unique, valuable content for each page
 - Business analysis from URL or text
-- Programmatic SEO template generation
-- Bulk page generation with AI
+- Programmatic SEO template generation at scale
+- Bulk page generation with mandatory AI quality assurance
 - Export to CSV, JSON, or WordPress
 - Progress tracking for long operations
+
+## ⚡ AI-First Architecture
+
+**CRITICAL**: This tool requires AI providers for content generation. The enhanced programmatic SEO formula:
+
+**Template + Data + AI = Scale with Quality**
+
+### Why AI is Mandatory:
+- Generate truly unique content for hundreds/thousands of pages
+- Ensure content quality that ranks in search engines  
+- Provide real value to users (not template-filled content)
+- Scale content production without quality degradation
 
 ## Deployment on Railway
 
@@ -24,10 +37,13 @@ This is the FastAPI backend for the Programmatic SEO Tool, designed to be deploy
 
 ### Required Environment Variables
 
+**CRITICAL**: At least one AI provider is mandatory for the tool to function.
+
 ```bash
-# AI Provider (at least one required)
-PERPLEXITY_API_KEY=your_key_here
-OPENAI_API_KEY=your_key_here
+# AI Provider (MANDATORY - at least one required)
+PERPLEXITY_API_KEY=your_key_here    # Recommended for SEO content
+OPENAI_API_KEY=your_key_here         # Alternative option
+ANTHROPIC_API_KEY=your_key_here      # Alternative option
 ANTHROPIC_API_KEY=your_key_here
 
 # Frontend URL (your Vercel deployment)

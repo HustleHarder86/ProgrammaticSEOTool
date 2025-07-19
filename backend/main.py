@@ -22,7 +22,18 @@ app = FastAPI(title="Programmatic SEO Tool API")
 ai_client = AIClient()
 template_engine = TemplateEngine()
 data_processor = DataProcessor()
-page_generator = PageGenerator()
+
+# Initialize PageGenerator with AI requirement
+# This will raise an error if no AI providers are configured
+try:
+    page_generator = PageGenerator(require_ai=True)
+    ai_initialization_error = None
+except RuntimeError as e:
+    # Store the error but don't crash the app - we'll show helpful error messages
+    page_generator = None
+    ai_initialization_error = str(e)
+    print(f"⚠️  PageGenerator initialization failed: {e}")
+
 variable_generator = VariableGeneratorAgent()
 
 # Initialize database on startup
@@ -57,12 +68,24 @@ def health_check(db: Session = Depends(get_db)):
     except Exception as e:
         db_status = f"error: {str(e)}"
     
-    return {
-        "status": "healthy",
+    # Check AI provider status
+    ai_status = "configured" if page_generator else "missing"
+    overall_status = "healthy" if (db_status == "connected" and ai_status == "configured") else "degraded"
+    
+    response = {
+        "status": overall_status,
         "service": "programmatic-seo-backend",
         "database": db_status,
+        "ai_providers": ai_status,
         "timestamp": datetime.utcnow().isoformat()
     }
+    
+    # Include AI error message if there's an issue
+    if ai_initialization_error:
+        response["ai_error"] = ai_initialization_error
+        response["setup_required"] = True
+    
+    return response
 
 @app.get("/api/test")
 def test_endpoint():
@@ -946,6 +969,25 @@ def generate_preview_pages(
     db: Session = Depends(get_db)
 ):
     """Generate preview pages to see what will be created"""
+    
+    # CRITICAL: Validate AI is available for programmatic SEO
+    if not page_generator:
+        raise HTTPException(
+            status_code=503, 
+            detail={
+                "error": "AI_PROVIDER_REQUIRED",
+                "message": "Programmatic SEO requires AI providers for dynamic content generation",
+                "details": ai_initialization_error,
+                "setup_instructions": [
+                    "Configure at least one AI provider:",
+                    "• OPENAI_API_KEY=your_openai_key",
+                    "• ANTHROPIC_API_KEY=your_anthropic_key", 
+                    "• PERPLEXITY_API_KEY=your_perplexity_key",
+                    "Then restart the application."
+                ]
+            }
+        )
+    
     try:
         # Generate preview pages
         preview_pages = page_generator.generate_preview_pages(
@@ -1062,6 +1104,30 @@ def generate_all_pages(
     """Generate all pages from template and data"""
     print(f"DEBUG: Generate pages called for project={project_id}, template={template_id}")
     print(f"DEBUG: Request data: batch_size={request.batch_size}, selected_titles={len(request.selected_titles) if request.selected_titles else 0}, has_variables={bool(request.variables_data)}")
+    
+    # CRITICAL: Validate AI is available for programmatic SEO
+    if not page_generator:
+        raise HTTPException(
+            status_code=503, 
+            detail={
+                "error": "AI_PROVIDER_REQUIRED",
+                "message": "Programmatic SEO requires AI providers for high-quality, scalable content generation",
+                "details": ai_initialization_error,
+                "why_ai_required": [
+                    "• Generate unique content for hundreds/thousands of pages",
+                    "• Ensure content quality that ranks in search engines", 
+                    "• Provide real value to users (not just template-filled content)",
+                    "• Scale content production without quality degradation"
+                ],
+                "setup_instructions": [
+                    "Configure at least one AI provider:",
+                    "• OPENAI_API_KEY=your_openai_key",
+                    "• ANTHROPIC_API_KEY=your_anthropic_key", 
+                    "• PERPLEXITY_API_KEY=your_perplexity_key",
+                    "Then restart the application."
+                ]
+            }
+        )
     
     try:
         # Check if project and template exist
