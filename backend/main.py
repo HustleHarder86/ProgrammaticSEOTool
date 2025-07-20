@@ -9,7 +9,7 @@ from datetime import datetime
 import os
 from ai_client import AIClient
 from database import get_db, init_db
-from models import Project, Template, DataSet, GeneratedPage
+from models import Project, Template, DataSet, GeneratedPage, PotentialPage
 from template_engine import TemplateEngine
 from data_processor import DataProcessor
 from page_generator import PageGenerator
@@ -1341,6 +1341,255 @@ class AIStrategyResponse(BaseModel):
     strategy: dict
     templates_generated: int
     implementation_plan: dict
+
+class GeneratePotentialPagesRequest(BaseModel):
+    variables_data: Optional[dict] = None
+    max_combinations: Optional[int] = 1000
+
+class PotentialPageResponse(BaseModel):
+    id: str
+    title: str
+    slug: str
+    variables: dict
+    is_generated: bool
+    priority: int
+    created_at: str
+
+class PotentialPagesListResponse(BaseModel):
+    potential_pages: List[PotentialPageResponse]
+    total_count: int
+    generated_count: int
+    remaining_count: int
+
+class GenerateSelectedPagesRequest(BaseModel):
+    page_ids: List[str]
+    batch_size: Optional[int] = 10
+
+# Page Preview & Selection endpoints
+@app.post("/api/projects/{project_id}/templates/{template_id}/generate-potential-pages")
+async def generate_potential_pages(
+    project_id: str,
+    template_id: str,
+    request: GeneratePotentialPagesRequest,
+    db: Session = Depends(get_db)
+):
+    """Generate and save all potential pages for preview and selection"""
+    
+    # Validate project and template exist
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    template = db.query(Template).filter(
+        Template.id == template_id,
+        Template.project_id == project_id
+    ).first()
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found")
+    
+    try:
+        # Clear existing potential pages for this template
+        db.query(PotentialPage).filter(
+            PotentialPage.project_id == project_id,
+            PotentialPage.template_id == template_id
+        ).delete()
+        
+        # Generate all possible combinations
+        if request.variables_data:
+            # Use provided data
+            variable_combinations = page_generator.generate_all_combinations(request.variables_data)
+        else:
+            # Load data from datasets
+            variable_data = page_generator.load_datasets_for_variables(project_id, template, db)
+            variable_combinations = page_generator.generate_all_combinations(variable_data)
+        
+        # Limit combinations if requested
+        if request.max_combinations and len(variable_combinations) > request.max_combinations:
+            variable_combinations = variable_combinations[:request.max_combinations]
+        
+        # Create potential pages
+        potential_pages = []
+        for i, variables in enumerate(variable_combinations):
+            # Generate title and slug
+            title = page_generator.replace_variables_in_content(template.pattern, variables)
+            slug = title.lower().replace(' ', '-').replace('?', '').replace(',', '').replace(':', '')
+            
+            potential_page = PotentialPage(
+                project_id=project_id,
+                template_id=template_id,
+                title=title,
+                slug=slug,
+                variables=variables,
+                priority=0  # Default priority
+            )
+            potential_pages.append(potential_page)
+        
+        # Batch insert for performance
+        db.add_all(potential_pages)
+        db.commit()
+        
+        return {
+            "message": f"Generated {len(potential_pages)} potential pages",
+            "total_potential_pages": len(potential_pages),
+            "template_pattern": template.pattern,
+            "preview_url": f"/api/projects/{project_id}/templates/{template_id}/potential-pages"
+        }
+        
+    except Exception as e:
+        print(f"❌ Potential page generation failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Potential page generation failed: {str(e)}"
+        )
+
+@app.get("/api/projects/{project_id}/templates/{template_id}/potential-pages", response_model=PotentialPagesListResponse)
+async def get_potential_pages(
+    project_id: str,
+    template_id: str,
+    offset: int = 0,
+    limit: int = 50,
+    db: Session = Depends(get_db)
+):
+    """Get potential pages for preview and selection"""
+    
+    # Get total counts
+    total_count = db.query(PotentialPage).filter(
+        PotentialPage.project_id == project_id,
+        PotentialPage.template_id == template_id
+    ).count()
+    
+    generated_count = db.query(PotentialPage).filter(
+        PotentialPage.project_id == project_id,
+        PotentialPage.template_id == template_id,
+        PotentialPage.is_generated == 1
+    ).count()
+    
+    # Get paginated potential pages
+    potential_pages = db.query(PotentialPage).filter(
+        PotentialPage.project_id == project_id,
+        PotentialPage.template_id == template_id
+    ).order_by(PotentialPage.priority.desc(), PotentialPage.created_at).offset(offset).limit(limit).all()
+    
+    pages_data = []
+    for page in potential_pages:
+        pages_data.append(PotentialPageResponse(
+            id=page.id,
+            title=page.title,
+            slug=page.slug,
+            variables=page.variables,
+            is_generated=bool(page.is_generated),
+            priority=page.priority,
+            created_at=page.created_at.isoformat()
+        ))
+    
+    return PotentialPagesListResponse(
+        potential_pages=pages_data,
+        total_count=total_count,
+        generated_count=generated_count,
+        remaining_count=total_count - generated_count
+    )
+
+@app.post("/api/projects/{project_id}/templates/{template_id}/generate-selected-pages")
+async def generate_selected_pages(
+    project_id: str,
+    template_id: str,
+    request: GenerateSelectedPagesRequest,
+    db: Session = Depends(get_db)
+):
+    """Generate content for selected potential pages"""
+    
+    # Validate AI is available
+    if not page_generator:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "error": "AI_PROVIDER_REQUIRED", 
+                "message": "AI providers required for content generation",
+                "details": ai_initialization_error
+            }
+        )
+    
+    try:
+        # Get selected potential pages
+        potential_pages = db.query(PotentialPage).filter(
+            PotentialPage.id.in_(request.page_ids),
+            PotentialPage.project_id == project_id,
+            PotentialPage.template_id == template_id,
+            PotentialPage.is_generated == 0  # Only generate pages that haven't been generated yet
+        ).all()
+        
+        if not potential_pages:
+            raise HTTPException(status_code=404, detail="No valid potential pages found for generation")
+        
+        # Get template
+        template = db.query(Template).filter(Template.id == template_id).first()
+        if not template:
+            raise HTTPException(status_code=404, detail="Template not found")
+        
+        # Generate pages
+        generated_pages = []
+        for potential_page in potential_pages:
+            try:
+                # Generate content using the page generator
+                page_content = page_generator.generate_unique_content(
+                    template, potential_page.variables, 0, len(potential_pages)
+                )
+                
+                # Create generated page (using correct model fields)
+                generated_page = GeneratedPage(
+                    project_id=project_id,
+                    template_id=template_id,
+                    title=page_content.get("title", potential_page.title),
+                    content=page_content,  # Store all content as JSON
+                    meta_data={
+                        "slug": potential_page.slug,
+                        "keyword": page_content.get("keyword", potential_page.title),
+                        "variables": potential_page.variables,
+                        "meta_description": page_content.get("meta_description", ""),
+                        "word_count": page_content.get("word_count", 0),
+                        "quality_score": page_content.get("quality_score", 0),
+                        "generated_from_potential_page": potential_page.id
+                    }
+                )
+                
+                db.add(generated_page)
+                db.flush()  # Get the ID
+                
+                # Update potential page to mark as generated
+                potential_page.is_generated = 1
+                potential_page.generated_page_id = generated_page.id
+                
+                generated_pages.append({
+                    "id": generated_page.id,
+                    "title": generated_page.title,
+                    "slug": generated_page.meta_data.get("slug", ""),
+                    "word_count": generated_page.meta_data.get("word_count", 0),
+                    "quality_score": generated_page.meta_data.get("quality_score", 0)
+                })
+                
+            except Exception as e:
+                print(f"❌ Failed to generate page '{potential_page.title}': {str(e)}")
+                continue
+        
+        db.commit()
+        
+        return {
+            "message": f"Successfully generated {len(generated_pages)} pages",
+            "generated_pages": generated_pages,
+            "total_requested": len(request.page_ids),
+            "successful_generations": len(generated_pages)
+        }
+        
+    except Exception as e:
+        print(f"❌ Selected page generation failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Selected page generation failed: {str(e)}"
+        )
 
 # AI Strategy Generation endpoint
 @app.post("/api/generate-ai-strategy", response_model=AIStrategyResponse)

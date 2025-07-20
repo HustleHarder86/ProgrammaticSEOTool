@@ -33,6 +33,7 @@ class Project(Base):
     templates = relationship("Template", back_populates="project", cascade="all, delete-orphan")
     data_sets = relationship("DataSet", back_populates="project", cascade="all, delete-orphan")
     generated_pages = relationship("GeneratedPage", back_populates="project", cascade="all, delete-orphan")
+    potential_pages = relationship("PotentialPage", cascade="all, delete-orphan")
     api_costs = relationship("ApiCost", back_populates="project", cascade="all, delete-orphan")
 
 class Template(Base):
@@ -100,3 +101,24 @@ class ApiCost(Base):
     
     # Relationships
     project = relationship("Project", back_populates="api_costs")
+
+class PotentialPage(Base):
+    """Potential pages that can be generated from templates - stored for preview and selection."""
+    __tablename__ = "potential_pages"
+    
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    project_id = Column(String(36), ForeignKey("projects.id"), nullable=False)
+    template_id = Column(String(36), ForeignKey("templates.id"), nullable=False)
+    title = Column(Text, nullable=False)  # Generated title with variables filled
+    slug = Column(Text, nullable=False)   # URL slug for the page
+    variables = Column(JSON, nullable=False)  # Variable values used for this page
+    is_generated = Column(Integer, default=0)  # 0 = not generated, 1 = generated
+    generated_page_id = Column(String(36), ForeignKey("generated_pages.id"))  # Link to actual generated page
+    priority = Column(Integer, default=0)  # User can set priority for generation order
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    project = relationship("Project")
+    template = relationship("Template")
+    generated_page = relationship("GeneratedPage")

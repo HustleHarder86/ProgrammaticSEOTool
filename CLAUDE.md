@@ -2,118 +2,201 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## What is Programmatic SEO?
+## What is AI-Powered Programmatic SEO?
 
-Programmatic SEO is an SEO strategy that leverages **automation and templates to generate and optimize a large volume of web pages** by using data to populate templates, creating numerous pages efficiently. It focuses on targeting long-tail keywords with lower competition.
+Programmatic SEO enhanced with **AI-driven strategy generation** that creates custom, business-specific templates and content strategies. Instead of static templates, AI analyzes each business to generate tailored programmatic SEO strategies that serve real user search intent.
 
-**Examples:**
+**Traditional Examples:**
 - Tripadvisor: "Things to do in [City]" - thousands of city pages from one template
 - Zillow: "[City] Real Estate" - location-based property pages
 - Yelp: "Best [Business Type] in [City]" - local business directory pages
 
-**Key Formula: Template + Data = Scale**
+**AI-Enhanced Examples:**
+- Real Estate SaaS: AI generates "Is {Property Type} profitable in {City}? ROI Analysis" 
+- Investment Platform: AI creates "{City} {Property Type} Investment Calculator"
+- Market Analysis: AI designs "Best {Neighborhoods} in {City} for {Property Type} Investment"
+
+**Revolutionary Formula: Business Analysis + AI Strategy Generation + Custom Templates + Data = Scale with Intent**
 
 ## Project Overview
 
-The Programmatic SEO Tool is a versatile bulk page generator that works for ANY business type. It creates hundreds or thousands of SEO-optimized pages by combining templates with data.
+The **AI Strategy-Driven Programmatic SEO Tool** revolutionizes content creation by generating custom, business-specific SEO strategies instead of using static templates. AI analyzes each business to create tailored templates, data strategies, and content frameworks that serve real user search intent.
 
-### Core Features
+### Revolutionary Features
 
-1. **Business Analysis & Template Discovery**
-   - Analyzes any business URL/description to understand offerings
-   - Identifies template opportunities based on search patterns
-   - Suggests relevant data types for page generation
+1. **AI Business Intelligence Analyzer**
+   - Deep analysis of business model, market position, and customer behavior
+   - Identifies actual search intents and user pain points
+   - Maps customer journey stages and search patterns
+   - Discovers competitive gaps and opportunities
 
-2. **Template Management System**
-   - Create reusable page templates with variable placeholders
-   - Support multiple template types (location, comparison, use-case, feature)
-   - Template library for common patterns
+2. **Dynamic Template Generation**
+   - AI creates custom templates based on business analysis
+   - Templates designed around actual user search intent
+   - Multiple template variations for different customer journey stages
+   - No more generic "Service in City" patterns
 
-3. **Data-Driven Page Generation**
-   - Import data via CSV or manual entry
-   - Generate all possible combinations from template + data
-   - Ensure unique elements on each page
+3. **Intelligent Data Strategy Generator**
+   - AI recommends optimal data sources and structures
+   - Creates data collection plans tailored to business needs
+   - Suggests variable combinations for maximum page coverage
+   - Validates data quality and relevance
 
-4. **Bulk Page Creation**
-   - Generate hundreds/thousands of pages from single template
-   - SEO optimization built into every page
-   - Maintain consistent structure while ensuring uniqueness
+4. **Content Strategy Framework**
+   - AI designs content pillars and topic clusters
+   - Creates SEO-optimized content architectures
+   - Plans internal linking and site structure
+   - Ensures content serves real user value
 
-5. **Export & Publishing**
-   - Export as CSV with all page data
-   - WordPress XML format
-   - Direct CMS integration capabilities
+5. **Implementation & Scale**
+   - Convert AI strategy into working templates
+   - Generate hundreds/thousands of pages with meaningful content
+   - Professional quality that ranks and converts
+   - Export to CSV, WordPress XML, or API formats
+
+## 🚀 AI Strategy-First Architecture
+
+**REVOLUTIONARY APPROACH**: This tool uses AI to generate custom programmatic SEO strategies instead of static templates.
+
+**Business Analysis + AI Strategy Generation + Custom Templates + Data = Scale with Intent**
+
+### AI Strategy Generation Process:
+1. **Deep Business Analysis** - AI understands your business model, customers, market
+2. **Opportunity Discovery** - AI identifies scalable content opportunities specific to your industry
+3. **Dynamic Template Creation** - AI generates custom templates based on real user search intent
+4. **Data Strategy Design** - AI recommends optimal data structures and sources
+5. **Content Framework** - AI creates SEO architecture and content strategy
+
+### Why AI Strategy Generation is Revolutionary:
+- **Business-Specific**: Every strategy is tailored to your unique business
+- **Intent-Driven**: Templates serve actual user search intent, not generic patterns
+- **Scalable Quality**: Maintains excellence even with thousands of pages
+- **Competitive Advantage**: Creates opportunities competitors don't have
+
+### AI Configuration Required:
+Set at least one environment variable:
+- `OPENAI_API_KEY=your_openai_key`
+- `ANTHROPIC_API_KEY=your_anthropic_key`
+- `PERPLEXITY_API_KEY=your_perplexity_key`
+
+### New API Endpoints:
+- `POST /api/generate-ai-strategy` - Generate complete custom strategy
+- `POST /api/projects/{id}/implement-ai-strategy` - Convert strategy to templates
 
 ## Architecture Components
 
-### Core Subagents
+### Revolutionary AI Strategy System
 
-#### 1. Business Analyzer Agent
-- **Purpose**: Understand any business and identify template opportunities
+#### 1. AI Business Intelligence Analyzer (`AIStrategyGenerator`)
+- **Purpose**: Deep business analysis and custom strategy generation
 - **Key Functions**:
-  - Analyze business URL/description
-  - Identify core offerings and target audience
-  - Suggest relevant template types
-  - Recommend data categories
+  - Analyze business model, market position, customer behavior
+  - Map customer search journey and intent patterns
+  - Identify competitive gaps and scalable opportunities
+  - Generate comprehensive business intelligence reports
 
-#### 2. Template Builder Agent
-- **Purpose**: Create and manage reusable page templates
+#### 2. Dynamic Template Generator (AI-Driven)
+- **Purpose**: Create custom templates based on business analysis
 - **Key Functions**:
-  - Design templates with variable placeholders
-  - Validate template structure for SEO
-  - Extract required variables
-  - Maintain template library
+  - Generate templates that serve real user search intent
+  - Design multiple template variations for different journey stages
+  - Create business-specific variable structures
+  - Eliminate generic "Service in City" patterns
 
-#### 3. Data Manager Agent
-- **Purpose**: Handle data import and combination generation
+#### 3. Intelligent Data Strategy Generator
+- **Purpose**: Design optimal data collection and structuring plans
 - **Key Functions**:
-  - Import data from CSV or manual entry
-  - Validate and clean data
-  - Generate all possible combinations
-  - Calculate page generation potential
+  - Recommend data sources tailored to business needs
+  - Create data validation and quality requirements
+  - Plan variable combinations for maximum coverage
+  - Design scalable data collection workflows
 
-#### 4. Page Generator Agent
-- **Purpose**: Create bulk pages from templates + data
+#### 4. Content Strategy Framework Generator
+- **Purpose**: Design SEO architecture and content planning
 - **Key Functions**:
-  - Populate templates with data
-  - Ensure unique content elements
-  - Optimize each page for SEO
-  - Generate at scale (hundreds/thousands)
+  - Create content pillars and topic clusters
+  - Plan internal linking strategies
+  - Design scalable content quality standards
+  - Ensure content serves genuine user value
 
-#### 5. Export Manager Agent
-- **Purpose**: Export pages in various formats
+#### 5. AI-Powered Page Generator (`SmartPageGenerator`)
+- **Purpose**: Generate high-quality pages using AI and real data
 - **Key Functions**:
-  - Export as CSV
-  - Generate WordPress XML
-  - Create JSON for APIs
-  - Maintain URL structure
+  - Create unique, valuable content for each page
+  - Use real market data and business insights
+  - Maintain professional quality at scale
+  - Optimize for search engines and user experience
 
-## Universal Application Examples
+#### 6. Strategy Implementation Engine
+- **Purpose**: Convert AI strategies into working templates and data
+- **Key Functions**:
+  - Transform strategy into database templates
+  - Set up data structures and validation
+  - Create implementation timelines
+  - Enable seamless scaling to production
 
-### Real Estate SaaS
-- **Template**: "[City] [Property Type] Investment Analysis"
-- **Data**: Cities (Toronto, Vancouver), Property Types (Condo, House)
-- **Result**: "Toronto Condo Investment Analysis", "Vancouver House Investment Analysis"
+## AI Strategy Generation Examples
 
-### Project Management Software
-- **Template**: "[Industry] Project Management Best Practices"
-- **Data**: Industries (Construction, Healthcare, Marketing)
-- **Result**: "Construction Project Management Best Practices"
+### Real Estate Investment SaaS
+**Business Input**: "Real estate investment analysis platform helping investors evaluate ROI, cash flow, and market trends"
 
-### E-commerce Store
-- **Template**: "Best [Product Category] for [Use Case]"
-- **Data**: Categories (Running Shoes, Hiking Boots), Use Cases (Beginners, Trail Running)
-- **Result**: "Best Running Shoes for Beginners"
+**AI-Generated Strategy**:
+- **Templates**: 
+  - "Is {Property Type} profitable in {City}? 2024 ROI Analysis"
+  - "{City} {Property Type} Investment Calculator - Market Data"
+  - "Best {Neighborhoods} in {City} for {Property Type} Investment"
+- **Data Strategy**: Cities, property types, neighborhoods, rental rates, occupancy data
+- **Content Focus**: Investment analysis, ROI calculations, market insights
+- **Result**: 500+ pages serving actual investor search intent with real market data
+
+### Project Management SaaS
+**Business Input**: "Project management software for construction companies with time tracking and resource management"
+
+**AI-Generated Strategy**:
+- **Templates**:
+  - "{Industry} Project Management Software Comparison 2024"
+  - "How to Manage {Project Type} Projects: Complete Guide"
+  - "{Industry} Resource Planning: Tools and Best Practices"
+- **Data Strategy**: Industries, project types, tools, methodologies
+- **Content Focus**: Industry-specific guidance, tool comparisons, implementation guides
+- **Result**: 300+ pages serving specific industry needs with actionable insights
+
+### E-commerce Analytics Platform
+**Business Input**: "Analytics platform helping e-commerce stores optimize conversion rates and customer experience"
+
+**AI-Generated Strategy**:
+- **Templates**:
+  - "{E-commerce Platform} Conversion Rate Optimization Guide"
+  - "How to Increase {Metric} for {Store Type}: Data-Driven Strategies"
+  - "{Industry} E-commerce Analytics: Key Metrics and Tools"
+- **Data Strategy**: E-commerce platforms, metrics, store types, industries
+- **Content Focus**: Platform-specific optimization, metric improvement, industry insights
+- **Result**: 400+ pages with platform-specific, actionable optimization strategies
 
 ## Development Guidelines
 
 When implementing features:
-1. **Template First**: Always think in terms of templates and data, not individual pages
-2. **Universal Design**: Ensure features work for ANY business type
-3. **Data Validation**: Validate all imported data for quality
-4. **Uniqueness**: Each generated page must have unique elements beyond the template
-5. **SEO Built-in**: Every page must be SEO-optimized by default
-6. **Scale Testing**: Test with hundreds of combinations to ensure performance
+1. **AI Strategy-First**: Use AI to generate custom strategies instead of static templates
+2. **Business-Specific**: Every solution should be tailored to the specific business and industry
+3. **Intent-Driven**: Ensure all templates serve real user search intent, not generic patterns
+4. **AI Requirement**: Validate AI providers are configured for all strategy generation
+5. **Data Strategy**: Use AI to recommend optimal data structures for each business
+6. **Quality at Scale**: AI ensures unique, valuable content even for thousands of pages
+7. **User Value**: Every page must provide genuine value to the end user
+8. **Scale Testing**: Test with hundreds of combinations to ensure performance
+
+### AI Strategy Development Process
+1. **Business Analysis**: Use AI to deeply understand the business model and market
+2. **Opportunity Discovery**: Identify scalable content opportunities specific to the industry
+3. **Template Generation**: Create custom templates based on real user search patterns
+4. **Data Planning**: Design optimal data collection and validation strategies
+5. **Implementation**: Convert strategies into working templates and content systems
+
+### AI Configuration Validation
+- Always check AI provider availability before strategy generation
+- Provide clear error messages with setup instructions when AI is missing
+- Use debug endpoints to verify AI configuration in production
+- Test strategy generation with sample business inputs
 
 ## CRITICAL: Testing & Quality Assurance Protocol
 
