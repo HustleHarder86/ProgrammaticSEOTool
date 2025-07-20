@@ -1036,6 +1036,8 @@ class GenerateVariablesResponse(BaseModel):
     total_count: int
     template_pattern: str
     variable_types: Dict[str, str]
+    potential_pages_generated: Optional[int] = None
+    potential_pages_url: Optional[str] = None
 
 @app.post("/api/projects/{project_id}/templates/{template_id}/generate-variables", response_model=GenerateVariablesResponse)
 async def generate_variables(
@@ -1095,6 +1097,60 @@ async def generate_variables(
                     "total_combinations": result["total_count"]
                 }
             )
+        
+        # Store the generated variables for later use
+        # Convert the AI response format to the format expected by potential pages
+        formatted_variables = {}
+        for var_name, var_values in result["variables"].items():
+            if isinstance(var_values, list):
+                formatted_variables[var_name] = [
+                    {
+                        'value': val,
+                        'dataset_id': 'ai_generated',
+                        'dataset_name': 'AI Generated Variables',
+                        'metadata': {}
+                    } for val in var_values
+                ]
+        
+        # Automatically generate potential pages with the AI-generated variables
+        try:
+            # Clear existing potential pages
+            db.query(PotentialPage).filter(
+                PotentialPage.project_id == project_id,
+                PotentialPage.template_id == template_id
+            ).delete()
+            
+            # Generate combinations
+            variable_combinations = page_generator.generate_all_combinations(formatted_variables)
+            
+            # Create potential pages
+            potential_pages = []
+            for i, variables in enumerate(variable_combinations[:1000]):  # Limit to 1000 for safety
+                title = page_generator.replace_variables_in_content(template.pattern, variables)
+                slug = title.lower().replace(' ', '-').replace('?', '').replace(',', '').replace(':', '')
+                
+                potential_page = PotentialPage(
+                    project_id=project_id,
+                    template_id=template_id,
+                    title=title,
+                    slug=slug,
+                    variables=variables,
+                    priority=0
+                )
+                potential_pages.append(potential_page)
+            
+            # Batch insert
+            if potential_pages:
+                db.add_all(potential_pages)
+                db.commit()
+                
+            # Add potential pages info to response
+            result["potential_pages_generated"] = len(potential_pages)
+            result["potential_pages_url"] = f"/api/projects/{project_id}/templates/{template_id}/potential-pages"
+            
+        except Exception as pp_error:
+            print(f"Warning: Could not generate potential pages: {str(pp_error)}")
+            # Don't fail the whole request, just log the warning
         
         return GenerateVariablesResponse(**result)
         
@@ -1399,9 +1455,35 @@ async def generate_potential_pages(
             # Use provided data
             variable_combinations = page_generator.generate_all_combinations(request.variables_data)
         else:
-            # Load data from datasets
-            variable_data = page_generator.load_datasets_for_variables(project_id, template, db)
-            variable_combinations = page_generator.generate_all_combinations(variable_data)
+            # Try to use AI-generated variables first
+            # Check if template has generated variables from the AI generation endpoint
+            if hasattr(template, 'generated_variables_data') and template.generated_variables_data:
+                # Convert AI-generated format to expected format
+                ai_variables = template.generated_variables_data
+                variable_data = {}
+                
+                for var_name, var_values in ai_variables.items():
+                    if isinstance(var_values, list):
+                        # Convert simple list to expected format
+                        variable_data[var_name] = [
+                            {
+                                'value': val,
+                                'dataset_id': 'ai_generated',
+                                'dataset_name': 'AI Generated',
+                                'metadata': {}
+                            } for val in var_values
+                        ]
+                
+                if variable_data:
+                    variable_combinations = page_generator.generate_all_combinations(variable_data)
+                else:
+                    # Fallback to datasets
+                    variable_data = page_generator.load_datasets_for_variables(project_id, template, db)
+                    variable_combinations = page_generator.generate_all_combinations(variable_data)
+            else:
+                # Load data from datasets
+                variable_data = page_generator.load_datasets_for_variables(project_id, template, db)
+                variable_combinations = page_generator.generate_all_combinations(variable_data)
         
         # Limit combinations if requested
         if request.max_combinations and len(variable_combinations) > request.max_combinations:
