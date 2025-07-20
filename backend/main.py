@@ -17,6 +17,7 @@ from export_manager import export_manager, ExportFormat
 from agents.variable_generator import VariableGeneratorAgent
 from api_routes import router as cost_router
 from cost_tracker import CostTracker, OperationType
+from ai_strategy_generator import AIStrategyGenerator
 
 app = FastAPI(title="Programmatic SEO Tool API")
 ai_client = AIClient()
@@ -35,6 +36,16 @@ except RuntimeError as e:
     print(f"⚠️  PageGenerator initialization failed: {e}")
 
 variable_generator = VariableGeneratorAgent()
+
+# Initialize AI Strategy Generator 
+try:
+    ai_strategy_generator = AIStrategyGenerator()
+    strategy_generator_error = None
+    print("✅ AI Strategy Generator initialized")
+except RuntimeError as e:
+    ai_strategy_generator = None
+    strategy_generator_error = str(e)
+    print(f"⚠️ AI Strategy Generator initialization failed: {e}")
 
 # Initialize database on startup
 @app.on_event("startup")
@@ -1321,6 +1332,141 @@ class ExportStatusResponse(BaseModel):
     completed_at: Optional[str] = None
     error_message: Optional[str] = None
     download_url: Optional[str] = None
+
+class AIStrategyRequest(BaseModel):
+    business_input: str
+    business_url: Optional[str] = None
+
+class AIStrategyResponse(BaseModel):
+    strategy: dict
+    templates_generated: int
+    implementation_plan: dict
+
+# AI Strategy Generation endpoint
+@app.post("/api/generate-ai-strategy", response_model=AIStrategyResponse)
+async def generate_ai_strategy(
+    request: AIStrategyRequest,
+    db: Session = Depends(get_db)
+):
+    """Generate a complete AI-powered programmatic SEO strategy for a business"""
+    
+    # Validate AI Strategy Generator is available
+    if not ai_strategy_generator:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "error": "AI_STRATEGY_GENERATOR_UNAVAILABLE",
+                "message": "AI Strategy Generator requires AI providers for business analysis and strategy creation",
+                "details": strategy_generator_error,
+                "setup_instructions": [
+                    "Configure at least one AI provider:",
+                    "• OPENAI_API_KEY=your_openai_key",
+                    "• ANTHROPIC_API_KEY=your_anthropic_key",
+                    "• PERPLEXITY_API_KEY=your_perplexity_key",
+                    "Then restart the application."
+                ]
+            }
+        )
+    
+    try:
+        print(f"🚀 Generating AI strategy for: {request.business_input[:50]}...")
+        
+        # Generate complete strategy
+        strategy = await ai_strategy_generator.generate_complete_strategy(
+            business_input=request.business_input,
+            business_url=request.business_url
+        )
+        
+        templates_count = len(strategy.get("custom_templates", []))
+        implementation_plan = strategy.get("implementation_plan", {})
+        
+        print(f"✅ Strategy generated with {templates_count} templates")
+        
+        return AIStrategyResponse(
+            strategy=strategy,
+            templates_generated=templates_count,
+            implementation_plan=implementation_plan
+        )
+        
+    except Exception as e:
+        print(f"❌ AI strategy generation failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": "STRATEGY_GENERATION_FAILED", 
+                "message": f"AI strategy generation failed: {str(e)}",
+                "business_input": request.business_input
+            }
+        )
+
+@app.post("/api/projects/{project_id}/implement-ai-strategy")
+async def implement_ai_strategy(
+    project_id: str,
+    strategy_data: dict,
+    db: Session = Depends(get_db)
+):
+    """Create templates and data structures from an AI-generated strategy"""
+    
+    # Validate project exists
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    try:
+        custom_templates = strategy_data.get("custom_templates", [])
+        created_templates = []
+        
+        for template_data in custom_templates:
+            # Create template in database
+            template = Template(
+                project_id=project_id,
+                name=template_data.get("template_name", "AI Generated Template"),
+                pattern=template_data.get("template_pattern", ""),
+                template_sections={
+                    "seo_structure": {
+                        "title_template": template_data.get("template_pattern", ""),
+                        "h1_template": template_data.get("h1_pattern", ""),
+                        "meta_description_template": template_data.get("seo_strategy", {}).get("meta_description_template", "")
+                    },
+                    "content_strategy": template_data.get("content_strategy", {}),
+                    "ai_generated": True,
+                    "generation_date": datetime.now().isoformat()
+                },
+                variables=template_data.get("target_variables", [])
+            )
+            
+            db.add(template)
+            db.commit()
+            db.refresh(template)
+            
+            created_templates.append({
+                "id": template.id,
+                "name": template.name,
+                "pattern": template.pattern,
+                "variables": len(template.variables)
+            })
+        
+        return {
+            "message": f"Successfully implemented AI strategy with {len(created_templates)} templates",
+            "templates_created": created_templates,
+            "implementation_plan": strategy_data.get("implementation_plan", {}),
+            "next_steps": [
+                "Generate or import data for template variables",
+                "Test content generation with sample data",
+                "Scale to full page generation"
+            ]
+        }
+        
+    except Exception as e:
+        print(f"❌ Strategy implementation failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Strategy implementation failed: {str(e)}"
+        )
 
 # Export endpoints
 @app.post("/api/projects/{project_id}/export", response_model=ExportResponse)
