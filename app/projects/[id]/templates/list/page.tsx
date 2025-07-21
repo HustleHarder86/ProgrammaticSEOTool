@@ -66,7 +66,7 @@ export default function TemplatesListPage() {
     try {
       await apiClient.delete(`/api/templates/${template.id}`);
       await loadData(); // Reload templates
-    } catch (err) {
+    } catch {
       alert('Failed to delete template');
     }
   };
@@ -82,7 +82,7 @@ export default function TemplatesListPage() {
       
       await apiClient.post(`/api/projects/${projectId}/templates`, duplicateData);
       await loadData(); // Reload templates
-    } catch (err) {
+    } catch {
       alert('Failed to duplicate template');
     }
   };
@@ -171,7 +171,7 @@ export default function TemplatesListPage() {
         <Card>
           <CardContent className="text-center py-12">
             <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No templates found matching "{searchQuery}"</p>
+            <p className="text-gray-600">No templates found matching &quot;{searchQuery}&quot;</p>
           </CardContent>
         </Card>
       ) : (

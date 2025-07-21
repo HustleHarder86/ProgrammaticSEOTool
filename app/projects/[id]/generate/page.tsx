@@ -73,6 +73,7 @@ export default function GeneratePagesPage() {
     if (selectedTemplate && !showPotentialPages && !generatingVariables) {
       handleTemplateSelected(selectedTemplate);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTemplate]);
 
   const handleTemplateSelected = async (template: Template) => {

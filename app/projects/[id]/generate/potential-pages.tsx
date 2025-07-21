@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -11,16 +11,14 @@ import {
   AlertCircle, 
   Loader2,
   FileText,
-  Hash,
-  CheckSquare,
-  Square
+  CheckSquare
 } from 'lucide-react';
 
 interface PotentialPage {
   id: string;
   title: string;
   slug: string;
-  variables: Record<string, any>;
+  variables: Record<string, string | number>;
   is_generated: boolean;
   priority: number;
   created_at: string;
@@ -39,7 +37,7 @@ interface PotentialPagesProps {
   templateName: string;
   templatePattern: string;
   onBack: () => void;
-  onComplete: (result: any) => void;
+  onComplete: (result: { status: string; generated_count: number }) => void;
 }
 
 export default function PotentialPagesSelector({
@@ -61,12 +59,7 @@ export default function PotentialPagesSelector({
     remaining: 0
   });
 
-  // Load potential pages
-  useEffect(() => {
-    loadPotentialPages();
-  }, [projectId, templateId]);
-
-  const loadPotentialPages = async () => {
+  const loadPotentialPages = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -95,7 +88,12 @@ export default function PotentialPagesSelector({
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId, templateId]);
+
+  // Load potential pages
+  useEffect(() => {
+    loadPotentialPages();
+  }, [projectId, templateId, loadPotentialPages]);
 
   const handleSelectAll = () => {
     const allIds = potentialPages
