@@ -30,6 +30,17 @@ export interface Template {
   template_html?: string;
   variables: string[];
   seo_settings?: SeoSettings;
+  template_sections?: {
+    seo_structure?: {
+      title_template?: string;
+      meta_description_template?: string;
+      h1_template?: string;
+    };
+    content_sections?: Array<{
+      type: string;
+      content: string;
+    }>;
+  };
   created_at: string;
   updated_at?: string;
 }
