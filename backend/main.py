@@ -65,6 +65,29 @@ app.add_middleware(
 # Include cost tracking router
 app.include_router(cost_router)
 
+# Configuration Management Endpoints
+@app.get("/api/config/feature-flags")
+def get_feature_flags():
+    """Get current feature flags"""
+    from config_manager import get_config_manager
+    config = get_config_manager()
+    return config.get("feature_flags", {})
+
+@app.get("/api/config/settings")
+def get_config_settings():
+    """Get application configuration settings"""
+    from config_manager import get_config_manager
+    config = get_config_manager()
+    return config.export_config(include_sensitive=False)
+
+@app.put("/api/config/feature-flags/{flag_name}")
+def update_feature_flag(flag_name: str, enabled: bool):
+    """Update a feature flag"""
+    from config_manager import get_config_manager
+    config = get_config_manager()
+    config.set(f"feature_flags.{flag_name}", enabled)
+    return {"flag": flag_name, "enabled": enabled}
+
 @app.get("/")
 def root():
     return {"message": "Programmatic SEO Tool API is running!"}

@@ -1,0 +1,139 @@
+{
+  "version": "1.0.0",
+  "description": "Schema markup templates and configurations",
+  "content_type_mapping": {
+    "evaluation_question": {
+      "primary": "FAQPage",
+      "secondary": ["WebPage"],
+      "conditions": {
+        "has_multiple_questions": "FAQPage",
+        "single_question": "Article"
+      }
+    },
+    "location_service": {
+      "primary": "Service",
+      "secondary": ["LocalBusiness", "WebPage"],
+      "conditions": {
+        "has_address": "LocalBusiness",
+        "service_only": "Service"
+      }
+    },
+    "comparison": {
+      "primary": "Article",
+      "secondary": ["ItemList", "WebPage"],
+      "conditions": {
+        "product_comparison": "Product",
+        "service_comparison": "Service"
+      }
+    },
+    "how_to": {
+      "primary": "HowTo",
+      "secondary": ["Article", "WebPage"],
+      "conditions": {
+        "has_steps": "HowTo",
+        "general_guide": "Article"
+      }
+    },
+    "product_review": {
+      "primary": "Review",
+      "secondary": ["Product", "Article"],
+      "conditions": {
+        "single_product": "Review",
+        "multiple_products": "ItemList"
+      }
+    },
+    "local_business": {
+      "primary": "LocalBusiness",
+      "secondary": ["Service", "WebPage"],
+      "conditions": {
+        "has_location": "LocalBusiness",
+        "online_only": "Organization"
+      }
+    },
+    "generic": {
+      "primary": "Article",
+      "secondary": ["WebPage"],
+      "conditions": {}
+    }
+  },
+  "schema_enhancements": {
+    "author": {
+      "type": "Organization",
+      "fields": {
+        "name": "{business_name}",
+        "url": "{business_url}",
+        "logo": "{logo_url}"
+      }
+    },
+    "publisher": {
+      "type": "Organization",
+      "fields": {
+        "name": "{business_name}",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "{logo_url}",
+          "width": 600,
+          "height": 60
+        }
+      }
+    },
+    "breadcrumb": {
+      "template": [
+        {"name": "Home", "url": "/"},
+        {"name": "{category}", "url": "/{category_slug}"},
+        {"name": "{title}", "url": "{current_url}"}
+      ]
+    }
+  },
+  "rich_snippets": {
+    "faq": {
+      "max_questions": 10,
+      "min_answer_length": 50,
+      "extract_from_content": true
+    },
+    "howto": {
+      "max_steps": 15,
+      "include_time": true,
+      "include_cost": true,
+      "include_tools": true
+    },
+    "review": {
+      "rating_scale": 5,
+      "include_pros_cons": true,
+      "aggregate_ratings": true
+    },
+    "product": {
+      "include_offers": true,
+      "include_availability": true,
+      "include_reviews": true
+    }
+  },
+  "validation_rules": {
+    "required_fields": {
+      "all": ["@context", "@type"],
+      "Article": ["headline", "datePublished", "author"],
+      "FAQPage": ["mainEntity"],
+      "HowTo": ["name", "step"],
+      "LocalBusiness": ["name", "address"],
+      "Product": ["name"],
+      "Service": ["name", "provider"],
+      "Review": ["itemReviewed", "reviewRating", "author"]
+    },
+    "field_limits": {
+      "headline": {"max_length": 110},
+      "description": {"max_length": 160},
+      "name": {"max_length": 100},
+      "reviewBody": {"max_length": 1500}
+    }
+  },
+  "default_values": {
+    "datePublished": "current_date",
+    "dateModified": "current_date",
+    "inLanguage": "en-US",
+    "publisher": "use_author",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "{current_url}"
+    }
+  }
+}

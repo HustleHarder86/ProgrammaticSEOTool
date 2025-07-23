@@ -1,0 +1,159 @@
+{
+  "version": "1.0.0",
+  "description": "Centralized AI prompts configuration for Programmatic SEO Tool",
+  "models": {
+    "primary": {
+      "provider": "openai",
+      "model": "gpt-4",
+      "temperature": 0.7,
+      "max_tokens": 2000
+    },
+    "fallback": {
+      "provider": "anthropic",
+      "model": "claude-3-haiku-20240307",
+      "temperature": 0.7,
+      "max_tokens": 2000
+    },
+    "business_analysis": {
+      "provider": "perplexity",
+      "model": "sonar",
+      "temperature": 0.5,
+      "max_tokens": 3000
+    }
+  },
+  "prompts": {
+    "business_analysis": {
+      "url_based": {
+        "system": "You are an expert SEO strategist and business analyst specializing in programmatic content opportunities.",
+        "user": "Analyze this website for programmatic SEO opportunities.\n\nWebsite URL: {business_input}\nWebsite Content:\n{url_content}\n\nBased on this website, provide a JSON response with:\n1. business_name: The actual business name from the website\n2. business_description: What this business/app actually does based on the website content\n3. target_audience: Who actually uses this product/service\n4. core_offerings: List of 3-5 main features/services from the website\n5. template_opportunities: Array of realistic programmatic SEO template opportunities\n\nIMPORTANT: Base your analysis on what the website ACTUALLY does, not assumptions.\n\nFormat response as JSON in a markdown code block.",
+        "variations": [
+          "professional",
+          "analytical",
+          "strategic"
+        ]
+      },
+      "text_based": {
+        "system": "You are an expert SEO strategist specializing in identifying scalable content opportunities for businesses.",
+        "user": "Analyze this business for programmatic SEO opportunities: {business_input}\n\nProvide a JSON response with:\n1. business_name: A clear business name\n2. business_description: Business description\n3. target_audience: Who the business serves\n4. core_offerings: List of 3-5 main products/services\n5. template_opportunities: Array of template opportunities, each with:\n   - template_name: Descriptive name\n   - template_pattern: Template pattern (e.g., {Service} in {City})\n   - example_pages: 3 example page titles\n   - estimated_pages: Number between 50-500\n   - difficulty: Easy/Medium/Hard\n\nFormat response as JSON in a markdown code block.",
+        "variations": [
+          "comprehensive",
+          "focused",
+          "growth-oriented"
+        ]
+      }
+    },
+    "variable_generation": {
+      "default": {
+        "system": "You are a data analyst specializing in creating realistic, search-relevant variables for SEO content generation.",
+        "user": "Generate {count} realistic values for the variable '{variable_name}' in the context of '{template_pattern}' for a {business_type} business.\n\nRequirements:\n- Values should be search-relevant and realistic\n- Mix popular and long-tail options\n- Consider user search intent\n- Include variety (don't just list biggest/most popular)\n- Make values specific and actionable\n\nReturn as a JSON array of strings.",
+        "temperature": 0.8
+      }
+    },
+    "content_generation": {
+      "evaluation_question": {
+        "system": "You are an expert content writer creating data-driven, helpful content that directly answers user questions.",
+        "user": "Write a 350-400 word answer to: \"{title}\"\n\nUse ONLY this verified data:\n{data_summary}\n\nStructure your response:\n1. Start with a clear yes/no answer backed by the data\n2. Present 3-4 key data points that support your answer\n3. Include specific numbers and percentages from the data\n4. Address potential concerns or considerations\n5. End with actionable next steps\n\nImportant:\n- Use ONLY the data provided above\n- Be specific with numbers, don't round excessively\n- Write in a conversational but informative tone\n- Make it scannable with short paragraphs\n- Do NOT invent any statistics or data points",
+        "tone_variations": [
+          "conversational",
+          "professional",
+          "expert"
+        ]
+      },
+      "location_service": {
+        "system": "You are a local services expert creating helpful, location-specific content.",
+        "user": "Create a 350-word overview for: \"{title}\"\n\nUse ONLY this verified data:\n{data_summary}\n\nStructure:\n1. Opening with provider count and average rating\n2. List top 3-4 providers with their ratings\n3. Local market insights (pricing, availability)\n4. What makes this location unique for this service\n5. Clear call-to-action\n\nRequirements:\n- Include all specific numbers from the data\n- Make it locally relevant\n- Focus on helping users make decisions\n- Natural, helpful tone",
+        "tone_variations": [
+          "local-friendly",
+          "informative",
+          "helpful"
+        ]
+      },
+      "comparison": {
+        "system": "You are a comparison expert helping users make informed decisions.",
+        "user": "Write a 350-word comparison for: \"{title}\"\n\nUse this data:\n{data_summary}\n\nInclude:\n1. Clear introduction to what's being compared\n2. Side-by-side analysis of key features\n3. Pros and cons of each option\n4. Best use cases for each\n5. Clear recommendation based on user needs\n\nBe objective and data-driven.",
+        "tone_variations": [
+          "analytical",
+          "balanced",
+          "decisive"
+        ]
+      },
+      "generic": {
+        "system": "You are a versatile content writer creating informative, SEO-optimized content.",
+        "user": "Create a 350-word article about: \"{title}\"\n\nContext: {business_context}\nData: {data_summary}\n\nRequirements:\n- Informative and engaging\n- Include relevant statistics\n- Natural keyword usage\n- Clear structure with subheadings\n- Actionable takeaways",
+        "tone_variations": [
+          "informative",
+          "engaging",
+          "authoritative"
+        ]
+      }
+    },
+    "meta_generation": {
+      "meta_description": {
+        "system": "You are an SEO copywriter specializing in compelling meta descriptions.",
+        "user": "Write a 155-character meta description for: {title}\n\nInclude:\n- Primary keyword naturally\n- Clear value proposition\n- Call-to-action\n- Stay under 155 characters\n\nContext: {page_summary}"
+      },
+      "title_optimization": {
+        "system": "You are an SEO specialist optimizing page titles.",
+        "user": "Optimize this title for SEO: {original_title}\n\nRequirements:\n- Keep under 60 characters\n- Include primary keyword\n- Make it compelling\n- Maintain clarity\n\nContext: {page_context}"
+      }
+    },
+    "enhancement_prompts": {
+      "statistics": {
+        "system": "You are a data analyst creating relevant statistics.",
+        "user": "Generate 5 relevant statistics for: {topic}\n\nContext: {business_context}\n\nRequirements:\n- Use realistic, industry-standard data\n- Include sources when possible\n- Make statistics relevant to user intent\n- Mix different types (percentages, growth rates, comparisons)"
+      },
+      "faq": {
+        "system": "You are an FAQ specialist anticipating user questions.",
+        "user": "Create 5 frequently asked questions and answers for: {topic}\n\nContext: {content_summary}\n\nRequirements:\n- Questions users actually ask\n- Concise, helpful answers\n- Include relevant data\n- Natural language"
+      },
+      "local_context": {
+        "system": "You are a local market expert.",
+        "user": "Add local context for {service} in {location}:\n\nInclude:\n- Local market conditions\n- Specific neighborhoods or areas\n- Local regulations or considerations\n- Seasonal factors\n- Community insights"
+      }
+    }
+  },
+  "prompt_styles": {
+    "tones": {
+      "professional": {
+        "description": "Formal, authoritative, data-driven",
+        "modifiers": "Write in a professional, authoritative tone with emphasis on data and credibility."
+      },
+      "conversational": {
+        "description": "Friendly, approachable, helpful",
+        "modifiers": "Write in a conversational, friendly tone that's easy to understand and approachable."
+      },
+      "expert": {
+        "description": "Knowledgeable, detailed, technical when appropriate",
+        "modifiers": "Write as a subject matter expert, including technical details where appropriate while remaining accessible."
+      },
+      "local-friendly": {
+        "description": "Community-focused, neighborly, practical",
+        "modifiers": "Write with a local, community-focused perspective that feels neighborly and practical."
+      }
+    },
+    "content_structures": {
+      "how-to": "Step-by-step guide format with clear instructions",
+      "listicle": "Numbered or bulleted list format with brief explanations",
+      "comparison": "Side-by-side analysis with pros, cons, and recommendations",
+      "guide": "Comprehensive overview with sections and subsections",
+      "answer": "Direct answer format addressing specific questions"
+    }
+  },
+  "validation": {
+    "content_requirements": {
+      "min_word_count": 300,
+      "max_word_count": 500,
+      "required_elements": [
+        "data_points",
+        "actionable_advice",
+        "clear_structure"
+      ]
+    },
+    "quality_checks": [
+      "no_placeholder_text",
+      "proper_variable_substitution",
+      "factual_accuracy",
+      "readability_score"
+    ]
+  }
+}
