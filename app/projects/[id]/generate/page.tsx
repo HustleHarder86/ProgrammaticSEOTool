@@ -103,17 +103,26 @@ export default function GeneratePagesPage() {
     }
   };
 
-  const handleGenerationComplete = (result: { status: string; generated_count: number }) => {
-    // Create a GenerationResult object from the simpler result
-    const generationResult: GenerationResult = {
-      status: result.status as 'completed' | 'failed',
-      total_pages: result.generated_count,
-      generated_pages: result.generated_count,
+  const handleGenerationComplete = (result: GenerationResult | { status: string; generated_count: number }) => {
+    // Handle both types of results
+    let generationResult: GenerationResult;
+    
+    if ('generated_pages' in result) {
+      // Already a GenerationResult
+      generationResult = result as GenerationResult;
+    } else {
+      // Convert from simpler format
+      generationResult = {
+        status: result.status as 'completed' | 'failed',
+        total_pages: result.generated_count,
+        generated_pages: result.generated_count,
       failed_pages: 0,
       preview_pages: []
-    };
+    }
+    
     setGenerationResult(generationResult);
-    if (result.status === 'completed') {
+    
+    if (generationResult.status === 'completed') {
       // Could redirect to results page or show inline
       router.push(`/projects/${projectId}/pages`);
     }
