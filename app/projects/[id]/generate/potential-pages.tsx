@@ -139,10 +139,7 @@ export default function PotentialPagesSelector({
       
       onComplete({
         status: 'completed',
-        generated_pages: response.data.successful_generations,
-        total_pages: selectedIds.length,
-        failed_pages: selectedIds.length - response.data.successful_generations,
-        message: response.data.message
+        generated_count: response.data.successful_generations
       });
       
     } catch (err) {
