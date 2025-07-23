@@ -1,0 +1,213 @@
+# Page snapshot
+
+```yaml
+- navigation:
+  - link "SEO Toolkit":
+    - /url: /
+  - link "Dashboard":
+    - /url: /
+  - link "Projects":
+    - /url: /projects
+  - link "Templates":
+    - /url: /templates
+  - link "Data":
+    - /url: /data
+  - link "Export":
+    - /url: /export
+  - link "Settings":
+    - /url: /settings
+- main:
+  - heading "Good evening!" [level=1]
+  - paragraph: Your SEO toolkit workspace
+  - paragraph: Active Projects
+  - paragraph: "27"
+  - paragraph: 27 projects
+  - paragraph: Potential Pages
+  - paragraph: 10,455
+  - paragraph: Ready to generate
+  - paragraph: Templates Available
+  - paragraph: "78"
+  - paragraph: 78 templates
+  - paragraph: Last Activity
+  - paragraph: Just now
+  - paragraph: Keep going!
+  - heading "Quick Actions" [level=2]
+  - link "New Project Start a new SEO project":
+    - /url: /projects/new
+    - heading "New Project" [level=3]
+    - paragraph: Start a new SEO project
+  - link "Analyze Website Get template suggestions from any URL":
+    - /url: /analyze
+    - heading "Analyze Website" [level=3]
+    - paragraph: Get template suggestions from any URL
+  - link "Import Data Upload CSV data for bulk generation":
+    - /url: /import
+    - heading "Import Data" [level=3]
+    - paragraph: Upload CSV data for bulk generation
+  - link "Templates Manage your page templates":
+    - /url: /templates
+    - heading "Templates" [level=3]
+    - paragraph: Manage your page templates
+  - link "Generate Pages Create bulk pages from templates":
+    - /url: /generate
+    - heading "Generate Pages" [level=3]
+    - paragraph: Create bulk pages from templates
+  - link "Export Export pages as CSV, WordPress, or JSON":
+    - /url: /export
+    - heading "Export" [level=3]
+    - paragraph: Export pages as CSV, WordPress, or JSON
+  - heading "Recent Projects" [level=2]
+  - link "View All Projects":
+    - /url: /projects
+    - button "View All Projects"
+  - link "Example Business A business focused on A test company that sells software Templates 1 Potential Pages 100 5 days ago":
+    - /url: /projects/d9f88603-b1a6-44a0-a3df-e55dab03b970
+    - heading "Example Business" [level=3]
+    - paragraph: A business focused on A test company that sells software
+    - text: Templates 1 Potential Pages 100 5 days ago
+  - link "Example Business A business focused on Canva is a graphic design platform that allows users to create social media graphics, presentations, Templates 1 Potential Pages 100 5 days ago":
+    - /url: /projects/a422b3c1-3ad3-45e8-968f-4b855a873659
+    - heading "Example Business" [level=3]
+    - paragraph: A business focused on Canva is a graphic design platform that allows users to create social media graphics, presentations,
+    - text: Templates 1 Potential Pages 100 5 days ago
+  - link "Test Project 20250711_094639 Test e-commerce store selling outdoor gear Templates 0 Potential Pages 0 5 days ago":
+    - /url: /projects/4c7f79d7-d9f4-4178-96af-4f623bf3d5ae
+    - heading "Test Project 20250711_094639" [level=3]
+    - paragraph: Test e-commerce store selling outdoor gear
+    - text: Templates 0 Potential Pages 0 5 days ago
+  - link "Example Business A business focused on Canva is a graphic design platform that allows users to create social media graphics, presentations, Templates 1 Potential Pages 100 5 days ago":
+    - /url: /projects/74a5af98-d57f-4b4a-b344-37be4eb0872c
+    - heading "Example Business" [level=3]
+    - paragraph: A business focused on Canva is a graphic design platform that allows users to create social media graphics, presentations,
+    - text: Templates 1 Potential Pages 100 5 days ago
+  - link "Test Project 20250711_094809 Test e-commerce store selling outdoor gear Templates 0 Potential Pages 0 5 days ago":
+    - /url: /projects/c0cc3932-e976-4867-97ca-e1aca59e6a42
+    - heading "Test Project 20250711_094809" [level=3]
+    - paragraph: Test e-commerce store selling outdoor gear
+    - text: Templates 0 Potential Pages 0 5 days ago
+  - link "Example Business A business focused on Canva is a graphic design platform that allows users to create social media graphics, presentations, Templates 1 Potential Pages 100 5 days ago":
+    - /url: /projects/e2a3c802-5d83-4475-a677-581f064d1a0b
+    - heading "Example Business" [level=3]
+    - paragraph: A business focused on Canva is a graphic design platform that allows users to create social media graphics, presentations,
+    - text: Templates 1 Potential Pages 100 5 days ago
+  - link "Test Project 20250711_094831 Test e-commerce store selling outdoor gear Templates 0 Potential Pages 0 5 days ago":
+    - /url: /projects/e3343577-e534-4880-b9c8-bf9a1ad98ece
+    - heading "Test Project 20250711_094831" [level=3]
+    - paragraph: Test e-commerce store selling outdoor gear
+    - text: Templates 0 Potential Pages 0 5 days ago
+  - link "Example Business A business focused on Canva is a graphic design platform that allows users to create social media graphics, presentations, Templates 1 Potential Pages 100 5 days ago":
+    - /url: /projects/4cf1a0aa-088f-4a80-a812-f8274c542173
+    - heading "Example Business" [level=3]
+    - paragraph: A business focused on Canva is a graphic design platform that allows users to create social media graphics, presentations,
+    - text: Templates 1 Potential Pages 100 5 days ago
+  - link "Test Project 20250711_094907 Test e-commerce store selling outdoor gear Templates 0 Potential Pages 0 5 days ago":
+    - /url: /projects/cc9cdf50-e74b-4945-8034-a2c3357f89bd
+    - heading "Test Project 20250711_094907" [level=3]
+    - paragraph: Test e-commerce store selling outdoor gear
+    - text: Templates 0 Potential Pages 0 5 days ago
+  - link "Example Business A business focused on Canva is a graphic design platform that allows users to create social media graphics, presentations, Templates 1 Potential Pages 100 5 days ago":
+    - /url: /projects/62dd4fc3-588a-43f1-b571-7b93f17dd8f8
+    - heading "Example Business" [level=3]
+    - paragraph: A business focused on Canva is a graphic design platform that allows users to create social media graphics, presentations,
+    - text: Templates 1 Potential Pages 100 5 days ago
+  - link "Test Project 20250711_094954 Test e-commerce store selling outdoor gear Templates 0 Potential Pages 0 5 days ago":
+    - /url: /projects/67e23105-f7cf-4733-b97b-8824feb9f1b3
+    - heading "Test Project 20250711_094954" [level=3]
+    - paragraph: Test e-commerce store selling outdoor gear
+    - text: Templates 0 Potential Pages 0 5 days ago
+  - link "Test Company A generic placeholder name for a business to analyze potential programmatic SEO strategies. No specific industry details provided. Templates 4 Potential Pages 525 5 days ago":
+    - /url: /projects/916bd8a8-77ef-4949-a4ae-78e896ebe081
+    - heading "Test Company" [level=3]
+    - paragraph: A generic placeholder name for a business to analyze potential programmatic SEO strategies. No specific industry details provided.
+    - text: Templates 4 Potential Pages 525 5 days ago
+  - link "Real Estate Investment Navigator A real estate tool designed to analyze the short-term vs long-term rental potential of investment properties in Canada, helping real estate agents find the best investment opportunities for their clients. Templates 3 Potential Pages 450 5 days ago":
+    - /url: /projects/844fe485-b120-4c17-b37c-cc8f017c65cc
+    - heading "Real Estate Investment Navigator" [level=3]
+    - paragraph: A real estate tool designed to analyze the short-term vs long-term rental potential of investment properties in Canada, helping real estate agents find the best investment opportunities for their clients.
+    - text: Templates 3 Potential Pages 450 5 days ago
+  - link "CanInvest Realty Analyzer A specialized real estate investment analysis tool designed for the Canadian market that evaluates and compares the financial potential of short-term rental versus long-term rental strategies for investment properties. Templates 5 Potential Pages 650 5 days ago":
+    - /url: /projects/ae822d74-b34e-49c8-a53f-761a550321e2
+    - heading "CanInvest Realty Analyzer" [level=3]
+    - paragraph: A specialized real estate investment analysis tool designed for the Canadian market that evaluates and compares the financial potential of short-term rental versus long-term rental strategies for investment properties.
+    - text: Templates 5 Potential Pages 650 5 days ago
+  - link "ContentCraft AI ContentCraft AI is an AI-powered writing assistant designed to help bloggers, marketers, and writers create high-quality, SEO-optimized content faster. It offers intelligent blog post generation, customizable email templates, social media caption creation, and advanced SEO optimization features to boost content performance and search engine rankings. Templates 5 Potential Pages 575 4 days ago":
+    - /url: /projects/21b7e281-f864-4ed1-ac0e-abfac2c91818
+    - heading "ContentCraft AI" [level=3]
+    - paragraph: ContentCraft AI is an AI-powered writing assistant designed to help bloggers, marketers, and writers create high-quality, SEO-optimized content faster. It offers intelligent blog post generation, customizable email templates, social media caption creation, and advanced SEO optimization features to boost content performance and search engine rankings.
+    - text: Templates 5 Potential Pages 575 4 days ago
+  - link "ContentCraft AI An AI-powered writing assistant designed to empower bloggers, marketers, and writers to produce high-quality, SEO-optimized content faster and more efficiently. It offers features like blog post generation, email templates, social media captions, and real-time SEO optimization with keyword insights and competitor analysis. Templates 5 Potential Pages 650 4 days ago":
+    - /url: /projects/81b94197-9f7d-43bd-9bd9-17306aba92f4
+    - heading "ContentCraft AI" [level=3]
+    - paragraph: An AI-powered writing assistant designed to empower bloggers, marketers, and writers to produce high-quality, SEO-optimized content faster and more efficiently. It offers features like blog post generation, email templates, social media captions, and real-time SEO optimization with keyword insights and competitor analysis.
+    - text: Templates 5 Potential Pages 650 4 days ago
+  - link "ContentFlow AI An AI-powered writing assistant designed to help bloggers, marketers, and writers create high-quality, SEO-optimized content faster. The tool offers automated blog post generation, customizable email templates, social media caption creation, and real-time SEO optimization with keyword insights and competitor analysis. Templates 5 Potential Pages 575 4 days ago":
+    - /url: /projects/5b2005f0-13b1-435d-856a-f5e74432fdcc
+    - heading "ContentFlow AI" [level=3]
+    - paragraph: An AI-powered writing assistant designed to help bloggers, marketers, and writers create high-quality, SEO-optimized content faster. The tool offers automated blog post generation, customizable email templates, social media caption creation, and real-time SEO optimization with keyword insights and competitor analysis.
+    - text: Templates 5 Potential Pages 575 4 days ago
+  - link "ContentAI Writer An AI-powered writing assistant designed to help bloggers, marketers, and content creators produce high-quality, SEO-optimized content quickly and efficiently. Features include blog post generation, email template creation, social media caption crafting, and comprehensive SEO optimization with real-time feedback. Templates 5 Potential Pages 870 4 days ago":
+    - /url: /projects/1c3c4447-aac7-4381-908a-87327ca1c075
+    - heading "ContentAI Writer" [level=3]
+    - paragraph: An AI-powered writing assistant designed to help bloggers, marketers, and content creators produce high-quality, SEO-optimized content quickly and efficiently. Features include blog post generation, email template creation, social media caption crafting, and comprehensive SEO optimization with real-time feedback.
+    - text: Templates 5 Potential Pages 870 4 days ago
+  - link "ContentAI Writing Assistant An AI-powered writing assistant designed for bloggers, marketers, and content creators to generate high-quality, SEO-optimized content faster. The tool offers features such as blog post generation, email templates, social media caption creation, and real-time SEO optimization with keyword suggestions, competitor insights, and readability enhancement. Templates 5 Potential Pages 650 4 days ago":
+    - /url: /projects/ac4cde73-b805-4ae9-887d-4e5a85787db3
+    - heading "ContentAI Writing Assistant" [level=3]
+    - paragraph: An AI-powered writing assistant designed for bloggers, marketers, and content creators to generate high-quality, SEO-optimized content faster. The tool offers features such as blog post generation, email templates, social media caption creation, and real-time SEO optimization with keyword suggestions, competitor insights, and readability enhancement.
+    - text: Templates 5 Potential Pages 650 4 days ago
+  - link "ContentCraft AI An AI-powered writing assistant that accelerates and enhances content creation for bloggers, marketers, and writers by providing SEO-optimized blog post generation, email templates, social media captions, and real-time SEO feedback. Templates 5 Potential Pages 825 4 days ago":
+    - /url: /projects/89bdea03-9b7e-4054-8e86-a7bad62b5573
+    - heading "ContentCraft AI" [level=3]
+    - paragraph: An AI-powered writing assistant that accelerates and enhances content creation for bloggers, marketers, and writers by providing SEO-optimized blog post generation, email templates, social media captions, and real-time SEO feedback.
+    - text: Templates 5 Potential Pages 825 4 days ago
+  - link "EcomBoost Digital Marketing A digital marketing agency specializing in SEO and PPC services tailored specifically for e-commerce brands to maximize their online visibility, traffic, and sales performance. Templates 5 Potential Pages 620 about 5 hours ago":
+    - /url: /projects/0858ca2a-31d2-4e50-9fb0-13a8c82ede4d
+    - heading "EcomBoost Digital Marketing" [level=3]
+    - paragraph: A digital marketing agency specializing in SEO and PPC services tailored specifically for e-commerce brands to maximize their online visibility, traffic, and sales performance.
+    - text: Templates 5 Potential Pages 620 about 5 hours ago
+  - link "ProductivityAI We provide AI-powered productivity tools for remote teams Templates 1 Potential Pages 100 about 3 hours ago":
+    - /url: /projects/51ec6ea9-6032-4826-aad7-87ccdcddd07a
+    - heading "ProductivityAI" [level=3]
+    - paragraph: We provide AI-powered productivity tools for remote teams
+    - text: Templates 1 Potential Pages 100 about 3 hours ago
+  - link "AI Writing Assistant for Content Creators An AI-powered platform that enables bloggers, marketers, and writers to create high-quality content efficiently. The tool offers blog post generation, email templates, social media captions, and built-in SEO optimization, helping users save time and enhance their content’s search performance. Templates 5 Potential Pages 870 about 3 hours ago":
+    - /url: /projects/a2b3506a-4ae0-4763-bdf2-21c253860b71
+    - heading "AI Writing Assistant for Content Creators" [level=3]
+    - paragraph: An AI-powered platform that enables bloggers, marketers, and writers to create high-quality content efficiently. The tool offers blog post generation, email templates, social media captions, and built-in SEO optimization, helping users save time and enhance their content’s search performance.
+    - text: Templates 5 Potential Pages 870 about 3 hours ago
+  - link "ContentCraft AI An AI-powered writing assistant designed to help bloggers, marketers, and writers create high-quality, SEO-optimized content faster and more efficiently. Features include automatic blog post generation, customizable email templates, social media caption creation, and on-page SEO enhancement tools. Templates 5 Potential Pages 605 in about 2 hours":
+    - /url: /projects/334b0b5d-759e-4c6d-a3bf-c9dcc412d0b8
+    - heading "ContentCraft AI" [level=3]
+    - paragraph: An AI-powered writing assistant designed to help bloggers, marketers, and writers create high-quality, SEO-optimized content faster and more efficiently. Features include automatic blog post generation, customizable email templates, social media caption creation, and on-page SEO enhancement tools.
+    - text: Templates 5 Potential Pages 605 in about 2 hours
+  - link "Test Digital Marketing Agency A full-service digital marketing agency specializing in boosting online presence and driving business growth through tailored SEO, social media marketing, PPC, content creation, and web design services. Templates 4 Potential Pages 570 in about 4 hours":
+    - /url: /projects/21685f51-5eab-46c8-bf46-e1a59db6bde4
+    - heading "Test Digital Marketing Agency" [level=3]
+    - paragraph: A full-service digital marketing agency specializing in boosting online presence and driving business growth through tailored SEO, social media marketing, PPC, content creation, and web design services.
+    - text: Templates 4 Potential Pages 570 in about 4 hours
+  - link "AI Content Pro Writer An AI-powered writing assistant designed to help bloggers, marketers, and writers create high-quality, SEO-optimized content faster. It offers features such as blog post generation, email templates, social media captions, and real-time SEO analysis to improve content ranking and engagement. Templates 5 Potential Pages 650 in about 4 hours":
+    - /url: /projects/43d5b56b-46ea-4fc0-8eae-9c8d71e7066c
+    - heading "AI Content Pro Writer" [level=3]
+    - paragraph: An AI-powered writing assistant designed to help bloggers, marketers, and writers create high-quality, SEO-optimized content faster. It offers features such as blog post generation, email templates, social media captions, and real-time SEO analysis to improve content ranking and engagement.
+    - text: Templates 5 Potential Pages 650 in about 4 hours
+  - link "EcomBoost Digital Marketing Agency EcomBoost is a specialized digital marketing agency focused on helping e-commerce brands grow through integrated and data-driven marketing strategies. We combine SEO, paid advertising, content marketing, and social media to maximize online visibility and sales for online stores. Templates 5 Potential Pages 670 in about 4 hours":
+    - /url: /projects/f25673e3-deab-491c-9fdd-cc7fb96b4162
+    - heading "EcomBoost Digital Marketing Agency" [level=3]
+    - paragraph: EcomBoost is a specialized digital marketing agency focused on helping e-commerce brands grow through integrated and data-driven marketing strategies. We combine SEO, paid advertising, content marketing, and social media to maximize online visibility and sales for online stores.
+    - text: Templates 5 Potential Pages 670 in about 4 hours
+  - heading "Workflow" [level=2]
+  - text: "1"
+  - heading "Analyze" [level=3]
+  - paragraph: Enter a URL or description to get template suggestions.
+  - text: "2"
+  - heading "Build" [level=3]
+  - paragraph: Create templates with variables and import your data.
+  - text: "3"
+  - heading "Export" [level=3]
+  - paragraph: Generate pages and export in your preferred format.
+- button "Open Tanstack query devtools":
+  - img
+- alert
+- button "Open Next.js Dev Tools":
+  - img
+```

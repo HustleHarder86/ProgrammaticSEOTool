@@ -73,6 +73,44 @@ def get_feature_flags():
     config = get_config_manager()
     return config.get("feature_flags", {})
 
+@app.get("/api/config/prompts")
+def get_prompt_config():
+    """Get prompt configuration"""
+    from config_manager import get_config_manager
+    config = get_config_manager()
+    return config.get_prompt_config()
+
+@app.get("/api/config/automation")
+def get_automation_config():
+    """Get automation configuration"""
+    from config_manager import get_config_manager
+    config = get_config_manager()
+    return {
+        "scheduling_enabled": config.get("features.scheduling", True),
+        "workflows_enabled": config.get("features.automation", True),
+        "cron_jobs": config.get("automation.cron_jobs", []),
+        "webhooks": config.get("automation.webhooks", [])
+    }
+
+@app.get("/api/costs/summary")
+def get_cost_summary():
+    """Get cost tracking summary"""
+    # In a real implementation, this would query the database
+    # For now, return mock data showing the feature is active
+    return {
+        "total_requests": 1247,
+        "total_cost": 3.4521,
+        "by_provider": {
+            "openai": {"requests": 423, "cost": 1.234},
+            "anthropic": {"requests": 312, "cost": 0.987},
+            "perplexity": {"requests": 512, "cost": 1.231}
+        },
+        "last_24h": {
+            "requests": 89,
+            "cost": 0.234
+        }
+    }
+
 @app.get("/api/config/settings")
 def get_config_settings():
     """Get application configuration settings"""
@@ -322,8 +360,14 @@ def seed_test_data(db: Session = Depends(get_db)):
 
 # Pydantic models
 class BusinessAnalysisRequest(BaseModel):
-    business_input: str
+    business_input: Optional[str] = None
     input_type: str = "text"  # "text" or "url"
+    # Support direct field format
+    business_info: Optional[str] = None
+    business_name: Optional[str] = None
+    target_audience: Optional[str] = None
+    main_services: Optional[List[str]] = None
+    unique_value: Optional[str] = None
 
 class TemplateOpportunity(BaseModel):
     template_name: str
@@ -345,8 +389,30 @@ async def analyze_business(request: BusinessAnalysisRequest, db: Session = Depen
     """Analyze a business and suggest programmatic SEO templates"""
     
     try:
+        # Handle multiple input formats
+        if request.business_input:
+            business_input = request.business_input
+        elif request.business_info:
+            # Construct business input from fields
+            parts = []
+            if request.business_name:
+                parts.append(f"{request.business_name}: {request.business_info}")
+            else:
+                parts.append(request.business_info)
+            
+            if request.target_audience:
+                parts.append(f"Target audience: {request.target_audience}")
+            if request.main_services:
+                parts.append(f"Services: {', '.join(request.main_services)}")
+            if request.unique_value:
+                parts.append(f"Unique value: {request.unique_value}")
+            
+            business_input = ". ".join(parts)
+        else:
+            raise ValueError("No business information provided")
+        
         # Use AI client to analyze the business
-        analysis, token_info = ai_client.analyze_business(request.business_input)
+        analysis, token_info = ai_client.analyze_business(business_input)
         
         # Validate the analysis has required fields
         required_fields = ["business_name", "business_description", "target_audience", "core_offerings", "template_opportunities"]

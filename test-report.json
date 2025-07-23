@@ -1,0 +1,30 @@
+{
+  "timestamp": "2025-07-17T02:17:14.219Z",
+  "summary": {
+    "total": 3,
+    "passed": 3,
+    "failed": 0,
+    "successRate": 100
+  },
+  "results": [
+    {
+      "test": "API Health Check",
+      "status": 200,
+      "success": true,
+      "response": "{\"status\":\"healthy\",\"service\":\"programmatic-seo-backend\",\"database\":\"connected\",\"timestamp\":\"2025-07-17T02:17:09.365503\"}"
+    },
+    {
+      "test": "Frontend Check",
+      "status": 200,
+      "success": true,
+      "response": "<!DOCTYPE html><html lang=\"en\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"stylesheet\" href=\"/_next/static/chunks/%5Broot-of-the-server..."
+    },
+    {
+      "test": "Business Analysis",
+      "status": 200,
+      "success": true,
+      "response": "{\"project_id\":\"21685f51-5eab-46c8-bf46-e1a59db6bde4\",\"business_name\":\"Test Digital Marketing Agency\",\"business_description\":\"A full-service digital marketing agency specializing in boosting online pre..."
+    }
+  ],
+  "recommendations": []
+}

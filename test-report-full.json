@@ -1,0 +1,148 @@
+{
+  "timestamp": "2025-07-17T12:28:06.111Z",
+  "summary": {
+    "total": 11,
+    "passed": 10,
+    "failed": 1,
+    "successRate": 90.9
+  },
+  "costAnalysis": {
+    "totalCost": 0.00020000000000000004,
+    "costPerTest": 0.000018181818181818185,
+    "projectsCreated": 1
+  },
+  "artifacts": {
+    "projectId": "e909fc75-1d3b-4f74-8e98-7dcead4ee51a",
+    "templateId": "7ba2ed4c-c3c9-442f-bb4c-e692846f6a24",
+    "exportId": "export_20250717_082754_55f0b7cf"
+  },
+  "tests": [
+    {
+      "name": "API Health Check",
+      "success": true,
+      "details": {
+        "status": 200,
+        "response": {
+          "status": "healthy",
+          "service": "programmatic-seo-backend",
+          "database": "connected",
+          "timestamp": "2025-07-17T12:27:31.739013"
+        }
+      },
+      "timestamp": "2025-07-17T12:27:31.760Z"
+    },
+    {
+      "name": "Cost Tracking API",
+      "success": true,
+      "details": {
+        "projectCount": 1,
+        "totalCost": "0.0001"
+      },
+      "timestamp": "2025-07-17T12:27:31.776Z"
+    },
+    {
+      "name": "Business Analysis",
+      "success": true,
+      "details": {
+        "projectId": "e909fc75-1d3b-4f74-8e98-7dcead4ee51a",
+        "businessName": "EcoStyle Apparel",
+        "templates": 5,
+        "message": "Created project: EcoStyle Apparel with 5 template opportunities"
+      },
+      "timestamp": "2025-07-17T12:27:39.381Z"
+    },
+    {
+      "name": "Template Creation",
+      "success": true,
+      "details": {
+        "templateId": "7ba2ed4c-c3c9-442f-bb4c-e692846f6a24",
+        "variables": [
+          "Category",
+          "City"
+        ],
+        "message": "Created template with variables: Category, City"
+      },
+      "timestamp": "2025-07-17T12:27:39.402Z"
+    },
+    {
+      "name": "Variable Generation",
+      "success": true,
+      "details": {
+        "totalCombinations": 625,
+        "variables": [
+          "Category: 25 values",
+          "City: 25 values"
+        ],
+        "message": "Generated 625 possible combinations"
+      },
+      "timestamp": "2025-07-17T12:27:48.221Z"
+    },
+    {
+      "name": "Page Generation",
+      "success": true,
+      "details": {
+        "pagesGenerated": 3,
+        "pageIds": [
+          "08bc982c-7b35-40d0-a4f8-ce80c2f48750",
+          "af2ce846-f8a2-44f2-a5b7-217a5cb99953",
+          "ce0cd237-3b5d-44bd-8839-f24398b6d30f"
+        ],
+        "message": "Generated 3 pages (limited for cost savings)"
+      },
+      "timestamp": "2025-07-17T12:27:54.087Z"
+    },
+    {
+      "name": "Export Creation",
+      "success": true,
+      "details": {
+        "exportId": "export_20250717_082754_55f0b7cf",
+        "format": "CSV",
+        "status": "started",
+        "message": "Export initiated with ID: export_20250717_082754_55f0b7cf"
+      },
+      "timestamp": "2025-07-17T12:27:54.106Z"
+    },
+    {
+      "name": "Cost Tracking Update",
+      "success": true,
+      "details": {
+        "newProjects": 1,
+        "totalCostIncurred": "0.0002",
+        "message": "Total API cost for this test: $0.0002"
+      },
+      "timestamp": "2025-07-17T12:27:54.122Z"
+    },
+    {
+      "name": "Project Cost Details",
+      "success": true,
+      "details": {
+        "totalCost": 0.0002,
+        "totalTokens": 2479,
+        "operations": [
+          "business_analysis",
+          "variable_generation"
+        ],
+        "message": "Project used 2479 tokens across 3 API calls"
+      },
+      "timestamp": "2025-07-17T12:27:54.132Z"
+    },
+    {
+      "name": "Frontend Homepage",
+      "success": true,
+      "details": {
+        "status": 200,
+        "message": "Frontend is accessible"
+      },
+      "timestamp": "2025-07-17T12:27:55.464Z"
+    },
+    {
+      "name": "Cost Tracking Page",
+      "success": false,
+      "details": {
+        "status": 500,
+        "message": "Cost tracking page not found"
+      },
+      "timestamp": "2025-07-17T12:28:06.110Z"
+    }
+  ]
+}

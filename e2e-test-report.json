@@ -1,0 +1,43 @@
+{
+  "timestamp": "2025-07-17T11:57:04.836Z",
+  "summary": {
+    "total": 6,
+    "passed": 6,
+    "failed": 0,
+    "successRate": 100
+  },
+  "results": [
+    {
+      "test": "API Health",
+      "success": true,
+      "details": "{\"status\":\"healthy\",\"service\":\"programmatic-seo-backend\",\"database\":\"connected\",\"timestamp\":\"2025-07-17T11:56:46.703332\"}"
+    },
+    {
+      "test": "Business Analysis",
+      "success": true,
+      "projectId": "4fc2fe32-a88c-4c4d-a9fb-9d3dbdc26b5e"
+    },
+    {
+      "test": "Template Creation",
+      "success": true,
+      "templateId": "31b65b0e-df91-4c07-89db-d66f87cde7bd"
+    },
+    {
+      "test": "Variable Generation",
+      "success": true,
+      "totalCombinations": 625
+    },
+    {
+      "test": "Page Generation",
+      "success": true,
+      "pagesGenerated": 3
+    },
+    {
+      "test": "Export",
+      "success": true,
+      "exportId": "export_20250717_075704_b67284c4"
+    }
+  ],
+  "projectId": "4fc2fe32-a88c-4c4d-a9fb-9d3dbdc26b5e",
+  "templateId": "31b65b0e-df91-4c07-89db-d66f87cde7bd"
+}
