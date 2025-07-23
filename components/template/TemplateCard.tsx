@@ -167,7 +167,7 @@ export function TemplateCard({
                 </div>
               </div>
               
-              {template.template_sections.content_sections?.length > 0 && (
+              {template.template_sections.content_sections && template.template_sections.content_sections.length > 0 && (
                 <div>
                   <p className="text-sm font-medium text-gray-700 mb-1">Content Sections</p>
                   <p className="text-sm text-gray-600">
