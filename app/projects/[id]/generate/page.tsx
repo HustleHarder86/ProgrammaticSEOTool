@@ -116,8 +116,9 @@ export default function GeneratePagesPage() {
         status: result.status as 'completed' | 'failed',
         total_pages: result.generated_count,
         generated_pages: result.generated_count,
-      failed_pages: 0,
-      preview_pages: []
+        failed_pages: 0,
+        preview_pages: []
+      };
     }
     
     setGenerationResult(generationResult);
