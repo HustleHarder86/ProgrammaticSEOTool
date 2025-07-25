@@ -260,12 +260,25 @@ export default function TemplateDashboardPage() {
         </Card>
       </div>
 
+      {/* Primary Generate Pages Button */}
+      <div className="mb-8">
+        <Link href={`/projects/${projectId}/generate?templateId=${templateId}`}>
+          <Button 
+            size="lg"
+            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+          >
+            <Sparkles className="w-5 h-5 mr-2" />
+            Generate Pages
+          </Button>
+        </Link>
+      </div>
+
       {/* Generation Controls */}
       <Card className="mb-8">
         <CardHeader>
-          <CardTitle>Batch Generation</CardTitle>
+          <CardTitle>Quick Batch Generation</CardTitle>
           <CardDescription>
-            Select pages to generate. Each session creates unique content.
+            Or use quick selection to generate pages directly from the dashboard.
           </CardDescription>
         </CardHeader>
         <CardContent>

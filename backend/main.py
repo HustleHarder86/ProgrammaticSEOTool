@@ -1781,13 +1781,12 @@ def get_potential_pages(
     remaining_count = total_all - generated_count
     
     return {
-        "pages": pages_list,
-        "total": total_count,
-        "offset": offset,
-        "limit": limit,
-        "total_all": total_all,
+        "potential_pages": pages_list,
+        "total_count": total_all,
         "generated_count": generated_count,
-        "remaining_count": remaining_count
+        "remaining_count": remaining_count,
+        "offset": offset,
+        "limit": limit
     }
 
 @app.post("/api/projects/{project_id}/templates/{template_id}/generate-selected")

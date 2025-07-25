@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api/client';
 import { Button } from '@/components/ui/button';
@@ -41,6 +41,7 @@ interface Project {
 export default function ProjectDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const projectId = params?.id as string;
   const selectedTemplate = searchParams?.get('template');
   
@@ -333,7 +334,11 @@ export default function ProjectDetailPage() {
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Active Templates</h2>
           <div className="grid gap-4">
             {Object.entries(stats.pages_by_template).map(([templateId, templateStats]) => (
-              <Card key={templateId}>
+              <Card 
+                key={templateId} 
+                className="cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => router.push(`/projects/${projectId}/templates/${templateId}/dashboard`)}
+              >
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div>
@@ -348,14 +353,22 @@ export default function ProjectDetailPage() {
                         <p className="text-sm text-gray-600">of {templateStats.potential_pages} pages</p>
                       </div>
                       <Link href={`/projects/${projectId}/templates/${templateId}/dashboard`}>
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <LayoutGrid className="w-4 h-4 mr-2" />
                           Dashboard
                         </Button>
                       </Link>
                       {templateStats.completion_percentage < 100 && (
                         <Link href={`/projects/${projectId}/generate?templateId=${templateId}`}>
-                          <Button size="sm" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
+                          <Button 
+                            size="sm" 
+                            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <Zap className="w-4 h-4 mr-2" />
                             Continue
                           </Button>

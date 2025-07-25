@@ -68,15 +68,18 @@ export default function PotentialPagesSelector({
         `/api/projects/${projectId}/templates/${templateId}/potential-pages?limit=1000`
       );
       
-      setPotentialPages(response.data.potential_pages);
+      // Handle the response data properly
+      const data = response.data;
+      
+      setPotentialPages(data.potential_pages || []);
       setPageInfo({
-        total: response.data.total_count,
-        generated: response.data.generated_count,
-        remaining: response.data.remaining_count
+        total: data.total_count || 0,
+        generated: data.generated_count || 0,
+        remaining: data.remaining_count || 0
       });
       
       // Pre-select first 10 ungeneraged pages
-      const ungenerated = response.data.potential_pages
+      const ungenerated = (data.potential_pages || [])
         .filter(p => !p.is_generated)
         .slice(0, 10)
         .map(p => p.id);
@@ -96,7 +99,7 @@ export default function PotentialPagesSelector({
   }, [projectId, templateId, loadPotentialPages]);
 
   const handleSelectAll = () => {
-    const allIds = potentialPages
+    const allIds = (potentialPages || [])
       .filter(p => !p.is_generated)
       .map(p => p.id);
     setSelectedIds(allIds);
@@ -107,7 +110,7 @@ export default function PotentialPagesSelector({
   };
 
   const handleSelectFirst = (count: number) => {
-    const firstIds = potentialPages
+    const firstIds = (potentialPages || [])
       .filter(p => !p.is_generated)
       .slice(0, count)
       .map(p => p.id);
@@ -133,7 +136,7 @@ export default function PotentialPagesSelector({
       setError(null);
       
       const response = await apiClient.post(
-        `/api/projects/${projectId}/templates/${templateId}/generate-selected-pages`,
+        `/api/projects/${projectId}/templates/${templateId}/generate-selected`,
         { page_ids: selectedIds }
       );
       
@@ -265,7 +268,7 @@ export default function PotentialPagesSelector({
         </CardHeader>
         <CardContent>
           <div className="max-h-[400px] overflow-y-auto space-y-2 pr-2">
-            {potentialPages.map((page) => (
+            {(potentialPages || []).map((page) => (
               <div 
                 key={page.id}
                 className={`flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 ${
