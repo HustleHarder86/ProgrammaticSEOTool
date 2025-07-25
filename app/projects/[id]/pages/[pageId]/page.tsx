@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Copy, Download } from 'lucide-react';
 import { Project } from '@/types';
+import './blog-preview.css';
 
 interface PageContent {
   title: string;
@@ -293,56 +294,151 @@ export default function PageDetailPage() {
         </TabsList>
 
         <TabsContent value="preview" className="mt-6">
-          <Card>
-            <CardContent className="prose prose-gray max-w-none p-8">
-              {/* Render HTML content if available, otherwise render sections */}
-              {page.content.content_html ? (
-                <div dangerouslySetInnerHTML={{ __html: page.content.content_html }} />
-              ) : Array.isArray(page.content.content_sections) ? (
-                // New format: array of sections
-                <>
-                  <h1>{page.content.h1 || page.title}</h1>
-                  {page.content.content_sections.map((section: { type?: string; content?: string; heading?: string }, index: number) => {
-                    const sectionType = section.type || '';
-                    const content = section.content || '';
-                    const heading = section.heading || '';
-                    
-                    if (sectionType === 'introduction') {
-                      return <p key={index} className="lead">{content}</p>;
-                    } else if (sectionType === 'faq') {
-                      return (
-                        <div key={index}>
-                          <h2>{heading}</h2>
-                          <div dangerouslySetInnerHTML={{ __html: content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n\n/g, '<br><br>') }} />
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              {/* Blog Post Container */}
+              <article className="bg-white">
+                {/* Blog Header */}
+                <header className="px-8 py-12 bg-gradient-to-b from-gray-50 to-white border-b">
+                  <div className="max-w-3xl mx-auto">
+                    <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
+                      {page.content.h1 || page.title}
+                    </h1>
+                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <time dateTime={page.created_at}>
+                        {new Date(page.created_at).toLocaleDateString('en-US', { 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        })}
+                      </time>
+                      <span>•</span>
+                      <span>{page.content.quality_metrics?.reading_time || 5} min read</span>
+                      {page.content.quality_metrics?.word_count && (
+                        <>
+                          <span>•</span>
+                          <span>{page.content.quality_metrics.word_count} words</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </header>
+
+                {/* Blog Content */}
+                <div className="px-8 py-12">
+                  <div className="max-w-3xl mx-auto">
+                    {/* Render content with proper blog styling */}
+                    {page.content.content_html ? (
+                      <div 
+                        className="blog-content"
+                        dangerouslySetInnerHTML={{ 
+                          __html: page.content.content_html
+                            .replace(/<h1>/g, '<h1 class="text-3xl font-bold text-gray-900 mb-6 mt-8">')
+                            .replace(/<h2>/g, '<h2 class="text-2xl font-bold text-gray-800 mb-4 mt-8">')
+                            .replace(/<h3>/g, '<h3 class="text-xl font-semibold text-gray-800 mb-3 mt-6">')
+                            .replace(/<h4>/g, '<h4 class="text-lg font-semibold text-gray-700 mb-2 mt-4">')
+                            .replace(/<p>/g, '<p class="text-gray-700 leading-relaxed mb-4">')
+                            .replace(/<p class='intro'>/g, '<p class="text-xl text-gray-600 leading-relaxed mb-6">')
+                            .replace(/<p class='cta'>/g, '<p class="text-lg font-medium text-gray-800 bg-blue-50 p-6 rounded-lg mb-6 border-l-4 border-blue-500">')
+                            .replace(/<ul>/g, '<ul class="list-disc pl-6 mb-6 space-y-2">')
+                            .replace(/<ul class='provider-list'>/g, '<ul class="space-y-3 mb-6">')
+                            .replace(/<li>/g, '<li class="text-gray-700 leading-relaxed">')
+                            .replace(/<li><strong>/g, '<li class="flex items-start p-3 bg-gray-50 rounded-lg"><strong class="text-gray-900">')
+                            .replace(/<div class='comparison'>/g, '<div class="bg-gray-50 p-6 rounded-lg mb-6">')
+                            .replace(/<div class='key-metrics'>/g, '<div class="bg-blue-50 p-6 rounded-lg mb-6 border border-blue-100">')
+                            .replace(/<div class='service-overview'>/g, '<div class="mb-8">')
+                            .replace(/<table>/g, '<table class="w-full border-collapse mb-6">')
+                            .replace(/<th>/g, '<th class="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-200">')
+                            .replace(/<td>/g, '<td class="p-3 border-b border-gray-200">')
+                            .replace(/<blockquote>/g, '<blockquote class="border-l-4 border-blue-500 pl-6 my-6 italic text-gray-600">')
+                            .replace(/<strong>/g, '<strong class="font-semibold text-gray-900">') 
+                        }} 
+                      />
+                    ) : Array.isArray(page.content.content_sections) ? (
+                      // New format: array of sections with blog styling
+                      <div className="space-y-6">
+                        {page.content.content_sections.map((section: { type?: string; content?: string; heading?: string }, index: number) => {
+                          const sectionType = section.type || '';
+                          const content = section.content || '';
+                          const heading = section.heading || '';
+                          
+                          if (sectionType === 'introduction') {
+                            return <p key={index} className="text-xl text-gray-600 leading-relaxed mb-6">{content}</p>;
+                          } else if (sectionType === 'faq') {
+                            return (
+                              <div key={index} className="bg-gray-50 p-6 rounded-lg mb-6">
+                                <h2 className="text-2xl font-bold text-gray-800 mb-4">{heading}</h2>
+                                <div 
+                                  className="space-y-4"
+                                  dangerouslySetInnerHTML={{ 
+                                    __html: content
+                                      .replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-900">$1</strong>')
+                                      .replace(/\n\n/g, '</p><p class="text-gray-700 mb-4">')
+                                      .replace(/^/, '<p class="text-gray-700 mb-4">')
+                                      .replace(/$/, '</p>')
+                                  }} 
+                                />
+                              </div>
+                            );
+                          } else if (sectionType === 'statistics') {
+                            return (
+                              <div key={index} className="bg-blue-50 p-6 rounded-lg mb-6 border border-blue-100">
+                                <h2 className="text-2xl font-bold text-gray-800 mb-4">{heading}</h2>
+                                <div 
+                                  className="space-y-2 text-gray-700"
+                                  dangerouslySetInnerHTML={{ 
+                                    __html: content
+                                      .replace(/\n/g, '<br>')
+                                      .replace(/<strong>/g, '<strong class="text-gray-900 font-semibold">')
+                                  }} 
+                                />
+                              </div>
+                            );
+                          } else if (sectionType === 'conclusion') {
+                            return (
+                              <div key={index} className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-lg mb-6 border-l-4 border-purple-500">
+                                <p className="text-lg text-gray-800 leading-relaxed">{content}</p>
+                              </div>
+                            );
+                          } else {
+                            // Regular content section
+                            return (
+                              <div key={index} className="mb-6">
+                                {heading && <h2 className="text-2xl font-bold text-gray-800 mb-4">{heading}</h2>}
+                                <p className="text-gray-700 leading-relaxed">{content}</p>
+                              </div>
+                            );
+                          }
+                        })}
+                      </div>
+                    ) : (
+                      // Fallback: display raw content with styling
+                      <div className="bg-gray-50 p-6 rounded-lg">
+                        <h1 className="text-3xl font-bold text-gray-900 mb-6">{page.title}</h1>
+                        <pre className="text-sm text-gray-600 whitespace-pre-wrap">{JSON.stringify(page.content, null, 2)}</pre>
+                      </div>
+                    )}
+
+                    {/* Blog Footer */}
+                    <footer className="mt-12 pt-8 border-t border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm text-gray-600">
+                          <p>Published on {new Date(page.created_at).toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                          })}</p>
                         </div>
-                      );
-                    } else if (sectionType === 'statistics') {
-                      return (
-                        <div key={index}>
-                          <h2>{heading}</h2>
-                          <div className="statistics" dangerouslySetInnerHTML={{ __html: content.replace(/\n/g, '<br>') }} />
+                        <div className="flex gap-2">
+                          <Badge variant="outline">
+                            {page.meta_data.keyword}
+                          </Badge>
                         </div>
-                      );
-                    } else if (sectionType === 'conclusion') {
-                      return <p key={index} className="conclusion">{content}</p>;
-                    } else {
-                      // Regular content section
-                      return (
-                        <div key={index}>
-                          {heading && <h2>{heading}</h2>}
-                          <p>{content}</p>
-                        </div>
-                      );
-                    }
-                  })}
-                </>
-              ) : (
-                // Fallback: display raw content
-                <div>
-                  <h1>{page.title}</h1>
-                  <pre>{JSON.stringify(page.content, null, 2)}</pre>
+                      </div>
+                    </footer>
+                  </div>
                 </div>
-              )}
+              </article>
             </CardContent>
           </Card>
         </TabsContent>

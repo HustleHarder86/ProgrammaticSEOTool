@@ -1,0 +1,220 @@
+/* Blog Preview Styling - Authentic Blog Post Appearance */
+
+/* Blog Content Container */
+.blog-content {
+  font-family: Georgia, 'Times New Roman', serif;
+  line-height: 1.8;
+  color: #2d3748;
+}
+
+/* Typography */
+.blog-content h1 {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #1a202c;
+  margin: 2rem 0 1.5rem;
+  line-height: 1.2;
+}
+
+.blog-content h2 {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 2.5rem 0 1rem;
+  line-height: 1.3;
+}
+
+.blog-content h3 {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 2rem 0 0.75rem;
+  line-height: 1.4;
+}
+
+.blog-content p {
+  font-size: 1.125rem;
+  margin-bottom: 1.5rem;
+  color: #4a5568;
+}
+
+.blog-content p.intro {
+  font-size: 1.375rem;
+  color: #718096;
+  font-weight: 300;
+  margin-bottom: 2rem;
+  font-style: italic;
+}
+
+/* Lists */
+.blog-content ul,
+.blog-content ol {
+  margin: 1.5rem 0;
+  padding-left: 2rem;
+}
+
+.blog-content li {
+  margin-bottom: 0.75rem;
+  font-size: 1.125rem;
+  line-height: 1.7;
+}
+
+.blog-content ul.provider-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.blog-content ul.provider-list li {
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.blog-content ul.provider-list li:hover {
+  background: #edf2f7;
+  border-color: #cbd5e0;
+}
+
+/* Special Sections */
+.blog-content .key-metrics {
+  background: linear-gradient(135deg, #ebf8ff 0%, #e6fffa 100%);
+  border: 1px solid #90cdf4;
+  padding: 2rem;
+  border-radius: 0.75rem;
+  margin: 2rem 0;
+}
+
+.blog-content .key-metrics h3 {
+  color: #2c5282;
+  margin-top: 0;
+}
+
+.blog-content .key-metrics p {
+  color: #2d3748;
+  margin-bottom: 1rem;
+}
+
+.blog-content .key-metrics strong {
+  color: #2c5282;
+  font-weight: 600;
+}
+
+/* Call to Action */
+.blog-content .cta {
+  background: linear-gradient(135deg, #fef5e7 0%, #fdf2f8 100%);
+  border-left: 4px solid #f59e0b;
+  padding: 1.5rem 2rem;
+  border-radius: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #92400e;
+  margin: 2rem 0;
+}
+
+/* Tables */
+.blog-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 2rem 0;
+  font-size: 1rem;
+}
+
+.blog-content th {
+  background: #f7fafc;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.blog-content td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.blog-content tr:hover {
+  background: #f7fafc;
+}
+
+/* Blockquotes */
+.blog-content blockquote {
+  border-left: 4px solid #4299e1;
+  padding-left: 1.5rem;
+  margin: 2rem 0;
+  font-style: italic;
+  color: #4a5568;
+}
+
+/* Code Blocks */
+.blog-content code {
+  background: #f7fafc;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
+  font-size: 0.875rem;
+  color: #e53e3e;
+}
+
+.blog-content pre {
+  background: #2d3748;
+  color: #f7fafc;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 2rem 0;
+}
+
+.blog-content pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+/* Images */
+.blog-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 2rem auto;
+  display: block;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Links */
+.blog-content a {
+  color: #4299e1;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+
+.blog-content a:hover {
+  color: #3182ce;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .blog-content h1 {
+    font-size: 2rem;
+  }
+  
+  .blog-content h2 {
+    font-size: 1.5rem;
+  }
+  
+  .blog-content p,
+  .blog-content li {
+    font-size: 1rem;
+  }
+  
+  .blog-content p.intro {
+    font-size: 1.25rem;
+  }
+}
