@@ -388,7 +388,7 @@ export default function ProjectDetailPage() {
             
             return (
               <Card 
-                key={template.id || index}
+                key={index}
                 className={`transition-all duration-300 ${
                   isSelected ? 'border-purple-500 shadow-lg' : 'hover:shadow-md'
                 }`}
