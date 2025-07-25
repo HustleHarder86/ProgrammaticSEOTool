@@ -154,7 +154,7 @@ export default function TemplateBuilderPage() {
             {action === 'generate' && (
               <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm text-blue-800">
-                  <strong>Quick Generate Mode:</strong> Fill in your template details and click "Save & Continue" to start generating pages with AI-powered variables.
+                  <strong>Quick Generate Mode:</strong> Fill in your template details and click &quot;Save & Continue&quot; to start generating pages with AI-powered variables.
                 </p>
               </div>
             )}
