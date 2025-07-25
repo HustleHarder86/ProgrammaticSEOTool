@@ -166,7 +166,7 @@ class AIStrategyGenerator:
         
         prompt = f"""
         You are a programmatic SEO expert. Based on this business analysis, identify specific opportunities
-        for programmatic SEO that could generate hundreds or thousands of valuable pages.
+        for programmatic SEO that match ACTUAL SEARCH QUERIES people type into Google.
         
         Business: {business_core.get("name", "Unknown")}
         Industry: {business_core.get("industry", "Unknown")}
@@ -175,25 +175,38 @@ class AIStrategyGenerator:
         Search Intents: {search_behavior.get("primary_search_intents", [])}
         Customer Journey: {search_behavior.get("customer_journey_stages", {})}
         
+        CRITICAL RULES:
+        1. All keyword patterns MUST be things people actually search for
+        2. Use Google autocomplete patterns as inspiration
+        3. Focus on commercial and informational queries with clear intent
+        4. Avoid marketing jargon - use the language customers actually use
+        
+        Good pattern examples:
+        - "{{city}} {{service}} cost" (people search for prices)
+        - "best {{product}} for {{use_case}}" (comparison searches)
+        - "{{service}} near me" (local intent)
+        - "how to {{action}} {{topic}}" (how-to searches)
+        - "{{item1}} vs {{item2}}" (direct comparisons)
+        
         Identify programmatic SEO opportunities in JSON format:
         
         {{
             "scalable_content_types": [
                 {{
-                    "content_type": "Location-based analysis",
+                    "content_type": "Type of content that matches search intent",
                     "search_volume_potential": "High/Medium/Low",
                     "competition_level": "High/Medium/Low",
-                    "user_value": "What value this provides to users",
-                    "example_queries": ["Example search query 1", "Example search query 2"],
+                    "user_value": "What answer/solution this provides",
+                    "example_queries": ["ACTUAL search query example 1", "ACTUAL search query example 2"],
                     "scale_potential": "How many pages this could generate"
                 }}
             ],
             "template_opportunities": [
                 {{
-                    "template_concept": "Descriptive name of template concept",
-                    "search_intent": "What search intent this serves",
-                    "target_keywords": ["Primary keyword pattern", "Secondary keyword pattern"],
-                    "content_differentiation": "What makes this content unique/valuable",
+                    "template_concept": "Descriptive name matching search behavior",
+                    "search_intent": "What users want when searching this",
+                    "target_keywords": ["Exact search pattern 1", "Exact search pattern 2"],
+                    "content_differentiation": "What specific data/answer we provide",
                     "estimated_pages": "Number of pages this could generate"
                 }}
             ],
@@ -201,21 +214,21 @@ class AIStrategyGenerator:
                 {{
                     "data_type": "Type of data to collect/use",
                     "multiplication_factor": "How this data multiplies (e.g., 50 cities × 10 services = 500 pages)",
-                    "value_proposition": "Why users would want this specific data combination",
-                    "competitive_advantage": "Why competitors likely don't have this"
+                    "search_validation": "Proof people search for these combinations",
+                    "competitive_advantage": "Why we can rank for these queries"
                 }}
             ],
             "market_gaps": [
                 {{
-                    "gap_description": "What's missing in the market",
-                    "opportunity_size": "Large/Medium/Small",
+                    "gap_description": "What queries lack good answers",
+                    "example_searches": ["Specific searches with poor results"],
                     "difficulty_to_execute": "Easy/Medium/Hard",
-                    "first_mover_advantage": "Why being first matters here"
+                    "ranking_opportunity": "Why we can rank for these"
                 }}
             ]
         }}
         
-        Focus on opportunities that provide real user value, not just SEO volume.
+        Remember: Every pattern must match real search queries, not corporate marketing speak.
         """
         
         try:
@@ -257,7 +270,7 @@ class AIStrategyGenerator:
         business_core = business_intelligence.get("business_core", {})
         
         prompt = f"""
-        Create a specific programmatic SEO template for this opportunity:
+        Create a specific programmatic SEO template for this opportunity that matches ACTUAL Google search queries.
         
         Business: {business_core.get("name", "Unknown")}
         Industry: {business_core.get("industry", "Unknown")}
@@ -265,12 +278,25 @@ class AIStrategyGenerator:
         Search Intent: {opportunity.get("search_intent", "Unknown")}
         Target Keywords: {opportunity.get("target_keywords", [])}
         
+        CRITICAL: Template patterns MUST match real search queries that people actually type into Google.
+        
+        Good examples:
+        - "airbnb calculator {{City}}" (people search exactly this)
+        - "is {{Property Type}} profitable in {{City}}" (actual question format)
+        - "{{City}} real estate market analysis" (common search pattern)
+        - "{{Service}} pricing {{City}}" (matches search behavior)
+        
+        Bad examples (AVOID THESE):
+        - "simplify property analysis in {{City}}" (nobody searches this)
+        - "streamline your {{Service}}" (marketing speak, not search query)
+        - "enhance {{Topic}} experience" (too vague/corporate)
+        
         Generate a complete template in JSON format:
         
         {{
             "template_name": "Descriptive name for this template",
-            "template_pattern": "Title pattern with variables like {{Variable1}} {{Variable2}} Analysis",
-            "h1_pattern": "H1 pattern that's similar but slightly different",
+            "template_pattern": "MUST be a pattern people actually search for on Google",
+            "h1_pattern": "H1 that answers the search query directly",
             "search_intent_served": "Specific search intent this serves",
             "target_variables": [
                 {{
@@ -281,25 +307,25 @@ class AIStrategyGenerator:
                 }}
             ],
             "content_strategy": {{
-                "primary_value": "Main value this page provides to users",
+                "primary_value": "Direct answer to the search query",
                 "content_sections": ["Section 1", "Section 2", "Section 3"],
-                "unique_angle": "What makes this content different from competitors",
+                "unique_angle": "What specific data/insights we provide",
                 "user_action_goal": "What we want users to do after reading"
             }},
             "seo_strategy": {{
-                "primary_keyword_pattern": "Main keyword pattern",
-                "secondary_keywords": ["Related keyword 1", "Related keyword 2"],
-                "meta_description_template": "Template for meta descriptions",
+                "primary_keyword_pattern": "Exact search query pattern",
+                "secondary_keywords": ["Related search queries people use"],
+                "meta_description_template": "Template that mentions the exact search query",
                 "internal_linking_opportunities": ["How to link between pages"]
             }},
             "scale_estimate": {{
                 "variables_count": "How many values per variable",
                 "total_page_potential": "Total pages possible",
-                "priority_level": "High/Medium/Low based on opportunity"
+                "priority_level": "High/Medium/Low based on search volume"
             }}
         }}
         
-        Make this template specific to the business and valuable to users.
+        Remember: Template patterns MUST match actual search queries, not marketing language.
         """
         
         try:

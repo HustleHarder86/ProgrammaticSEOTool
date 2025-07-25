@@ -12,16 +12,16 @@ class TemplateGenerator:
         self.template_library = {
             "location_based": {
                 "templates": [
-                    "{location} {service}",
+                    "{service} {location}",
                     "best {service} in {location}",
-                    "{service} near me {location}",
-                    "{location} {service} {metric}",
-                    "top {service} {location} {year}",
+                    "{service} near me",
+                    "{location} {service} cost",
+                    "{service} {location} prices",
                     "{service} {location} reviews",
-                    "{location} vs {location2} {service}",
-                    "affordable {service} {location}",
-                    "{service} {location} {price_range}",
-                    "{location} {service} {business_attribute}"
+                    "cheap {service} {location}",
+                    "{service} companies {location}",
+                    "{location} {service} near me",
+                    "find {service} in {location}"
                 ],
                 "variables": {
                     "location": [],  # Will be populated dynamically
@@ -41,14 +41,14 @@ class TemplateGenerator:
             },
             "problem_solution": {
                 "templates": [
-                    "how to fix {problem} with {solution}",
-                    "{problem} solutions for {audience}",
-                    "solve {problem} using {method}",
-                    "{audience} {problem} {solution_type}",
-                    "best way to {solve} {problem}",
-                    "{problem} {solution} guide",
-                    "fix {problem} without {avoid}",
-                    "{problem} troubleshooting {year}"
+                    "how to fix {problem}",
+                    "{problem} solutions",
+                    "solve {problem}",
+                    "fix {problem} fast",
+                    "best way to fix {problem}",
+                    "{problem} troubleshooting",
+                    "{problem} not working",
+                    "why is my {problem}"
                 ],
                 "variables": {
                     "problem": [],  # Will be populated based on business
@@ -1110,7 +1110,7 @@ class TemplateGenerator:
         market_intelligence = self._extract_market_intelligence(business_info, market_context, ai_handler)
         
         prompt = f"""
-        Generate a programmatic SEO keyword template specifically for the category '{category}'.
+        Generate a programmatic SEO keyword template for '{category}' that matches ACTUAL GOOGLE SEARCHES.
         
         Business Context:
         - Name: {business_info.get('name', 'Unknown')}
@@ -1120,21 +1120,35 @@ class TemplateGenerator:
         Market Intelligence (AI-extracted):
         {market_intelligence}
         
-        Create keyword templates that incorporate this market intelligence.
-        Use the extracted locations, market segments, and industry terms to create relevant variables.
+        CRITICAL RULES:
+        1. Templates MUST match queries people actually type into Google
+        2. Use the market intelligence to create location/industry-specific searches
+        3. Avoid marketing jargon - use customer language
+        
+        Examples of GOOD search patterns:
+        - "{{city}} {{service}} cost" (price searches)
+        - "{{product}} reviews {{year}}" (research queries)
+        - "how to {{action}} {{topic}}" (how-to searches)
+        - "{{item1}} vs {{item2}} comparison" (versus searches)
+        - "{{service}} calculator" (tool searches)
+        
+        Examples of BAD patterns (AVOID):
+        - "optimize your {{process}}" (marketing speak)
+        - "enhance {{experience}} solutions" (corporate jargon)
+        - "streamline {{workflow}} efficiency" (nobody searches this)
         
         Create a template configuration with:
-        1. templates: List of 3-5 keyword patterns using variables in curly braces
-        2. variables: Dictionary with 10-20 relevant values per variable based on the market intelligence
+        1. templates: List of 3-5 ACTUAL search query patterns using variables
+        2. variables: Dictionary with realistic values from the market intelligence
         
-        Focus on the '{category}' concept and make templates relevant to the extracted market context.
+        Focus on '{category}' searches that real people make.
         
-        Return as JSON with this exact structure:
+        Return as JSON:
         {{
-            "templates": ["template using {{variable1}} and {{variable2}}", "another {{variable1}} template"],
+            "templates": ["actual search pattern with {{var1}}", "real query {{var2}} {{var3}}"],
             "variables": {{
-                "variable1": ["value1", "value2", "value3"],
-                "variable2": ["valueA", "valueB", "valueC"]
+                "var1": ["realistic value 1", "realistic value 2"],
+                "var2": ["actual term 1", "actual term 2"]
             }}
         }}
         """
@@ -1233,7 +1247,7 @@ class TemplateGenerator:
         """Fallback to basic AI template generation if comprehensive analysis fails"""
         
         prompt = f"""
-        You are an expert in programmatic SEO. Analyze this business and create custom seed keyword templates.
+        You are an expert in programmatic SEO. Analyze this business and create templates that match ACTUAL GOOGLE SEARCHES.
 
         Business Information:
         - Name: {business_info.get('name', 'Unknown')}
@@ -1241,19 +1255,32 @@ class TemplateGenerator:
         - Description: {business_info.get('description', 'No description')}
         - Target Audience: {business_info.get('target_audience', 'General')}
 
-        Create 4-6 highly relevant programmatic SEO page templates for this specific business.
-        Each template should generate hundreds or thousands of keyword variations.
+        CRITICAL: Create templates that match queries people ACTUALLY type into Google.
+        
+        Good template examples:
+        - "{{city}} {{service}} prices" (people search for costs)
+        - "best {{product}} for {{use_case}}" (comparison intent)
+        - "{{service}} near me" (local intent)
+        - "is {{product}} worth it" (evaluation queries)
+        - "{{tool}} calculator {{city}}" (tool searches)
+        
+        Bad template examples (AVOID):
+        - "simplify {{process}} in {{city}}" (corporate jargon)
+        - "enhance your {{service}}" (marketing speak)
+        - "streamline {{topic}} experience" (nobody searches this)
+
+        Create 4-6 programmatic SEO templates for this business.
 
         For each template provide:
         1. name: Descriptive name with emoji
-        2. category: Unique category ID (e.g., "location_analysis", "tool_calculators")
-        3. templates: List of 3-5 template patterns using variables in curly braces
-        4. variables: Dictionary of variable names and their possible values (5-20 values each)
-        5. description: Brief description of what keywords this generates
-        6. estimated_keywords: Realistic estimate of total variations
-        7. example: 2-3 example keywords this would generate
+        2. category: Unique category ID (match search intent)
+        3. templates: List of 3-5 ACTUAL search query patterns using variables
+        4. variables: Dictionary with realistic values (10-20 each)
+        5. description: What search intent this serves
+        6. estimated_keywords: Realistic estimate
+        7. example: 2-3 examples of ACTUAL searches this generates
 
-        Focus on templates that match their specific business type and would drive real search traffic.
+        Every template MUST match real search behavior, not marketing language.
         
         Return as JSON array.
         """
