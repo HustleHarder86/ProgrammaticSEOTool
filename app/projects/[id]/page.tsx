@@ -49,7 +49,7 @@ export default function ProjectDetailPage() {
   const [error, setError] = useState<string | null>(null);
   
   // Fetch project statistics
-  const { stats, loading: statsLoading, error: statsError } = useProjectStats(projectId);
+  const { stats } = useProjectStats(projectId);
 
   const fetchProject = useCallback(async () => {
     try {
@@ -429,7 +429,7 @@ export default function ProjectDetailPage() {
                     {stats && Object.keys(stats.pages_by_template).length > 0 && (
                       <div className="mt-4 p-3 bg-gray-50 rounded-lg text-sm text-gray-600">
                         <p className="font-medium">Ready to implement this template?</p>
-                        <p className="text-xs mt-1">Click "Build Template" to start generating pages</p>
+                        <p className="text-xs mt-1">Click &quot;Build Template&quot; to start generating pages</p>
                       </div>
                     )}
                     
