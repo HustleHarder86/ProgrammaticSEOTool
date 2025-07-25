@@ -423,14 +423,32 @@ Return as JSON with this structure:
     def _add_basic_visuals(self, content_html: str, template_data: Dict[str, Any], 
                           enriched_data: Dict[str, Any]) -> str:
         """Add basic visuals without AI"""
-        # Add a simple stats box after first paragraph
+        # Get default visual strategy based on template
+        visual_strategy = self._get_default_visual_strategy(template_data)
+        
+        # Split content by paragraphs
         sections = content_html.split('</p>')
-        if len(sections) > 1:
-            stats_box = self._generate_stats_box(
-                {'title': 'Quick Overview', 'focus': 'general'}, 
-                template_data, 
-                enriched_data.get('primary_data', {})
+        
+        # Add intro visual after first paragraph
+        if len(sections) > 1 and visual_strategy.get('intro_visual'):
+            intro_visual = self._generate_visual_element(
+                visual_strategy['intro_visual'], template_data, enriched_data
             )
-            sections[0] += '</p>' + stats_box
+            sections[0] += '</p>' + intro_visual
+        
+        # Add main visual after second paragraph
+        if len(sections) > 2 and visual_strategy.get('main_visual'):
+            main_visual = self._generate_visual_element(
+                visual_strategy['main_visual'], template_data, enriched_data
+            )
+            sections[1] += '</p>' + main_visual
+        
+        # Add support visual before last paragraph
+        if len(sections) > 3 and visual_strategy.get('support_visual'):
+            support_visual = self._generate_visual_element(
+                visual_strategy['support_visual'], template_data, enriched_data
+            )
+            # Insert before the last paragraph (before CTA)
+            sections[-2] += '</p>' + support_visual
         
         return ''.join(sections)
