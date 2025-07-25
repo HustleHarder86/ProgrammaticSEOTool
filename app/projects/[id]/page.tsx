@@ -12,7 +12,7 @@ import {
   ArrowLeft, FileText, Sparkles, Download, 
   LayoutTemplate, Database, Calendar, TrendingUp,
   MapPin, Users, Plus, CheckCircle, Clock,
-  Activity, Target, Zap, Eye
+  Activity, Target, Zap, Eye, LayoutGrid
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useProjectStats } from '@/lib/hooks/useProjectStats';
@@ -347,6 +347,12 @@ export default function ProjectDetailPage() {
                         <p className="text-2xl font-bold text-green-600">{templateStats.generated_pages}</p>
                         <p className="text-sm text-gray-600">of {templateStats.potential_pages} pages</p>
                       </div>
+                      <Link href={`/projects/${projectId}/templates/${templateId}/dashboard`}>
+                        <Button variant="outline" size="sm">
+                          <LayoutGrid className="w-4 h-4 mr-2" />
+                          Dashboard
+                        </Button>
+                      </Link>
                       {templateStats.completion_percentage < 100 && (
                         <Link href={`/projects/${projectId}/generate`}>
                           <Button size="sm" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">

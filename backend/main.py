@@ -1598,32 +1598,215 @@ class GeneratePotentialPagesRequest(BaseModel):
 
 class PotentialPageResponse(BaseModel):
     id: str
+    project_id: str
+    template_id: str
     title: str
     slug: str
     variables: dict
     is_generated: bool
+    generated_at: Optional[str] = None
     priority: int
-    created_at: str
+    
+    class Config:
+        from_attributes = True
 
-class PotentialPagesListResponse(BaseModel):
-    potential_pages: List[PotentialPageResponse]
-    total_count: int
+class TemplateDashboardResponse(BaseModel):
+    template_id: str
+    template_name: str
+    template_pattern: str
+    total_combinations: int
     generated_count: int
     remaining_count: int
+    completion_percentage: float
+    variables: Dict[str, List[str]]
+    recent_generations: List[Dict[str, Any]]
+    generation_sessions: List[Dict[str, Any]]
 
-class GenerateSelectedPagesRequest(BaseModel):
-    page_ids: List[str]
-    batch_size: Optional[int] = 10
-
-# Page Preview & Selection endpoints
-@app.post("/api/projects/{project_id}/templates/{template_id}/generate-potential-pages")
-async def generate_potential_pages(
+# Template Dashboard endpoints
+@app.get("/api/projects/{project_id}/templates/{template_id}/dashboard", response_model=TemplateDashboardResponse)
+def get_template_dashboard(
     project_id: str,
     template_id: str,
-    request: GeneratePotentialPagesRequest,
     db: Session = Depends(get_db)
 ):
-    """Generate and save all potential pages for preview and selection"""
+    """Get comprehensive dashboard data for a specific template"""
+    # Validate project and template exist
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    template = db.query(Template).filter(
+        Template.id == template_id,
+        Template.project_id == project_id
+    ).first()
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found")
+    
+    # Get all potential pages
+    potential_pages = db.query(PotentialPage).filter(
+        PotentialPage.project_id == project_id,
+        PotentialPage.template_id == template_id
+    ).all()
+    
+    total_combinations = len(potential_pages)
+    generated_count = sum(1 for p in potential_pages if p.is_generated)
+    remaining_count = total_combinations - generated_count
+    completion_percentage = (generated_count / total_combinations * 100) if total_combinations > 0 else 0
+    
+    # Extract unique variable values from potential pages
+    variables_dict = {}
+    for page in potential_pages:
+        if page.variables:
+            for var_name, var_value in page.variables.items():
+                if var_name not in variables_dict:
+                    variables_dict[var_name] = set()
+                # Extract just the value if it's a dict with 'value' key, otherwise convert to string
+                if isinstance(var_value, dict) and 'value' in var_value:
+                    value_str = str(var_value['value'])
+                else:
+                    value_str = str(var_value) if var_value is not None else ""
+                variables_dict[var_name].add(value_str)
+    
+    # Convert sets to lists
+    variables = {k: sorted(list(v)) for k, v in variables_dict.items()}
+    
+    # Get recent generations
+    recent_generations = []
+    recent_pages = db.query(GeneratedPage).filter(
+        GeneratedPage.project_id == project_id,
+        GeneratedPage.template_id == template_id
+    ).order_by(GeneratedPage.created_at.desc()).limit(10).all()
+    
+    for page in recent_pages:
+        recent_generations.append({
+            "id": page.id,
+            "title": page.title,
+            "generated_at": page.created_at.isoformat() if page.created_at else None
+        })
+    
+    # Calculate generation sessions (group by date)
+    generation_sessions = []
+    generated_pages = db.query(GeneratedPage).filter(
+        GeneratedPage.project_id == project_id,
+        GeneratedPage.template_id == template_id
+    ).all()
+    
+    sessions_by_date = {}
+    for page in generated_pages:
+        if page.created_at:
+            date_key = page.created_at.date().isoformat()
+            sessions_by_date[date_key] = sessions_by_date.get(date_key, 0) + 1
+    
+    for date, count in sorted(sessions_by_date.items(), reverse=True):
+        generation_sessions.append({"date": date, "count": count})
+    
+    return TemplateDashboardResponse(
+        template_id=template_id,
+        template_name=template.name,
+        template_pattern=template.pattern,
+        total_combinations=total_combinations,
+        generated_count=generated_count,
+        remaining_count=remaining_count,
+        completion_percentage=completion_percentage,
+        variables=variables,
+        recent_generations=recent_generations,
+        generation_sessions=generation_sessions
+    )
+
+@app.get("/api/projects/{project_id}/templates/{template_id}/potential-pages")
+def get_potential_pages(
+    project_id: str,
+    template_id: str,
+    offset: int = 0,
+    limit: int = 100,
+    filter_generated: Optional[str] = None,  # all, generated, remaining
+    search: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """Get potential pages for a template with filtering options"""
+    # Validate project and template exist
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    template = db.query(Template).filter(
+        Template.id == template_id,
+        Template.project_id == project_id
+    ).first()
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found")
+    
+    # Build query
+    query = db.query(PotentialPage).filter(
+        PotentialPage.project_id == project_id,
+        PotentialPage.template_id == template_id
+    )
+    
+    # Apply filters
+    if filter_generated == "generated":
+        query = query.filter(PotentialPage.is_generated == 1)
+    elif filter_generated == "remaining":
+        query = query.filter(PotentialPage.is_generated == 0)
+    
+    # Apply search
+    if search:
+        query = query.filter(PotentialPage.title.contains(search))
+    
+    # Get total count before pagination
+    total_count = query.count()
+    
+    # Apply pagination
+    potential_pages = query.offset(offset).limit(limit).all()
+    
+    # Convert to response format
+    pages_list = []
+    for page in potential_pages:
+        pages_list.append({
+            "id": page.id,
+            "title": page.title,
+            "slug": page.slug,
+            "variables": page.variables or {},
+            "is_generated": bool(page.is_generated),
+            "generated_at": page.updated_at.isoformat() if page.is_generated and page.updated_at else None,
+            "priority": page.priority
+        })
+    
+    # Get counts for summary
+    all_pages_query = db.query(PotentialPage).filter(
+        PotentialPage.project_id == project_id,
+        PotentialPage.template_id == template_id
+    )
+    total_all = all_pages_query.count()
+    generated_count = all_pages_query.filter(PotentialPage.is_generated == 1).count()
+    remaining_count = total_all - generated_count
+    
+    return {
+        "pages": pages_list,
+        "total": total_count,
+        "offset": offset,
+        "limit": limit,
+        "total_all": total_all,
+        "generated_count": generated_count,
+        "remaining_count": remaining_count
+    }
+
+@app.post("/api/projects/{project_id}/templates/{template_id}/generate-selected")
+def generate_selected_pages(
+    project_id: str,
+    template_id: str,
+    request: GeneratePagesRequest,
+    db: Session = Depends(get_db)
+):
+    """Generate specific pages from selected potential page titles"""
+    # Validate AI is available
+    if not page_generator:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "error": "AI_PROVIDER_REQUIRED",
+                "message": "AI provider required for content generation"
+            }
+        )
     
     # Validate project and template exist
     project = db.query(Project).filter(Project.id == project_id).first()
@@ -1638,465 +1821,74 @@ async def generate_potential_pages(
         raise HTTPException(status_code=404, detail="Template not found")
     
     try:
-        # Clear existing potential pages for this template
-        db.query(PotentialPage).filter(
-            PotentialPage.project_id == project_id,
-            PotentialPage.template_id == template_id
-        ).delete()
-        
-        # Generate all possible combinations
-        if request.variables_data:
-            # Use provided data
-            variable_combinations = page_generator.generate_all_combinations(request.variables_data)
-        else:
-            # Try to use AI-generated variables first
-            # Check if template has generated variables from the AI generation endpoint
-            if hasattr(template, 'generated_variables_data') and template.generated_variables_data:
-                # Convert AI-generated format to expected format
-                ai_variables = template.generated_variables_data
-                variable_data = {}
-                
-                for var_name, var_values in ai_variables.items():
-                    if isinstance(var_values, list):
-                        # Convert simple list to expected format
-                        variable_data[var_name] = [
-                            {
-                                'value': val,
-                                'dataset_id': 'ai_generated',
-                                'dataset_name': 'AI Generated',
-                                'metadata': {}
-                            } for val in var_values
-                        ]
-                
-                if variable_data:
-                    variable_combinations = page_generator.generate_all_combinations(variable_data)
-                else:
-                    # Fallback to datasets
-                    variable_data = page_generator.load_datasets_for_variables(project_id, template, db)
-                    variable_combinations = page_generator.generate_all_combinations(variable_data)
-            else:
-                # Load data from datasets
-                variable_data = page_generator.load_datasets_for_variables(project_id, template, db)
-                variable_combinations = page_generator.generate_all_combinations(variable_data)
-        
-        # Limit combinations if requested
-        if request.max_combinations and len(variable_combinations) > request.max_combinations:
-            variable_combinations = variable_combinations[:request.max_combinations]
-        
-        # Create potential pages
-        potential_pages = []
-        for i, variables in enumerate(variable_combinations):
-            # Generate title and slug
-            title = page_generator.replace_variables_in_content(template.pattern, variables)
-            slug = title.lower().replace(' ', '-').replace('?', '').replace(',', '').replace(':', '')
-            
-            potential_page = PotentialPage(
-                project_id=project_id,
-                template_id=template_id,
-                title=title,
-                slug=slug,
-                variables=variables,
-                priority=0  # Default priority
-            )
-            potential_pages.append(potential_page)
-        
-        # Batch insert for performance
-        db.add_all(potential_pages)
-        db.commit()
-        
-        return {
-            "message": f"Generated {len(potential_pages)} potential pages",
-            "total_potential_pages": len(potential_pages),
-            "template_pattern": template.pattern,
-            "preview_url": f"/api/projects/{project_id}/templates/{template_id}/potential-pages"
-        }
-        
-    except Exception as e:
-        print(f"❌ Potential page generation failed: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(
-            status_code=500,
-            detail=f"Potential page generation failed: {str(e)}"
-        )
-
-@app.get("/api/projects/{project_id}/templates/{template_id}/potential-pages", response_model=PotentialPagesListResponse)
-async def get_potential_pages(
-    project_id: str,
-    template_id: str,
-    offset: int = 0,
-    limit: int = 50,
-    db: Session = Depends(get_db)
-):
-    """Get potential pages for preview and selection"""
-    
-    # Get total counts
-    total_count = db.query(PotentialPage).filter(
-        PotentialPage.project_id == project_id,
-        PotentialPage.template_id == template_id
-    ).count()
-    
-    generated_count = db.query(PotentialPage).filter(
-        PotentialPage.project_id == project_id,
-        PotentialPage.template_id == template_id,
-        PotentialPage.is_generated == 1
-    ).count()
-    
-    # Get paginated potential pages
-    potential_pages = db.query(PotentialPage).filter(
-        PotentialPage.project_id == project_id,
-        PotentialPage.template_id == template_id
-    ).order_by(PotentialPage.priority.desc(), PotentialPage.created_at).offset(offset).limit(limit).all()
-    
-    pages_data = []
-    for page in potential_pages:
-        pages_data.append(PotentialPageResponse(
-            id=page.id,
-            title=page.title,
-            slug=page.slug,
-            variables=page.variables,
-            is_generated=bool(page.is_generated),
-            priority=page.priority,
-            created_at=page.created_at.isoformat()
-        ))
-    
-    return PotentialPagesListResponse(
-        potential_pages=pages_data,
-        total_count=total_count,
-        generated_count=generated_count,
-        remaining_count=total_count - generated_count
-    )
-
-@app.post("/api/projects/{project_id}/templates/{template_id}/generate-selected-pages")
-async def generate_selected_pages(
-    project_id: str,
-    template_id: str,
-    request: GenerateSelectedPagesRequest,
-    db: Session = Depends(get_db)
-):
-    """Generate content for selected potential pages"""
-    
-    # Validate AI is available
-    if not page_generator:
-        raise HTTPException(
-            status_code=503,
-            detail={
-                "error": "AI_PROVIDER_REQUIRED", 
-                "message": "AI providers required for content generation",
-                "details": ai_initialization_error
-            }
-        )
-    
-    try:
-        # Get selected potential pages
+        # Get the potential pages by title
         potential_pages = db.query(PotentialPage).filter(
-            PotentialPage.id.in_(request.page_ids),
             PotentialPage.project_id == project_id,
             PotentialPage.template_id == template_id,
-            PotentialPage.is_generated == 0  # Only generate pages that haven't been generated yet
+            PotentialPage.title.in_(request.selected_page_titles or []),
+            PotentialPage.is_generated == 0  # Only non-generated pages
         ).all()
         
         if not potential_pages:
-            raise HTTPException(status_code=404, detail="No valid potential pages found for generation")
+            return {
+                "pages_generated": 0,
+                "status": "no_pages_to_generate",
+                "message": "No valid pages found to generate"
+            }
         
-        # Get template
-        template = db.query(Template).filter(Template.id == template_id).first()
-        if not template:
-            raise HTTPException(status_code=404, detail="Template not found")
+        # Prepare variables data for generation
+        variables_data = {}
+        selected_titles = []
         
-        # Generate pages
-        generated_pages = []
-        for potential_page in potential_pages:
-            try:
-                # Generate content using the page generator
-                page_content = page_generator.generate_unique_content(
-                    template, potential_page.variables, 0, len(potential_pages)
-                )
-                
-                # Create generated page (using correct model fields)
-                generated_page = GeneratedPage(
-                    project_id=project_id,
-                    template_id=template_id,
-                    title=page_content.get("title", potential_page.title),
-                    content=page_content,  # Store all content as JSON
-                    meta_data={
-                        "slug": potential_page.slug,
-                        "keyword": page_content.get("keyword", potential_page.title),
-                        "variables": potential_page.variables,
-                        "meta_description": page_content.get("meta_description", ""),
-                        "word_count": page_content.get("word_count", 0),
-                        "quality_score": page_content.get("quality_score", 0),
-                        "generated_from_potential_page": potential_page.id
+        for page in potential_pages:
+            selected_titles.append(page.title)
+            # Collect unique variable values
+            if page.variables:
+                for var_name, var_value in page.variables.items():
+                    if var_name not in variables_data:
+                        variables_data[var_name] = []
+                    # Add the variable value in the expected format
+                    value_entry = {
+                        'value': var_value,
+                        'dataset_id': 'potential_pages',
+                        'dataset_name': 'Selected Pages',
+                        'metadata': {}
                     }
-                )
-                
-                db.add(generated_page)
-                db.flush()  # Get the ID
-                
-                # Update potential page to mark as generated
-                potential_page.is_generated = 1
-                potential_page.generated_page_id = generated_page.id
-                
-                generated_pages.append({
-                    "id": generated_page.id,
-                    "title": generated_page.title,
-                    "slug": generated_page.meta_data.get("slug", ""),
-                    "word_count": generated_page.meta_data.get("word_count", 0),
-                    "quality_score": generated_page.meta_data.get("quality_score", 0)
-                })
-                
-            except Exception as e:
-                print(f"❌ Failed to generate page '{potential_page.title}': {str(e)}")
-                continue
+                    # Avoid duplicates
+                    if value_entry not in variables_data[var_name]:
+                        variables_data[var_name].append(value_entry)
+        
+        # Generate the pages
+        total_generated, page_ids = page_generator.generate_pages_from_variables(
+            project_id, 
+            template_id,
+            variables_data,
+            selected_titles,
+            db,
+            batch_size=request.batch_size or 10
+        )
+        
+        # Mark potential pages as generated
+        for page in potential_pages:
+            page.is_generated = 1
+            # Try to link to generated page if we can match by title
+            generated_page = db.query(GeneratedPage).filter(
+                GeneratedPage.project_id == project_id,
+                GeneratedPage.template_id == template_id,
+                GeneratedPage.title == page.title
+            ).first()
+            if generated_page:
+                page.generated_page_id = generated_page.id
         
         db.commit()
         
         return {
-            "message": f"Successfully generated {len(generated_pages)} pages",
-            "generated_pages": generated_pages,
-            "total_requested": len(request.page_ids),
-            "successful_generations": len(generated_pages)
+            "pages_generated": total_generated,
+            "page_ids": page_ids,
+            "status": "completed"
         }
         
     except Exception as e:
-        print(f"❌ Selected page generation failed: {str(e)}")
         import traceback
         traceback.print_exc()
-        raise HTTPException(
-            status_code=500,
-            detail=f"Selected page generation failed: {str(e)}"
-        )
-
-# AI Strategy Generation endpoint
-@app.post("/api/generate-ai-strategy", response_model=AIStrategyResponse)
-async def generate_ai_strategy(
-    request: AIStrategyRequest,
-    db: Session = Depends(get_db)
-):
-    """Generate a complete AI-powered programmatic SEO strategy for a business"""
-    
-    # Validate AI Strategy Generator is available
-    if not ai_strategy_generator:
-        raise HTTPException(
-            status_code=503,
-            detail={
-                "error": "AI_STRATEGY_GENERATOR_UNAVAILABLE",
-                "message": "AI Strategy Generator requires AI providers for business analysis and strategy creation",
-                "details": strategy_generator_error,
-                "setup_instructions": [
-                    "Configure at least one AI provider:",
-                    "• OPENAI_API_KEY=your_openai_key",
-                    "• ANTHROPIC_API_KEY=your_anthropic_key",
-                    "• PERPLEXITY_API_KEY=your_perplexity_key",
-                    "Then restart the application."
-                ]
-            }
-        )
-    
-    try:
-        print(f"🚀 Generating AI strategy for: {request.business_input[:50]}...")
-        
-        # Generate complete strategy
-        strategy = await ai_strategy_generator.generate_complete_strategy(
-            business_input=request.business_input,
-            business_url=request.business_url
-        )
-        
-        templates_count = len(strategy.get("custom_templates", []))
-        implementation_plan = strategy.get("implementation_plan", {})
-        
-        print(f"✅ Strategy generated with {templates_count} templates")
-        
-        return AIStrategyResponse(
-            strategy=strategy,
-            templates_generated=templates_count,
-            implementation_plan=implementation_plan
-        )
-        
-    except Exception as e:
-        print(f"❌ AI strategy generation failed: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "error": "STRATEGY_GENERATION_FAILED", 
-                "message": f"AI strategy generation failed: {str(e)}",
-                "business_input": request.business_input
-            }
-        )
-
-@app.post("/api/projects/{project_id}/implement-ai-strategy")
-async def implement_ai_strategy(
-    project_id: str,
-    strategy_data: dict,
-    db: Session = Depends(get_db)
-):
-    """Create templates and data structures from an AI-generated strategy"""
-    
-    # Validate project exists
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
-    
-    try:
-        custom_templates = strategy_data.get("custom_templates", [])
-        created_templates = []
-        
-        for template_data in custom_templates:
-            # Create template in database
-            template = Template(
-                project_id=project_id,
-                name=template_data.get("template_name", "AI Generated Template"),
-                pattern=template_data.get("template_pattern", ""),
-                template_sections={
-                    "seo_structure": {
-                        "title_template": template_data.get("template_pattern", ""),
-                        "h1_template": template_data.get("h1_pattern", ""),
-                        "meta_description_template": template_data.get("seo_strategy", {}).get("meta_description_template", "")
-                    },
-                    "content_strategy": template_data.get("content_strategy", {}),
-                    "ai_generated": True,
-                    "generation_date": datetime.now().isoformat()
-                },
-                variables=template_data.get("target_variables", [])
-            )
-            
-            db.add(template)
-            db.commit()
-            db.refresh(template)
-            
-            created_templates.append({
-                "id": template.id,
-                "name": template.name,
-                "pattern": template.pattern,
-                "variables": len(template.variables)
-            })
-        
-        return {
-            "message": f"Successfully implemented AI strategy with {len(created_templates)} templates",
-            "templates_created": created_templates,
-            "implementation_plan": strategy_data.get("implementation_plan", {}),
-            "next_steps": [
-                "Generate or import data for template variables",
-                "Test content generation with sample data",
-                "Scale to full page generation"
-            ]
-        }
-        
-    except Exception as e:
-        print(f"❌ Strategy implementation failed: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(
-            status_code=500,
-            detail=f"Strategy implementation failed: {str(e)}"
-        )
-
-# Export endpoints
-@app.post("/api/projects/{project_id}/export", response_model=ExportResponse)
-def start_export(
-    project_id: str,
-    request: ExportRequest,
-    db: Session = Depends(get_db)
-):
-    """Start a new export job for a project."""
-    # Validate project exists
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
-    
-    # Validate format
-    try:
-        export_format = ExportFormat(request.format.lower())
-    except ValueError:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unsupported export format: {request.format}. Supported formats: csv, json, wordpress, html"
-        )
-    
-    try:
-        # Start export job
-        export_id = export_manager.start_export(
-            project_id=project_id,
-            format=export_format,
-            options=request.options
-        )
-        
-        return ExportResponse(
-            export_id=export_id,
-            status="started",
-            message=f"Export job {export_id} started successfully"
-        )
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to start export: {str(e)}")
-
-@app.get("/api/exports/{export_id}/status", response_model=ExportStatusResponse)
-def get_export_status(export_id: str):
-    """Get the status of an export job."""
-    status = export_manager.get_export_status(export_id)
-    
-    if not status:
-        raise HTTPException(status_code=404, detail="Export job not found")
-    
-    return ExportStatusResponse(**status)
-
-@app.get("/api/exports/{export_id}/download")
-def download_export(export_id: str):
-    """Download the exported file."""
-    file_path = export_manager.get_file_path(export_id)
-    
-    if not file_path or not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="Export file not found or not ready")
-    
-    # Get filename from path
-    filename = os.path.basename(file_path)
-    
-    return FileResponse(
-        path=file_path,
-        filename=filename,
-        media_type='application/octet-stream'
-    )
-
-@app.get("/api/projects/{project_id}/exports")
-def list_project_exports(project_id: str, db: Session = Depends(get_db)):
-    """List all export jobs for a project."""
-    # Validate project exists
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
-    
-    exports = export_manager.list_exports(project_id=project_id)
-    return {"exports": exports}
-
-@app.get("/api/exports")
-def list_all_exports():
-    """List all export jobs across all projects."""
-    exports = export_manager.list_exports()
-    return {"exports": exports}
-
-@app.delete("/api/exports/{export_id}")
-def cancel_export(export_id: str):
-    """Cancel an active export job."""
-    success = export_manager.cancel_export(export_id)
-    
-    if not success:
-        raise HTTPException(
-            status_code=400,
-            detail="Export job not found or cannot be cancelled"
-        )
-    
-    return {"message": f"Export job {export_id} cancelled successfully"}
-
-@app.post("/api/exports/cleanup")
-def cleanup_old_exports(days_old: int = 7):
-    """Clean up old export files and jobs."""
-    try:
-        cleaned_count = export_manager.cleanup_old_exports(days_old)
-        return {
-            "message": f"Cleaned up {cleaned_count} old export jobs",
-            "cleaned_count": cleaned_count
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Cleanup failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Generation failed: {str(e)}")
