@@ -11,8 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { 
-  ArrowLeft, Sparkles, Filter, Download, Eye, 
-  CheckCircle, Clock, TrendingUp, LayoutGrid,
+  ArrowLeft, Sparkles, CheckCircle, Clock,
   Search, RefreshCw
 } from 'lucide-react';
 

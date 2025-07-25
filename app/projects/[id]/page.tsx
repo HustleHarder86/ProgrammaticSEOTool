@@ -461,15 +461,6 @@ export default function ProjectDetailPage() {
                             Build Template
                           </Button>
                         </Link>
-                        <Link href={`/projects/${projectId}/generate?templateId=${template.id}`}>
-                          <Button 
-                            size="sm"
-                            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-                          >
-                            <Sparkles className="w-4 h-4 mr-2" />
-                            Generate Pages
-                          </Button>
-                        </Link>
                       </div>
                     </div>
                   </div>
