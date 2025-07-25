@@ -11,6 +11,7 @@ from models import Template, DataSet, GeneratedPage, Project
 from content_variation import ContentVariationEngine, enhance_content_quality, ensure_minimum_quality
 from efficient_page_generator import EfficientPageGenerator
 from smart_page_generator import SmartPageGenerator
+from ai_visual_generator import AIVisualGenerator
 
 
 class PageGenerator:

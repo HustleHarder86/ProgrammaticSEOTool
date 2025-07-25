@@ -6,6 +6,7 @@ from typing import Dict, List, Any, Optional
 from efficient_page_generator import EfficientPageGenerator
 from data_enricher import DataEnricher
 from api.ai_handler import AIHandler
+from ai_visual_generator import AIVisualGenerator
 
 
 class SmartPageGenerator(EfficientPageGenerator):
@@ -15,6 +16,7 @@ class SmartPageGenerator(EfficientPageGenerator):
         super().__init__()
         self.data_enricher = DataEnricher()
         self.ai_handler = AIHandler()
+        self.ai_visual_generator = AIVisualGenerator()
         
         # AI prompts for different content types
         self.ai_prompts = {
@@ -132,16 +134,33 @@ Use only provided data.
             title, enriched_data["primary_data"], content_type
         )
         
+        # Enhance content with AI-generated visual elements
+        template_data = {
+            "pattern": template.get("pattern", ""),
+            "title": title,
+            "Service": data_row.get("Service", data_row.get("service", "")),
+            "City": data_row.get("City", data_row.get("city", ""))
+        }
+        
+        # Add all template variables to template_data
+        for key, value in data_row.items():
+            template_data[key] = value
+        
+        # Use AI to enhance content with visual elements
+        enhanced_content_html = self.ai_visual_generator.enhance_content_with_visuals(
+            content_html, template_data, enriched_data
+        )
+        
         # Calculate quality metrics
-        word_count = len(content_html.split())
-        quality_score = self._calculate_quality_score(content_html, enriched_data)
+        word_count = len(enhanced_content_html.split())
+        quality_score = self._calculate_quality_score(enhanced_content_html, enriched_data)
         
         return {
             "title": title,
             "h1": h1,
             "slug": slug,
             "meta_description": meta_description,
-            "content_html": content_html,
+            "content_html": enhanced_content_html,
             "word_count": word_count,
             "quality_score": quality_score,
             "data_quality": enriched_data["data_quality"],
