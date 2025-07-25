@@ -6,12 +6,16 @@ import Link from 'next/link';
 import { apiClient } from '@/lib/api/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import { 
   ArrowLeft, FileText, Sparkles, Download, 
   LayoutTemplate, Database, Calendar, TrendingUp,
-  MapPin, Users, Plus
+  MapPin, Users, Plus, CheckCircle, Clock,
+  Activity, Target, Zap, Eye
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { useProjectStats } from '@/lib/hooks/useProjectStats';
 
 interface Project {
   id: string;
@@ -43,6 +47,9 @@ export default function ProjectDetailPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Fetch project statistics
+  const { stats, loading: statsLoading, error: statsError } = useProjectStats(projectId);
 
   const fetchProject = useCallback(async () => {
     try {
@@ -133,6 +140,166 @@ export default function ProjectDetailPage() {
         </div>
       </div>
 
+      {/* Project Overview Cards */}
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-600">Templates</CardTitle>
+                <LayoutTemplate className="w-4 h-4 text-purple-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.total_templates}</div>
+              <p className="text-xs text-gray-500 mt-1">
+                {stats.total_templates === 0 ? 'Create your first template' : 'Active templates'}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-600">Generated Pages</CardTitle>
+                <CheckCircle className="w-4 h-4 text-green-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.total_generated_pages}</div>
+              <p className="text-xs text-gray-500 mt-1">
+                Out of {stats.total_potential_pages} potential
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-600">Progress</CardTitle>
+                <Activity className="w-4 h-4 text-blue-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <Progress value={stats.generation_progress} className="flex-1" />
+                <span className="text-sm font-medium">{Math.round(stats.generation_progress)}%</span>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                {stats.total_potential_pages - stats.total_generated_pages} pages remaining
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-600">Data Rows</CardTitle>
+                <Database className="w-4 h-4 text-indigo-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.total_data_rows}</div>
+              <p className="text-xs text-gray-500 mt-1">
+                {stats.total_data_rows === 0 ? 'Import or generate data' : 'Total data entries'}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Recent Activity */}
+      {stats && stats.recent_pages.length > 0 && (
+        <Card className="mb-8">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="w-5 h-5" />
+                Recent Activity
+              </CardTitle>
+              <Link href={`/projects/${projectId}/pages`}>
+                <Button variant="ghost" size="sm">
+                  View All Pages
+                  <Eye className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {stats.recent_pages.map((page) => (
+                <div key={page.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{page.title}</p>
+                    <p className="text-xs text-gray-500">
+                      Generated {formatDistanceToNow(new Date(page.created_at), { addSuffix: true })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline" className="text-xs">
+                      {page.word_count} words
+                    </Badge>
+                    <Badge 
+                      variant="outline" 
+                      className={`text-xs ${
+                        page.quality_score >= 80 ? 'border-green-500 text-green-700' :
+                        page.quality_score >= 60 ? 'border-yellow-500 text-yellow-700' :
+                        'border-red-500 text-red-700'
+                      }`}
+                    >
+                      {page.quality_score}% quality
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Next Actions */}
+      {stats && stats.next_actions.length > 0 && (
+        <Card className="mb-8 border-purple-200 bg-purple-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-purple-900">
+              <Target className="w-5 h-5" />
+              Suggested Next Steps
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-3">
+              {stats.next_actions.map((action, index) => {
+                let href = '';
+                let icon = null;
+                
+                if (action.includes('template')) {
+                  href = `/projects/${projectId}/templates`;
+                  icon = <LayoutTemplate className="w-4 h-4" />;
+                } else if (action.includes('data') || action.includes('variables')) {
+                  href = `/projects/${projectId}/data`;
+                  icon = <Database className="w-4 h-4" />;
+                } else if (action.includes('Generate') || action.includes('generating')) {
+                  href = `/projects/${projectId}/generate`;
+                  icon = <Sparkles className="w-4 h-4" />;
+                } else if (action.includes('Export')) {
+                  href = `/projects/${projectId}/export`;
+                  icon = <Download className="w-4 h-4" />;
+                }
+                
+                return (
+                  <Link key={index} href={href}>
+                    <Button variant="outline" className="border-purple-300 hover:bg-purple-100">
+                      {icon}
+                      {action}
+                    </Button>
+                  </Link>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Business Overview */}
       {analysis && (
         <Card className="mb-8">
@@ -160,9 +327,52 @@ export default function ProjectDetailPage() {
         </Card>
       )}
 
+      {/* Active Templates Progress */}
+      {stats && Object.keys(stats.pages_by_template).length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Active Templates</h2>
+          <div className="grid gap-4">
+            {Object.entries(stats.pages_by_template).map(([templateId, templateStats]) => (
+              <Card key={templateId}>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="font-semibold text-lg">{templateStats.template_name}</h3>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Pattern: <code className="bg-gray-100 px-2 py-1 rounded">{templateStats.template_pattern}</code>
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="text-2xl font-bold text-green-600">{templateStats.generated_pages}</p>
+                        <p className="text-sm text-gray-600">of {templateStats.potential_pages} pages</p>
+                      </div>
+                      {templateStats.completion_percentage < 100 && (
+                        <Link href={`/projects/${projectId}/generate`}>
+                          <Button size="sm" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
+                            <Zap className="w-4 h-4 mr-2" />
+                            Continue
+                          </Button>
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                  <Progress value={templateStats.completion_percentage} className="h-3" />
+                  <p className="text-sm text-gray-600 mt-2">
+                    {Math.round(templateStats.completion_percentage)}% complete
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Template Opportunities */}
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Template Opportunities</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          {Object.keys(stats?.pages_by_template || {}).length > 0 ? 'Additional Template Ideas' : 'Template Opportunities'}
+        </h2>
         {selectedTemplate && (
           <div className="mb-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
             <p className="text-purple-700">
@@ -178,7 +388,7 @@ export default function ProjectDetailPage() {
             
             return (
               <Card 
-                key={index}
+                key={template.id || index}
                 className={`transition-all duration-300 ${
                   isSelected ? 'border-purple-500 shadow-lg' : 'hover:shadow-md'
                 }`}
@@ -214,6 +424,14 @@ export default function ProjectDetailPage() {
                         ))}
                       </ul>
                     </div>
+                    
+                    {/* Progress bar for template completion - only show if we have actual templates */}
+                    {stats && Object.keys(stats.pages_by_template).length > 0 && (
+                      <div className="mt-4 p-3 bg-gray-50 rounded-lg text-sm text-gray-600">
+                        <p className="font-medium">Ready to implement this template?</p>
+                        <p className="text-xs mt-1">Click "Build Template" to start generating pages</p>
+                      </div>
+                    )}
                     
                     <div className="flex items-center justify-between pt-4 border-t">
                       <div className="flex items-center text-sm">

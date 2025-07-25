@@ -528,6 +528,111 @@ def get_project(project_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Project not found")
     return project
 
+# Project Statistics Model
+class ProjectStatsResponse(BaseModel):
+    project_id: str
+    total_templates: int
+    total_data_rows: int
+    total_potential_pages: int
+    total_generated_pages: int
+    pages_by_template: Dict[str, Dict[str, Any]]
+    recent_pages: List[Dict[str, Any]]
+    generation_progress: float
+    next_actions: List[str]
+
+@app.get("/api/projects/{project_id}/stats", response_model=ProjectStatsResponse)
+def get_project_stats(project_id: str, db: Session = Depends(get_db)):
+    """Get comprehensive statistics for a project"""
+    # Check if project exists
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Get templates count
+    templates = db.query(Template).filter(Template.project_id == project_id).all()
+    total_templates = len(templates)
+    
+    # Get total data rows
+    data_sets = db.query(DataSet).filter(DataSet.project_id == project_id).all()
+    total_data_rows = sum(ds.row_count for ds in data_sets)
+    
+    # Get potential and generated pages counts
+    total_potential_pages = db.query(PotentialPage).filter(
+        PotentialPage.project_id == project_id
+    ).count()
+    
+    total_generated_pages = db.query(GeneratedPage).filter(
+        GeneratedPage.project_id == project_id
+    ).count()
+    
+    # Get pages by template with details
+    pages_by_template = {}
+    for template in templates:
+        potential_count = db.query(PotentialPage).filter(
+            PotentialPage.project_id == project_id,
+            PotentialPage.template_id == template.id
+        ).count()
+        
+        generated_count = db.query(GeneratedPage).filter(
+            GeneratedPage.project_id == project_id,
+            GeneratedPage.template_id == template.id
+        ).count()
+        
+        pages_by_template[template.id] = {
+            "template_name": template.name,
+            "template_pattern": template.pattern,
+            "potential_pages": potential_count,
+            "generated_pages": generated_count,
+            "completion_percentage": (generated_count / potential_count * 100) if potential_count > 0 else 0
+        }
+    
+    # Get recent generated pages
+    recent_pages_query = db.query(GeneratedPage).filter(
+        GeneratedPage.project_id == project_id
+    ).order_by(GeneratedPage.created_at.desc()).limit(5).all()
+    
+    recent_pages = []
+    for page in recent_pages_query:
+        recent_pages.append({
+            "id": page.id,
+            "title": page.title,
+            "template_id": page.template_id,
+            "created_at": page.created_at.isoformat(),
+            "word_count": page.meta_data.get("word_count", 0) if page.meta_data else 0,
+            "quality_score": page.meta_data.get("quality_score", 0) if page.meta_data else 0
+        })
+    
+    # Calculate overall generation progress
+    generation_progress = (total_generated_pages / total_potential_pages * 100) if total_potential_pages > 0 else 0
+    
+    # Determine next actions
+    next_actions = []
+    if total_templates == 0:
+        next_actions.append("Create your first template")
+    elif total_data_rows == 0:
+        next_actions.append("Import data or generate variables")
+    elif total_potential_pages == 0:
+        next_actions.append("Generate potential pages")
+    elif total_generated_pages == 0:
+        next_actions.append("Generate your first batch of pages")
+    elif generation_progress < 100:
+        next_actions.append(f"Continue generating pages ({int(generation_progress)}% complete)")
+    else:
+        next_actions.append("Export your generated pages")
+        next_actions.append("Create additional templates")
+    
+    return ProjectStatsResponse(
+        project_id=project_id,
+        total_templates=total_templates,
+        total_data_rows=total_data_rows,
+        total_potential_pages=total_potential_pages,
+        total_generated_pages=total_generated_pages,
+        pages_by_template=pages_by_template,
+        recent_pages=recent_pages,
+        generation_progress=generation_progress,
+        next_actions=next_actions
+    )
+
 @app.put("/api/projects/{project_id}", response_model=ProjectResponse)
 def update_project(project_id: str, project_update: ProjectUpdate, db: Session = Depends(get_db)):
     """Update project"""
