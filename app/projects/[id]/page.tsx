@@ -354,7 +354,7 @@ export default function ProjectDetailPage() {
                         </Button>
                       </Link>
                       {templateStats.completion_percentage < 100 && (
-                        <Link href={`/projects/${projectId}/generate`}>
+                        <Link href={`/projects/${projectId}/generate?templateId=${templateId}`}>
                           <Button size="sm" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
                             <Zap className="w-4 h-4 mr-2" />
                             Continue
@@ -461,7 +461,7 @@ export default function ProjectDetailPage() {
                             Build Template
                           </Button>
                         </Link>
-                        <Link href={`/projects/${projectId}/templates?template=${encodeURIComponent(template.template_name)}&action=generate`}>
+                        <Link href={`/projects/${projectId}/generate?templateId=${template.id}`}>
                           <Button 
                             size="sm"
                             className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
