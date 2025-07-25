@@ -43,6 +43,7 @@ export default function TemplateBuilderPage() {
   const router = useRouter();
   const projectId = params?.id as string;
   const templateName = searchParams?.get('template');
+  const action = searchParams?.get('action');
   
   const [project, setProject] = useState<Project | null>(null);
   const [template, setTemplate] = useState<Template>({
@@ -107,9 +108,14 @@ export default function TemplateBuilderPage() {
         ...template
       });
       
-      if (response.data.success) {
-        // Navigate to data import page
-        router.push(`/projects/${projectId}/data?template=${encodeURIComponent(template.name)}`);
+      if (response.data.success && response.data.template_id) {
+        // If action=generate, go directly to generate page with template ID
+        if (action === 'generate') {
+          router.push(`/projects/${projectId}/generate?templateId=${response.data.template_id}`);
+        } else {
+          // Otherwise go to data import page
+          router.push(`/projects/${projectId}/data?template=${encodeURIComponent(template.name)}`);
+        }
       }
     } catch (err) {
       console.error('Failed to save template:', err);
@@ -145,6 +151,13 @@ export default function TemplateBuilderPage() {
             <p className="text-lg text-gray-600">
               Create a reusable template for {project?.business_analysis?.business_name || project?.name}
             </p>
+            {action === 'generate' && (
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Quick Generate Mode:</strong> Fill in your template details and click "Save & Continue" to start generating pages with AI-powered variables.
+                </p>
+              </div>
+            )}
           </div>
           <div className="flex gap-2">
             <Button

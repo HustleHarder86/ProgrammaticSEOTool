@@ -455,7 +455,7 @@ export default function ProjectDetailPage() {
                             Build Template
                           </Button>
                         </Link>
-                        <Link href={`/projects/${projectId}/generate`}>
+                        <Link href={`/projects/${projectId}/templates?template=${encodeURIComponent(template.template_name)}&action=generate`}>
                           <Button 
                             size="sm"
                             className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
