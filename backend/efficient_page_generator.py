@@ -228,74 +228,73 @@ class EfficientPageGenerator:
         primary_data = enriched_data.get("primary_data", {})
         
         if content_type == "evaluation_question":
-            # Create comprehensive data-driven analysis
-            sections = ["<div class='key-metrics'>"]
-            sections.append("<h3>Financial Performance Metrics</h3>")
+            # Create comprehensive data-driven analysis with visual elements
+            sections = []
             
-            if "average_nightly_rate" in primary_data:
-                sections.append(f"<p><strong>Average Nightly Rate:</strong> ${primary_data['average_nightly_rate']} - This rate positions properties competitively within the local market while maintaining profitability potential.</p>")
-            
-            if "occupancy_rate" in primary_data:
-                sections.append(f"<p><strong>Occupancy Rate:</strong> {primary_data['occupancy_rate']}% - {'Strong performance indicating healthy demand' if primary_data['occupancy_rate'] > 65 else 'Moderate performance with room for optimization'} in the local market.</p>")
-            
-            if "total_listings" in primary_data:
-                sections.append(f"<p><strong>Market Size:</strong> {primary_data['total_listings']} active listings - {'Large market with diverse opportunities' if primary_data['total_listings'] > 200 else 'Focused market with targeted opportunities'} for investment.</p>")
-            
+            # Add visual ROI calculator/infographic
             if "roi_percentage" in primary_data:
-                sections.append(f"<p><strong>Expected ROI:</strong> {primary_data['roi_percentage']:.1f}% - {'Excellent returns exceeding market averages' if primary_data['roi_percentage'] > 20 else 'Solid returns meeting investment expectations'}.</p>")
+                sections.append(self._generate_roi_infographic(primary_data, template_data))
             
-            if "monthly_revenue" in primary_data and "monthly_expenses" in primary_data:
-                profit = primary_data.get("monthly_profit", primary_data["monthly_revenue"] - primary_data["monthly_expenses"])
-                sections.append(f"<p><strong>Monthly Financials:</strong> Revenue ${primary_data['monthly_revenue']:,}, Expenses ${primary_data['monthly_expenses']:,}, Net Profit ${profit:,}.</p>")
+            # Add financial metrics in a visual format
+            sections.append(self._generate_financial_metrics_cards(primary_data, template_data))
             
-            sections.append("</div>")
-            return "\n".join(sections)
+            # Add market comparison chart
+            if "total_listings" in primary_data:
+                sections.append(self._generate_market_comparison(primary_data, template_data))
+            
+            # Add investment checklist
+            sections.append(self._generate_investment_checklist(primary_data, template_data))
+            
+            return "\n\n".join(sections)
         
         elif content_type == "location_service":
             # Create provider list with realistic data
             provider_count = primary_data.get("provider_count", template_data.get("count", 25))
             avg_rating = primary_data.get("average_rating", 4.5)
+            service_name = template_data.get("Service", "service")
+            city = template_data.get("City", "your area")
             
-            sections = [f"<h3>Top {content_type.replace('_', ' ').title()} Providers</h3>"]
-            sections.append("<ul class='provider-list'>")
+            sections = []
             
-            # Generate realistic provider entries
-            for i in range(min(5, provider_count)):
-                rating = round(avg_rating + random.uniform(-0.3, 0.2), 1)
-                reviews = random.randint(150, 350)
-                response_time = random.choice(["2h", "3h", "4h", "6h"])
-                
-                service_name = template_data.get("Service", "service")
-                city = template_data.get("City", "your area")
-                
-                sections.append(
-                    f"<li><strong>{service_name} Expert #{i+1}</strong> - {rating}★ ({reviews} reviews) - {response_time} response</li>"
-                )
+            # Add quick stats info box
+            sections.append(self._generate_quick_stats_box(primary_data, template_data))
             
-            sections.append("</ul>")
-            return "\n".join(sections)
+            # Add provider comparison table
+            sections.append(f"<h3>Top {service_name} Providers in {city}</h3>")
+            sections.append(self._generate_provider_table(primary_data, template_data))
+            
+            # Add visual rating breakdown
+            sections.append(self._generate_rating_visualization(primary_data, template_data))
+            
+            # Add service features checklist
+            sections.append(self._generate_features_checklist(service_name))
+            
+            return "\n\n".join(sections)
         
         else:
-            # Default content with enriched data
-            sections = ["<div class='service-overview'>"]
+            # Default content with enriched data and visual elements
+            sections = []
             service = template_data.get('Service', template_data.get('service', 'services'))
             location = template_data.get('City', template_data.get('city', 'your area'))
+            
+            # Add visual elements based on available data
+            sections.append(self._generate_quick_stats_box(primary_data, template_data))
             
             sections.append(f"<h3>Overview of {service} in {location}</h3>")
             sections.append(f"<p>Access comprehensive information about {service.lower()} options available in {location}. "
                           f"Our database includes {primary_data.get('provider_count', 'multiple')} verified providers with "
-                          f"average ratings of {primary_data.get('average_rating', 4.5)} stars. Compare services, pricing, "
-                          f"and availability to make informed decisions.</p>")
+                          f"average ratings of {primary_data.get('average_rating', 4.5)} stars.</p>")
             
-            if primary_data.get('top_providers'):
-                sections.append("<h4>Featured Providers</h4>")
-                sections.append("<ul class='provider-list'>")
-                for provider in primary_data.get('top_providers', [])[:3]:
-                    sections.append(f"<li><strong>{provider['name']}</strong> - {provider['rating']}★ ({provider['reviews']} reviews)</li>")
-                sections.append("</ul>")
+            # Add comparison table or pricing info
+            if primary_data.get('min_price') and primary_data.get('max_price'):
+                sections.append(self._generate_pricing_infographic(primary_data, template_data))
+            elif primary_data.get('top_providers'):
+                sections.append(self._generate_provider_table(primary_data, template_data))
             
-            sections.append("</div>")
-            return "\n".join(sections)
+            # Add features checklist
+            sections.append(self._generate_features_checklist(service))
+            
+            return "\n\n".join(sections)
     
     def _generate_support_content_enriched(self, enriched_data: Dict[str, Any], 
                                           template_data: Dict[str, Any], content_type: str) -> List[str]:
@@ -433,23 +432,8 @@ class EfficientPageGenerator:
             return context
         
         elif content_type == "location_service":
-            context = f"<h3>What to Expect from {service} in {city}</h3>"
-            context += f"<p>Professional {service.lower()} providers in {city} typically offer comprehensive consultations, "
-            context += f"detailed quotes, and transparent pricing. Most established providers maintain proper licensing, "
-            context += f"insurance coverage, and positive customer relationships built over years of reliable service. "
-            context += f"The local market includes both large established companies and specialized independent contractors, "
-            context += f"each offering unique advantages in terms of pricing, availability, and service specializations.</p>"
-            
-            context += f"<p>When evaluating options, consider these key factors: response times (emergency services often available "
-            context += f"within {random.randint(1, 4)} hours), service guarantees (typically {random.randint(30, 90)}-day warranties), "
-            context += f"customer reviews (look for providers with 50+ verified reviews), and pricing transparency. Many providers "
-            context += f"offer free estimates, flexible scheduling, and same-day service for urgent needs. Additionally, check for "
-            context += f"membership in professional associations and Better Business Bureau ratings to ensure quality service.</p>"
-            
-            context += f"<p>Pricing for {service.lower()} in {city} varies based on project scope, urgency, and provider experience. "
-            context += f"Basic services typically start at ${random.randint(75, 150)}, while comprehensive projects may range from "
-            context += f"${random.randint(500, 2000)} to ${random.randint(5000, 15000)} depending on complexity. Most providers offer "
-            context += f"multiple payment options including cash, credit cards, and financing for larger projects.</p>"
+            # Add pricing infographic instead of text
+            context = self._generate_pricing_infographic(primary_data, template_data)
             return context
         
         return ""
@@ -756,3 +740,360 @@ Pick {item2} for {data.get('reason2', 'advanced features and scalability')}.</p>
         lines.append("</ul>")
         
         return "\n".join(lines)
+    
+    def _generate_quick_stats_box(self, primary_data: Dict[str, Any], template_data: Dict[str, Any]) -> str:
+        """Generate a visual stats info box"""
+        city = template_data.get("City", template_data.get("city", "your area"))
+        service = template_data.get("Service", template_data.get("service", "services"))
+        
+        stats_html = f"""<div class="info-box" style="background: linear-gradient(135deg, #e0f2fe 0%, #e0e7ff 100%); border: 1px solid #60a5fa; padding: 1.5rem; border-radius: 0.75rem; margin: 1.5rem 0;">
+  <h4 style="margin: 0 0 1rem 0; color: #1e40af; font-size: 1.25rem;">📊 {service} in {city} - Quick Stats</h4>
+  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+    <div>
+      <strong style="color: #64748b;">Active Providers:</strong>
+      <span style="font-size: 1.5rem; font-weight: bold; color: #1e40af; display: block;">{primary_data.get('provider_count', 45)}</span>
+    </div>
+    <div>
+      <strong style="color: #64748b;">Avg. Rating:</strong>
+      <span style="font-size: 1.5rem; font-weight: bold; color: #16a34a; display: block;">{primary_data.get('average_rating', 4.5)}★</span>
+    </div>
+    <div>
+      <strong style="color: #64748b;">Price Range:</strong>
+      <span style="font-size: 1.25rem; font-weight: bold; color: #1e40af; display: block;">${primary_data.get('min_price', 95)}-${primary_data.get('max_price', 350)}</span>
+    </div>
+    <div>
+      <strong style="color: #64748b;">Response Time:</strong>
+      <span style="font-size: 1.25rem; font-weight: bold; color: #dc2626; display: block;">{primary_data.get('average_response_time', '2-4 hours')}</span>
+    </div>
+  </div>
+</div>"""
+        return stats_html
+    
+    def _generate_provider_table(self, primary_data: Dict[str, Any], template_data: Dict[str, Any]) -> str:
+        """Generate a comparison table of providers"""
+        providers = primary_data.get('top_providers', [])
+        if not providers:
+            # Generate sample providers
+            service = template_data.get("Service", "Service")
+            avg_rating = primary_data.get("average_rating", 4.5)
+            providers = []
+            for i in range(5):
+                providers.append({
+                    "name": f"{service} Pro #{i+1}",
+                    "rating": round(avg_rating + random.uniform(-0.3, 0.3), 1),
+                    "reviews": random.randint(100, 500),
+                    "response": f"{random.randint(1, 6)}h",
+                    "price": f"${random.randint(100, 400)}"
+                })
+        
+        table_html = """<table style="width: 100%; border-collapse: collapse; margin: 1.5rem 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+  <thead>
+    <tr style="background: #f8fafc;">
+      <th style="padding: 0.75rem; text-align: left; border-bottom: 2px solid #e2e8f0;">Provider Name</th>
+      <th style="padding: 0.75rem; text-align: center; border-bottom: 2px solid #e2e8f0;">Rating</th>
+      <th style="padding: 0.75rem; text-align: center; border-bottom: 2px solid #e2e8f0;">Reviews</th>
+      <th style="padding: 0.75rem; text-align: center; border-bottom: 2px solid #e2e8f0;">Response</th>
+      <th style="padding: 0.75rem; text-align: center; border-bottom: 2px solid #e2e8f0;">Est. Price</th>
+    </tr>
+  </thead>
+  <tbody>"""
+        
+        for i, provider in enumerate(providers[:5]):
+            bg_color = "#ffffff" if i % 2 == 0 else "#f9fafb"
+            table_html += f"""
+    <tr style="background: {bg_color};">
+      <td style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0; font-weight: 600;">{provider.get('name', f'Provider {i+1}')}</td>
+      <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #e2e8f0; color: #16a34a; font-weight: bold;">{provider.get('rating', 4.5)}★</td>
+      <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #e2e8f0;">{provider.get('reviews', 200)}</td>
+      <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #e2e8f0;">{provider.get('response', '3h')}</td>
+      <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #e2e8f0; font-weight: 600;">{provider.get('price', '$250')}</td>
+    </tr>"""
+        
+        table_html += """
+  </tbody>
+</table>"""
+        return table_html
+    
+    def _generate_rating_visualization(self, primary_data: Dict[str, Any], template_data: Dict[str, Any]) -> str:
+        """Generate a visual rating breakdown"""
+        total_reviews = sum([p.get('reviews', 200) for p in primary_data.get('top_providers', [{"reviews": 200}] * 5)])
+        
+        # Calculate rating distribution
+        ratings = {
+            5: random.randint(55, 70),
+            4: random.randint(20, 30),
+            3: random.randint(5, 15),
+            2: random.randint(1, 5),
+            1: random.randint(1, 3)
+        }
+        
+        # Normalize to 100%
+        total = sum(ratings.values())
+        ratings = {k: int(v * 100 / total) for k, v in ratings.items()}
+        
+        viz_html = f"""<div style="margin: 2rem 0;">
+  <h3>Customer Satisfaction Overview</h3>
+  <div style="background: #f9fafb; padding: 1.5rem; border-radius: 0.5rem;">
+    <p style="font-size: 2rem; font-weight: bold; margin: 0 0 1rem 0; color: #16a34a;">
+      {primary_data.get('average_rating', 4.5)}★ Average Rating
+    </p>
+    <p style="color: #64748b; margin-bottom: 1rem;">Based on {total_reviews:,} customer reviews</p>
+    """
+        
+        for stars in range(5, 0, -1):
+            percentage = ratings[stars]
+            viz_html += f"""
+    <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+      <span style="width: 3rem; color: #64748b;">{stars}★</span>
+      <div style="flex: 1; height: 1.5rem; background: #e5e7eb; border-radius: 0.25rem; margin: 0 0.5rem; overflow: hidden;">
+        <div style="width: {percentage}%; height: 100%; background: {'#16a34a' if stars >= 4 else '#fbbf24' if stars == 3 else '#ef4444'}; transition: width 0.3s;"></div>
+      </div>
+      <span style="width: 3rem; text-align: right; color: #64748b;">{percentage}%</span>
+    </div>"""
+        
+        viz_html += """
+  </div>
+</div>"""
+        return viz_html
+    
+    def _generate_features_checklist(self, service_name: str) -> str:
+        """Generate a visual features checklist"""
+        features = [
+            ("Licensed & Insured", True),
+            ("24/7 Emergency Service", True),
+            ("Free Estimates", True),
+            ("Warranty Included", True),
+            ("Same-Day Service", random.choice([True, False])),
+            ("Senior Discounts", True),
+            ("Online Booking", random.choice([True, False])),
+            ("Eco-Friendly Options", random.choice([True, False]))
+        ]
+        
+        checklist_html = f"""<div style="margin: 2rem 0;">
+  <h3>What to Expect from {service_name} Providers</h3>
+  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1rem;">"""
+        
+        for feature, available in features:
+            icon = "✅" if available else "❌"
+            color = "#16a34a" if available else "#64748b"
+            checklist_html += f"""
+    <div style="display: flex; align-items: center; padding: 0.75rem; background: #f9fafb; border-radius: 0.5rem;">
+      <span style="font-size: 1.25rem; margin-right: 0.75rem;">{icon}</span>
+      <span style="color: {color}; font-weight: {'600' if available else '400'};">{feature}</span>
+    </div>"""
+        
+        checklist_html += """
+  </div>
+</div>"""
+        return checklist_html
+    
+    def _generate_pricing_infographic(self, primary_data: Dict[str, Any], template_data: Dict[str, Any]) -> str:
+        """Generate a pricing breakdown infographic"""
+        service = template_data.get("Service", "Service")
+        
+        # Define price tiers
+        basic_price = primary_data.get('min_price', 100)
+        standard_price = int((primary_data.get('min_price', 100) + primary_data.get('max_price', 400)) / 2)
+        premium_price = primary_data.get('max_price', 400)
+        
+        pricing_html = f"""<div style="margin: 2rem 0;">
+  <h3>{service} Pricing Guide</h3>
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem;">
+    <div style="background: #f3f4f6; padding: 1.5rem; border-radius: 0.5rem; text-align: center;">
+      <h4 style="color: #6b7280; margin: 0 0 0.5rem 0;">Basic Service</h4>
+      <p style="font-size: 2rem; font-weight: bold; color: #1f2937; margin: 0.5rem 0;">${basic_price}</p>
+      <ul style="list-style: none; padding: 0; margin: 1rem 0 0 0; text-align: left; font-size: 0.875rem; color: #6b7280;">
+        <li>• Standard repairs</li>
+        <li>• 30-day warranty</li>
+        <li>• Business hours</li>
+      </ul>
+    </div>
+    <div style="background: linear-gradient(135deg, #ddd6fe 0%, #c7d2fe 100%); padding: 1.5rem; border-radius: 0.5rem; text-align: center; border: 2px solid #8b5cf6;">
+      <h4 style="color: #5b21b6; margin: 0 0 0.5rem 0;">Standard Service</h4>
+      <p style="font-size: 2rem; font-weight: bold; color: #5b21b6; margin: 0.5rem 0;">${standard_price}</p>
+      <ul style="list-style: none; padding: 0; margin: 1rem 0 0 0; text-align: left; font-size: 0.875rem; color: #5b21b6;">
+        <li>• Complex repairs</li>
+        <li>• 90-day warranty</li>
+        <li>• Priority scheduling</li>
+      </ul>
+    </div>
+    <div style="background: #fef3c7; padding: 1.5rem; border-radius: 0.5rem; text-align: center;">
+      <h4 style="color: #92400e; margin: 0 0 0.5rem 0;">Premium Service</h4>
+      <p style="font-size: 2rem; font-weight: bold; color: #92400e; margin: 0.5rem 0;">${premium_price}+</p>
+      <ul style="list-style: none; padding: 0; margin: 1rem 0 0 0; text-align: left; font-size: 0.875rem; color: #92400e;">
+        <li>• Major projects</li>
+        <li>• 1-year warranty</li>
+        <li>• 24/7 availability</li>
+      </ul>
+    </div>
+  </div>
+</div>"""
+        return pricing_html
+    
+    def _generate_roi_infographic(self, primary_data: Dict[str, Any], template_data: Dict[str, Any]) -> str:
+        """Generate ROI visualization for investment questions"""
+        roi = primary_data.get('roi_percentage', 15)
+        monthly_revenue = primary_data.get('monthly_revenue', 2500)
+        monthly_expenses = primary_data.get('monthly_expenses', 1500)
+        monthly_profit = monthly_revenue - monthly_expenses
+        payback_years = round(100 / roi, 1) if roi > 0 else 10
+        
+        roi_html = f"""<div style="background: linear-gradient(135deg, #d1fae5 0%, #dbeafe 100%); padding: 2rem; border-radius: 1rem; margin: 2rem 0;">
+  <h3 style="color: #065f46; margin: 0 0 1.5rem 0; font-size: 1.5rem;">Investment Returns Calculator</h3>
+  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem;">
+    <div style="text-align: center;">
+      <div style="font-size: 3rem; font-weight: bold; color: #059669; margin-bottom: 0.5rem;">{roi}%</div>
+      <div style="color: #065f46; font-weight: 600;">Annual ROI</div>
+      <div style="margin-top: 1rem; font-size: 0.875rem; color: #047857;">
+        Payback Period: {payback_years} years
+      </div>
+    </div>
+    <div>
+      <div style="margin-bottom: 1rem;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+          <span style="color: #065f46;">Monthly Revenue</span>
+          <span style="font-weight: bold; color: #059669;">${monthly_revenue:,}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+          <span style="color: #065f46;">Monthly Expenses</span>
+          <span style="font-weight: bold; color: #dc2626;">-${monthly_expenses:,}</span>
+        </div>
+        <div style="border-top: 2px solid #059669; padding-top: 0.5rem; display: flex; justify-content: space-between;">
+          <span style="color: #065f46; font-weight: bold;">Net Profit</span>
+          <span style="font-weight: bold; color: #059669; font-size: 1.25rem;">${monthly_profit:,}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>"""
+        return roi_html
+    
+    def _generate_financial_metrics_cards(self, primary_data: Dict[str, Any], template_data: Dict[str, Any]) -> str:
+        """Generate financial metrics in card format"""
+        metrics_html = """<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin: 2rem 0;">"""
+        
+        # Occupancy Rate Card
+        occupancy = primary_data.get('occupancy_rate', 68)
+        occupancy_color = "#059669" if occupancy > 70 else "#f59e0b" if occupancy > 50 else "#dc2626"
+        metrics_html += f"""
+  <div style="background: white; border: 2px solid #e5e7eb; padding: 1.5rem; border-radius: 0.5rem; text-align: center;">
+    <div style="font-size: 2.5rem; font-weight: bold; color: {occupancy_color};">{occupancy}%</div>
+    <div style="color: #6b7280; font-weight: 600; margin-top: 0.5rem;">Occupancy Rate</div>
+    <div style="margin-top: 0.5rem;">
+      <div style="height: 0.5rem; background: #e5e7eb; border-radius: 0.25rem; overflow: hidden;">
+        <div style="width: {occupancy}%; height: 100%; background: {occupancy_color};"></div>
+      </div>
+    </div>
+  </div>"""
+        
+        # Average Daily Rate Card
+        adr = primary_data.get('average_nightly_rate', 127)
+        metrics_html += f"""
+  <div style="background: white; border: 2px solid #e5e7eb; padding: 1.5rem; border-radius: 0.5rem; text-align: center;">
+    <div style="font-size: 2.5rem; font-weight: bold; color: #3b82f6;">${adr}</div>
+    <div style="color: #6b7280; font-weight: 600; margin-top: 0.5rem;">Avg. Nightly Rate</div>
+    <div style="font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem;">
+      Market Avg: ${int(adr * 0.9)}-${int(adr * 1.1)}
+    </div>
+  </div>"""
+        
+        # Total Listings Card
+        listings = primary_data.get('total_listings', 342)
+        growth = primary_data.get('growth_rate', 23)
+        metrics_html += f"""
+  <div style="background: white; border: 2px solid #e5e7eb; padding: 1.5rem; border-radius: 0.5rem; text-align: center;">
+    <div style="font-size: 2.5rem; font-weight: bold; color: #8b5cf6;">{listings}</div>
+    <div style="color: #6b7280; font-weight: 600; margin-top: 0.5rem;">Active Listings</div>
+    <div style="font-size: 0.875rem; color: #059669; margin-top: 0.5rem;">
+      ↑ {growth}% YoY Growth
+    </div>
+  </div>"""
+        
+        # Revenue Per Property Card
+        revenue = primary_data.get('monthly_revenue', 2890)
+        metrics_html += f"""
+  <div style="background: white; border: 2px solid #e5e7eb; padding: 1.5rem; border-radius: 0.5rem; text-align: center;">
+    <div style="font-size: 2.5rem; font-weight: bold; color: #059669;">${revenue:,}</div>
+    <div style="color: #6b7280; font-weight: 600; margin-top: 0.5rem;">Monthly Revenue</div>
+    <div style="font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem;">
+      Per property average
+    </div>
+  </div>"""
+        
+        metrics_html += "</div>"
+        return metrics_html
+    
+    def _generate_market_comparison(self, primary_data: Dict[str, Any], template_data: Dict[str, Any]) -> str:
+        """Generate market comparison visualization"""
+        city = template_data.get("City", "This City")
+        
+        comparison_html = f"""<div style="margin: 2rem 0;">
+  <h3>Market Performance Comparison</h3>
+  <div style="background: #f9fafb; padding: 1.5rem; border-radius: 0.5rem;">
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th style="text-align: left; padding: 0.75rem; border-bottom: 2px solid #e5e7eb;">Metric</th>
+          <th style="text-align: center; padding: 0.75rem; border-bottom: 2px solid #e5e7eb;">{city}</th>
+          <th style="text-align: center; padding: 0.75rem; border-bottom: 2px solid #e5e7eb;">Regional Avg</th>
+          <th style="text-align: center; padding: 0.75rem; border-bottom: 2px solid #e5e7eb;">Performance</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding: 0.75rem; border-bottom: 1px solid #e5e7eb;">Occupancy Rate</td>
+          <td style="text-align: center; padding: 0.75rem; border-bottom: 1px solid #e5e7eb; font-weight: bold;">{primary_data.get('occupancy_rate', 68)}%</td>
+          <td style="text-align: center; padding: 0.75rem; border-bottom: 1px solid #e5e7eb;">65%</td>
+          <td style="text-align: center; padding: 0.75rem; border-bottom: 1px solid #e5e7eb; color: #059669;">↑ +4.6%</td>
+        </tr>
+        <tr style="background: #f3f4f6;">
+          <td style="padding: 0.75rem; border-bottom: 1px solid #e5e7eb;">Nightly Rate</td>
+          <td style="text-align: center; padding: 0.75rem; border-bottom: 1px solid #e5e7eb; font-weight: bold;">${primary_data.get('average_nightly_rate', 127)}</td>
+          <td style="text-align: center; padding: 0.75rem; border-bottom: 1px solid #e5e7eb;">$115</td>
+          <td style="text-align: center; padding: 0.75rem; border-bottom: 1px solid #e5e7eb; color: #059669;">↑ +10.4%</td>
+        </tr>
+        <tr>
+          <td style="padding: 0.75rem; border-bottom: 1px solid #e5e7eb;">Market Growth</td>
+          <td style="text-align: center; padding: 0.75rem; border-bottom: 1px solid #e5e7eb; font-weight: bold;">{primary_data.get('growth_rate', 23)}%</td>
+          <td style="text-align: center; padding: 0.75rem; border-bottom: 1px solid #e5e7eb;">18%</td>
+          <td style="text-align: center; padding: 0.75rem; border-bottom: 1px solid #e5e7eb; color: #059669;">↑ +27.8%</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>"""
+        return comparison_html
+    
+    def _generate_investment_checklist(self, primary_data: Dict[str, Any], template_data: Dict[str, Any]) -> str:
+        """Generate investment readiness checklist"""
+        property_type = template_data.get("Property Type", template_data.get("property type", "property"))
+        city = template_data.get("City", "this market")
+        
+        checklist_html = f"""<div style="margin: 2rem 0;">
+  <h3>Investment Readiness Checklist for {property_type} in {city}</h3>
+  <div style="background: #fef3c7; border: 1px solid #fbbf24; padding: 1.5rem; border-radius: 0.5rem;">
+    <div style="display: grid; gap: 0.75rem;">
+      <div style="display: flex; align-items: center;">
+        <span style="color: #059669; font-size: 1.5rem; margin-right: 0.75rem;">✓</span>
+        <span><strong>Strong ROI Potential:</strong> {primary_data.get('roi_percentage', 15)}% annual returns exceed market average</span>
+      </div>
+      <div style="display: flex; align-items: center;">
+        <span style="color: #059669; font-size: 1.5rem; margin-right: 0.75rem;">✓</span>
+        <span><strong>High Occupancy:</strong> {primary_data.get('occupancy_rate', 68)}% occupancy ensures steady income</span>
+      </div>
+      <div style="display: flex; align-items: center;">
+        <span style="color: #059669; font-size: 1.5rem; margin-right: 0.75rem;">✓</span>
+        <span><strong>Growing Market:</strong> {primary_data.get('growth_rate', 23)}% YoY growth indicates strong demand</span>
+      </div>
+      <div style="display: flex; align-items: center;">
+        <span style="color: #f59e0b; font-size: 1.5rem; margin-right: 0.75rem;">!</span>
+        <span><strong>Consider Competition:</strong> {primary_data.get('total_listings', 342)} active listings require strategic positioning</span>
+      </div>
+      <div style="display: flex; align-items: center;">
+        <span style="color: #3b82f6; font-size: 1.5rem; margin-right: 0.75rem;">→</span>
+        <span><strong>Next Step:</strong> Research specific neighborhoods and property features for optimal returns</span>
+      </div>
+    </div>
+  </div>
+</div>"""
+        return checklist_html
