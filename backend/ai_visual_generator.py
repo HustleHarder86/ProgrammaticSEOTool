@@ -41,22 +41,39 @@ AVAILABLE DATA:
 {json.dumps(enriched_data.get('primary_data', {}), indent=2)[:800]}
 
 TASK:
-Create 2-3 HTML visual elements that enhance this specific content. The visuals should:
+Create 2-3 SIMPLE HTML visual elements for programmatic SEO. The visuals should:
 1. Be directly relevant to the content topic
 2. Use the actual data provided above
-3. Enhance reader understanding
-4. Be visually appealing with inline CSS
+3. Be SIMPLE and SCALABLE (no complex charts or custom graphics)
+4. Use basic HTML with inline CSS
 
-EXAMPLES OF APPROPRIATE VISUALS:
-- For "X vs Y" comparisons: Feature comparison table, pros/cons lists, pricing differences
-- For investment/ROI content: ROI calculator, market stats table, investment breakdown
-- For service listings: Provider comparison table, pricing tiers, service checklist
-- For how-to content: Step-by-step process, checklist, timeline
-- For product reviews: Feature comparison, rating breakdown, price comparison
+PROGRAMMATIC SEO VISUAL GUIDELINES:
+✅ DO USE THESE SIMPLE VISUALS:
+- Tables (comparison tables, data tables, feature matrices)
+- Lists (bulleted lists, numbered steps, checklists with ✓/✗)
+- Stats boxes (simple div boxes with numbers and labels)
+- Info cards (bordered divs with key facts)
+- Simple grids (2x2 or 3x3 layouts with data)
+- Text-based ratings (★★★★☆ not complex star graphics)
 
-CRITICAL: The visuals MUST match the content. If this is about "Viome vs Thorne", create a comparison table of their features, NOT a generic provider stats box.
+❌ AVOID THESE COMPLEX VISUALS:
+- Charts or graphs (no bar charts, pie charts, line graphs)
+- Custom illustrations or icons
+- Complex calculators with JavaScript
+- Animated elements
+- Image-based infographics
+- Anything requiring external libraries
 
-Return ONLY the HTML for the visual elements. Use inline CSS. Make it specific to THIS content."""
+EXAMPLES FOR DIFFERENT CONTENT:
+- Comparisons: Simple 2-column comparison table with features
+- Services: Basic table with provider, rating, price columns
+- How-to: Numbered list of steps in boxes
+- Investment: Stats boxes showing ROI%, occupancy rate, etc.
+- Products: Simple feature list with checkmarks
+
+CRITICAL: Keep it SIMPLE for scale. If this is about "Viome vs Thorne", create a basic 2-column comparison table, NOT a complex interactive comparison tool.
+
+Return ONLY the HTML for the visual elements. Use inline CSS. Make it simple and data-focused."""
 
         try:
             # Generate visuals with AI
