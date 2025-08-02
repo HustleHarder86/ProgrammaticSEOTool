@@ -13,7 +13,7 @@ from models import Project, Template, DataSet, GeneratedPage, PotentialPage
 from template_engine import TemplateEngine
 from data_processor import DataProcessor
 from page_generator import PageGenerator
-from export_manager import export_manager, ExportFormat
+from export_manager import export_manager, ExportFormat, ExportStatus
 from agents.variable_generator import VariableGeneratorAgent
 from api_routes import router as cost_router
 from cost_tracker import CostTracker, OperationType
@@ -1404,15 +1404,15 @@ def generate_all_pages(
             raise HTTPException(status_code=404, detail="Template not found")
         
         # Generate pages
-        if request.selected_titles and request.variables_data:
-            # Use AI-generated variables and selected titles
+        if request.variables_data:
+            # Use AI-generated variables (with or without selected titles)
             print(f"DEBUG: Using AI-generated variables: {list(request.variables_data.keys())}")
-            print(f"DEBUG: Number of selected titles: {len(request.selected_titles)}")
+            print(f"DEBUG: Number of selected titles: {len(request.selected_titles) if request.selected_titles else 'All'}")
             
             total_generated, page_ids = page_generator.generate_pages_from_variables(
                 project_id, template_id, 
                 request.variables_data,
-                request.selected_titles,
+                request.selected_titles,  # Can be None - will generate all combinations
                 db, batch_size=request.batch_size
             )
             
@@ -1824,7 +1824,7 @@ def generate_selected_pages(
         potential_pages = db.query(PotentialPage).filter(
             PotentialPage.project_id == project_id,
             PotentialPage.template_id == template_id,
-            PotentialPage.title.in_(request.selected_page_titles or []),
+            PotentialPage.title.in_(request.selected_titles or []),
             PotentialPage.is_generated == 0  # Only non-generated pages
         ).all()
         
@@ -1836,26 +1836,24 @@ def generate_selected_pages(
             }
         
         # Prepare variables data for generation
+        # generate_pages_from_variables expects Dict[str, List[str]] not Dict[str, List[dict]]
         variables_data = {}
         selected_titles = []
         
         for page in potential_pages:
             selected_titles.append(page.title)
-            # Collect unique variable values
+            # Collect unique variable values as strings
             if page.variables:
                 for var_name, var_value in page.variables.items():
                     if var_name not in variables_data:
                         variables_data[var_name] = []
-                    # Add the variable value in the expected format
-                    value_entry = {
-                        'value': var_value,
-                        'dataset_id': 'potential_pages',
-                        'dataset_name': 'Selected Pages',
-                        'metadata': {}
-                    }
-                    # Avoid duplicates
-                    if value_entry not in variables_data[var_name]:
-                        variables_data[var_name].append(value_entry)
+                    # Add just the string value, not a dict
+                    if var_value not in variables_data[var_name]:
+                        variables_data[var_name].append(var_value)
+        
+        # Debug: Print what we're sending
+        print(f"DEBUG generate-selected: variables_data = {variables_data}")
+        print(f"DEBUG generate-selected: selected_titles = {selected_titles}")
         
         # Generate the pages
         total_generated, page_ids = page_generator.generate_pages_from_variables(
@@ -1866,6 +1864,8 @@ def generate_selected_pages(
             db,
             batch_size=request.batch_size or 10
         )
+        
+        print(f"DEBUG generate-selected: total_generated = {total_generated}, page_ids = {page_ids[:5] if page_ids else []}")
         
         # Mark potential pages as generated
         for page in potential_pages:
@@ -1891,3 +1891,90 @@ def generate_selected_pages(
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Generation failed: {str(e)}")
+
+# Export endpoints
+@app.post("/api/projects/{project_id}/export")
+def export_project_pages(
+    project_id: str,
+    format: str = "csv",
+    db: Session = Depends(get_db)
+):
+    """Export all generated pages for a project"""
+    # Validate project exists
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Get all generated pages for the project
+    pages = db.query(GeneratedPage).filter(
+        GeneratedPage.project_id == project_id
+    ).all()
+    
+    if not pages:
+        raise HTTPException(
+            status_code=400, 
+            detail="No pages found for this project. Generate pages first."
+        )
+    
+    # We don't need to prepare export data - the export manager handles it
+    # Just validate that pages exist
+    
+    try:
+        # Start export job - the export manager will fetch pages from database
+        export_id = export_manager.start_export(
+            project_id=project_id,
+            format=format
+        )
+        
+        # Get job status
+        export_status = export_manager.get_export_status(export_id)
+        
+        # Convert to expected format
+        if not export_status:
+            raise ValueError("Export job not found")
+        
+        return {
+            "export_id": export_id,
+            "status": export_status.get("status", "pending"),
+            "format": format,
+            "file_path": export_status.get("file_path")
+        }
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
+
+@app.get("/api/exports/{export_id}/status")
+def get_export_status(export_id: str, db: Session = Depends(get_db)):
+    """Get status of an export job"""
+    export_status = export_manager.get_export_status(export_id)
+    
+    if not export_status:
+        raise HTTPException(status_code=404, detail="Export job not found")
+    
+    return export_status
+
+@app.get("/api/exports/{export_id}/download")
+def download_export(export_id: str, db: Session = Depends(get_db)):
+    """Download exported file"""
+    export_status = export_manager.get_export_status(export_id)
+    
+    if not export_status:
+        raise HTTPException(status_code=404, detail="Export job not found")
+    
+    if export_status.get("status") != "completed":
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Export is not ready. Status: {export_status.get('status')}"
+        )
+    
+    file_path = export_status.get("file_path")
+    if not file_path or not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Export file not found")
+    
+    return FileResponse(
+        path=file_path,
+        filename=os.path.basename(file_path),
+        media_type='application/octet-stream'
+    )
