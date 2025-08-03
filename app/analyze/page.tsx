@@ -70,7 +70,7 @@ export default function AnalyzePage() {
 
   if (analysisResult) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="max-w-6xl">
         <TemplateResults 
           results={analysisResult}
           onSelectTemplate={handleSelectTemplate}
@@ -81,7 +81,7 @@ export default function AnalyzePage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="max-w-4xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-3">Analyze Your Business</h1>
         <p className="text-lg text-gray-600">

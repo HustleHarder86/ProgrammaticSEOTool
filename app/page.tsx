@@ -28,7 +28,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50/30 overflow-hidden">
+    <div className="min-h-full bg-gradient-to-br from-slate-50 via-white to-purple-50/30">
       {/* Background Effects */}
       <div className="fixed inset-0 -z-10">
         <div className="absolute top-0 -left-4 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" />
@@ -37,7 +37,7 @@ export default function Home() {
       </div>
 
       {/* Dashboard Header */}
-      <section className="relative px-4 pt-12 pb-8 mx-auto max-w-7xl">
+      <section className="relative pb-8">
         <div className="relative">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             {greeting()}!
