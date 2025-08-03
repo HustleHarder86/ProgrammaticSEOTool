@@ -239,15 +239,26 @@ Generate {target_count} relevant values that make sense for this variable in the
         
         prompt += """
 
+CRITICAL SEARCH OPTIMIZATION RULES:
+- Use terms people ACTUALLY type into Google, not formal language
+- Use "condo" not "condominium"
+- Use "apt" not "apartment" 
+- Use "NYC" not "New York City", "LA" not "Los Angeles"
+- Use "BC" not "British Columbia", "CA" not "California" (for US states)
+- Use "doctor" not "physician", "lawyer" not "attorney"
+- Use "gym" not "fitness center", "car" not "automobile"
+- Use common abbreviations and slang terms
+- Think like someone quickly typing a search query
+
 Requirements:
 1. Return ONLY a JSON array of strings
-2. Each value should be realistic and searchable
+2. Each value should match actual search behavior
 3. Values should be diverse but relevant
-4. Use proper capitalization
+4. Use proper capitalization for readability
 5. Avoid duplicates
-6. Focus on high-search-volume terms when possible
+6. Focus on high-search-volume informal terms
 
-Example format: ["Value 1", "Value 2", "Value 3"]
+Example format: ["Miami", "NYC", "LA", "Chicago", "SF"]
 
 Generate the values:"""
         

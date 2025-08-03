@@ -9,7 +9,7 @@ import json
 import re
 from typing import Dict, List, Any, Tuple, Optional
 from datetime import datetime
-from api.ai_handler import AIHandler
+from .api.ai_handler import AIHandler
 
 
 class AIStrategyGenerator:
@@ -334,6 +334,10 @@ class AIStrategyGenerator:
                 json_match = re.search(r'\{.*\}', response, re.DOTALL)
                 if json_match:
                     template = json.loads(json_match.group())
+                    
+                    # Two-stage optimization: Convert to search-friendly terms
+                    template = await self._optimize_for_search_terms(template)
+                    
                     # Add generation metadata
                     template["generated_at"] = datetime.now().isoformat()
                     template["generation_method"] = "ai_dynamic"
@@ -342,6 +346,82 @@ class AIStrategyGenerator:
             print(f"   ❌ Template generation failed: {e}")
         
         return None
+    
+    async def _optimize_for_search_terms(self, template: Dict[str, Any]) -> Dict[str, Any]:
+        """Optimize template patterns to use terms people actually search for"""
+        
+        # Extract all text fields that need optimization
+        fields_to_optimize = {
+            'template_pattern': template.get('template_pattern', ''),
+            'h1_pattern': template.get('h1_pattern', ''),
+            'template_name': template.get('template_name', '')
+        }
+        
+        # Also optimize variable example values
+        optimized_variables = []
+        for var in template.get('target_variables', []):
+            var_copy = var.copy()
+            if 'example_values' in var_copy:
+                var_copy['example_values'] = await self._optimize_value_list(var_copy['example_values'])
+            optimized_variables.append(var_copy)
+        
+        # Optimize each field
+        for field_name, field_value in fields_to_optimize.items():
+            if field_value:
+                template[field_name] = await self._convert_to_search_terms(field_value)
+        
+        # Update variables
+        if optimized_variables:
+            template['target_variables'] = optimized_variables
+        
+        return template
+    
+    async def _convert_to_search_terms(self, text: str) -> str:
+        """Convert formal terms to what people actually search for"""
+        
+        prompt = f"""
+        Convert this text to use terms people ACTUALLY type into Google search.
+        Make it match real search behavior, not formal language.
+        
+        Original text: {text}
+        
+        Rules:
+        1. Use common abbreviations (condo not condominium, apt not apartment)
+        2. Use informal terms (doctor not physician, lawyer not attorney)
+        3. Shorten locations (SF not San Francisco, NYC not New York City, BC not British Columbia)
+        4. Use numbers not words (5 not five, 10 not ten)
+        5. Remove unnecessary words (the, in the, of the)
+        6. Use slang/common terms (gym not fitness center, BBQ not barbecue)
+        7. Think like someone quickly typing into Google
+        
+        Examples:
+        - "Condominium Investment in British Columbia" → "Condo Investment BC"
+        - "Automobile Dealerships in Los Angeles" → "Car Dealers LA"
+        - "Physical Fitness Centers Near Me" → "Gyms Near Me"
+        - "Attorney Services in New York City" → "Lawyer NYC"
+        
+        Return ONLY the converted text, nothing else.
+        """
+        
+        try:
+            response = self.ai_handler.generate(prompt, max_tokens=100)
+            if response and response.strip():
+                # Clean up the response
+                converted = response.strip().strip('"').strip("'")
+                print(f"   🔄 Converted: '{text}' → '{converted}'")
+                return converted
+        except Exception as e:
+            print(f"   ⚠️ Conversion failed: {e}")
+        
+        return text  # Return original if conversion fails
+    
+    async def _optimize_value_list(self, values: List[str]) -> List[str]:
+        """Optimize a list of example values for search terms"""
+        optimized = []
+        for value in values:
+            optimized_value = await self._convert_to_search_terms(value)
+            optimized.append(optimized_value)
+        return optimized
     
     async def _create_data_strategy(self, business_intelligence: Dict[str, Any], 
                                   custom_templates: List[Dict[str, Any]]) -> Dict[str, Any]:

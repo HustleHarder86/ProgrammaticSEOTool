@@ -3,10 +3,10 @@ import json
 import hashlib
 from datetime import datetime
 from typing import Dict, List, Any, Optional
-from efficient_page_generator import EfficientPageGenerator
-from data_enricher import DataEnricher
-from api.ai_handler import AIHandler
-from ai_visual_generator import AIVisualGenerator
+from .efficient_page_generator import EfficientPageGenerator
+from .data_enricher import DataEnricher
+from .api.ai_handler import AIHandler
+from .ai_visual_generator import AIVisualGenerator
 
 
 class SmartPageGenerator(EfficientPageGenerator):
