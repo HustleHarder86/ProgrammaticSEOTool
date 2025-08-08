@@ -70,6 +70,59 @@ class PageGenerator:
         variables = re.findall(r'\[([^\]]+)\]', pattern)
         return variables
     
+    def load_variables_from_potential_pages(self, project_id: str, template_id: str, db: Session) -> Dict[str, List[Dict[str, Any]]]:
+        """Load variables from PotentialPages when no DataSet exists
+        
+        Args:
+            project_id: Project ID
+            template_id: Template ID
+            db: Database session
+            
+        Returns:
+            Dict mapping variable names to their data lists
+        """
+        from models import PotentialPage
+        
+        # Get potential pages
+        potential_pages = db.query(PotentialPage).filter(
+            PotentialPage.project_id == project_id,
+            PotentialPage.template_id == template_id
+        ).limit(100).all()  # Limit for safety
+        
+        if not potential_pages:
+            return {}
+        
+        # Get template to know variable names
+        template = db.query(Template).filter(Template.id == template_id).first()
+        if not template or not template.variables:
+            return {}
+        
+        # Extract unique values for each variable
+        variable_data = {var: [] for var in template.variables}
+        seen_values = {var: set() for var in template.variables}
+        
+        for page in potential_pages:
+            if page.variables:
+                for var_name in template.variables:
+                    if var_name in page.variables:
+                        value = page.variables[var_name]
+                        # Handle dict values from JSON
+                        if isinstance(value, dict):
+                            value = value.get('value', str(value))
+                        # Convert to string for hashing
+                        value_str = str(value)
+                        # Only add unique values
+                        if value_str not in seen_values[var_name]:
+                            seen_values[var_name].add(value_str)
+                            variable_data[var_name].append({
+                                'value': value,
+                                'dataset_id': 'ai_generated',
+                                'dataset_name': 'AI Generated Variables',
+                                'metadata': {}
+                            })
+        
+        return variable_data
+    
     def load_datasets_for_variables(self, project_id: str, template: Template, db: Session) -> Dict[str, List[Dict[str, Any]]]:
         """Load all datasets for a project and map to template variables
         
@@ -548,6 +601,10 @@ class PageGenerator:
         
         # Load datasets
         variable_data = self.load_datasets_for_variables(project_id, template, db)
+        
+        # If no datasets, try to get variables from PotentialPages
+        if not variable_data:
+            variable_data = self.load_variables_from_potential_pages(project_id, template_id, db)
         
         if not variable_data:
             raise ValueError("No data available for template variables")

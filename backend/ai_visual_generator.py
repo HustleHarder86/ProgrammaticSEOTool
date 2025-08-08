@@ -2,7 +2,7 @@
 import json
 import re
 from typing import Dict, List, Any, Optional, Tuple
-from .api.ai_handler import AIHandler
+from api.ai_handler import AIHandler
 
 
 class AIVisualGenerator:

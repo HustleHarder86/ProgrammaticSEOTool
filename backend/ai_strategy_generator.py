@@ -9,7 +9,7 @@ import json
 import re
 from typing import Dict, List, Any, Tuple, Optional
 from datetime import datetime
-from .api.ai_handler import AIHandler
+from api.ai_handler import AIHandler
 
 
 class AIStrategyGenerator:
