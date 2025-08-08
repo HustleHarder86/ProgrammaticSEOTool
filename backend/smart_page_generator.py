@@ -147,9 +147,11 @@ Use only provided data.
             template_data[key] = value
         
         # Use AI to enhance content with visual elements
+        print(f"🎨 Attempting to generate visual elements for: {title[:50]}...")
         enhanced_content_html = self.ai_visual_generator.enhance_content_with_visuals(
             content_html, template_data, enriched_data
         )
+        print(f"🎨 Visual generation complete. Content length: {len(enhanced_content_html)}")
         
         # Calculate quality metrics
         word_count = len(enhanced_content_html.split())

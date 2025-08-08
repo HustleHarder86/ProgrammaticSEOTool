@@ -15,11 +15,13 @@ class AIVisualGenerator:
                                     enriched_data: Dict[str, Any]) -> str:
         """Enhance content with AI-generated visual elements - AI only, no fallbacks"""
         
+        print("🎨 Visual generator called")
         if not self.ai_handler.has_ai_provider():
             # Return content without visuals if no AI available
             print("⚠️ No AI provider configured - returning content without visuals")
             return content_html
         
+        print("🎨 AI provider available, generating visuals...")
         # Generate AI visuals based on actual blog content
         enhanced_content = self._generate_ai_visuals(content_html, template_data, enriched_data)
         
@@ -64,6 +66,8 @@ VISUAL REQUIREMENTS:
 - Support the article's main arguments with data
 - Simple HTML with inline CSS (no external dependencies)
 - Focus on clarity and readability
+- CENTER all visual elements using margin: 20px auto
+- Set max-width on elements (e.g., max-width: 600px) to maintain readability
 
 EXAMPLE APPROACH:
 - If article says "68% occupancy rate in Winnipeg", create a stat box showing exactly 68%
@@ -77,13 +81,18 @@ ACCEPTABLE VISUAL TYPES:
 - Simple grids showing real data points
 - Info cards with key facts from the content
 
-Return ONLY the HTML for 2-3 visual elements. Each visual must directly support a specific claim or data point from the article."""
+CRITICAL STYLING RULES:
+1. Every visual element MUST include: style="margin: 20px auto; max-width: 600px;"
+2. Tables should also include: style="margin: 20px auto; max-width: 100%;"
+3. This centers the elements and maintains readable width
+
+Return ONLY the HTML for 2-3 visual elements. Each visual must directly support a specific claim or data point from the article. ALL visuals must be centered."""
 
         max_retries = 3
         for attempt in range(max_retries):
             try:
                 # Generate visuals with AI
-                visual_html = self.ai_handler.generate_content(prompt, max_tokens=2500)
+                visual_html = self.ai_handler.generate(prompt, max_tokens=2500)
                 
                 if visual_html:
                     # Validate that visuals contain actual data from article
@@ -248,7 +257,10 @@ Return ONLY the HTML for 2-3 visual elements. Each visual must directly support 
                 # Find matching closing div
                 end_pos = self._find_closing_tag(html, 'div')
                 if end_pos > 0:
-                    visuals.append(html[:end_pos])
+                    visual_element = html[:end_pos]
+                    # Ensure centering
+                    visual_element = self._ensure_centered(visual_element, 'div')
+                    visuals.append(visual_element)
                     html = html[end_pos:].strip()
                 else:
                     break
@@ -256,7 +268,10 @@ Return ONLY the HTML for 2-3 visual elements. Each visual must directly support 
                 # Find matching closing table
                 end_pos = self._find_closing_tag(html, 'table')
                 if end_pos > 0:
-                    visuals.append(html[:end_pos])
+                    visual_element = html[:end_pos]
+                    # Ensure centering
+                    visual_element = self._ensure_centered(visual_element, 'table')
+                    visuals.append(visual_element)
                     html = html[end_pos:].strip()
                 else:
                     break
@@ -269,6 +284,53 @@ Return ONLY the HTML for 2-3 visual elements. Each visual must directly support 
                     break
         
         return visuals[:3]  # Max 3 visuals
+    
+    def _ensure_centered(self, element_html: str, tag_type: str) -> str:
+        """Ensure visual element is centered with proper styling"""
+        import re
+        
+        # Check if element already has style attribute
+        if 'style=' in element_html:
+            # Extract existing style
+            style_match = re.search(r'style="([^"]*)"', element_html)
+            if style_match:
+                existing_style = style_match.group(1)
+                
+                # Always add centering, even if some margin exists
+                # Remove any existing margin settings first
+                existing_style = re.sub(r'margin:[^;]*;?', '', existing_style)
+                existing_style = existing_style.strip().rstrip(';')
+                
+                # Add centering
+                if tag_type == 'table':
+                    new_style = f"{existing_style}; margin: 20px auto; max-width: 100%; border-collapse: collapse;"
+                else:
+                    new_style = f"{existing_style}; margin: 20px auto; max-width: 600px; display: block;"
+                
+                # Replace the style attribute
+                element_html = re.sub(
+                    r'style="[^"]*"',
+                    f'style="{new_style}"',
+                    element_html,
+                    count=1
+                )
+        else:
+            # Add style attribute with centering
+            if tag_type == 'table':
+                element_html = element_html.replace(
+                    f'<{tag_type}',
+                    f'<{tag_type} style="margin: 20px auto; max-width: 100%; border-collapse: collapse;"',
+                    1
+                )
+            else:
+                element_html = element_html.replace(
+                    f'<{tag_type}',
+                    f'<{tag_type} style="margin: 20px auto; max-width: 600px; display: block;"',
+                    1
+                )
+        
+        print(f"🎯 Centered {tag_type} element")
+        return element_html
     
     def _find_closing_tag(self, html: str, tag_name: str) -> int:
         """Find the position after the closing tag for a given opening tag"""
